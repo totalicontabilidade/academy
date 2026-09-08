@@ -209,6 +209,29 @@ exports.auditarItem = onDocumentWritten(
       carimbo.recebidoEm = FieldValue.serverTimestamp();
     }
 
+    /* DOCUMENTO SEM ARQUIVO NENHUM NÃO TEM DATA DE CHEGADA.
+
+       O carimbo era posto na primeira chegada e nunca mais saía —
+       nem quando o cliente removia tudo. Duas consequências, e as
+       duas ruins:
+
+       Um documento vazio ficava com data de recebimento. E o
+       arquivo seguinte, enviado semanas depois, herdava a data do
+       que foi removido: o dossiê afirmaria que chegou em março o
+       que chegou em maio, com o peso de um carimbo do servidor.
+
+       Apareceu no teste de 08/09/2026 — enviei um arquivo para
+       verificar o caminho, removi, e a data ficou no item para
+       sempre, esperando para se colar no próximo envio de verdade.
+
+       A condição olha o ESTADO e não o evento, então também limpa
+       carimbo antigo na primeira gravação que passar pelo item. E
+       não entra em laço: depois de limpo, `depois.recebidoEm` não
+       existe mais e nada é gravado. */
+    if (nDepois === 0 && depois.recebidoEm) {
+      carimbo.recebidoEm = FieldValue.delete();
+    }
+
     if (rDepois.status && rDepois.status !== rAntes.status) {
       if (rDepois.status === "aprovado") {
         carimbo.aprovadoEm = FieldValue.serverTimestamp();
