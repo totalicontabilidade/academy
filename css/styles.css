@@ -384,19 +384,32 @@ html.motion .reveal.is-in{
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
-/* O RÓTULO DO PAINEL SAI NO CELULAR.
+/* O RÓTULO DO PAINEL SAI SÓ ONDE NÃO CABE.
 
-   Aqui o cabeçalho tem quatro ações disputando 375px, e sobram
-   ~64px para o texto: o bastante para mostrar "Painel d…" e mais
-   nada. Rótulo cortado pela metade não informa, e ainda deixa a
-   barra desalinhada. A logo já diz de quem é a tela, o título da
-   seção diz onde a pessoa está, e o aviso de uso interno continua
-   no rodapé de todas as telas.
+   Quando o cabeçalho tinha um botão a mais — o "Acesso do cliente",
+   removido em 04/09/2026 —, sobravam 64px para o texto em 375px:
+   o bastante para "Painel d…" e mais nada, com o "USO INTERNO"
+   quebrando em duas linhas. O rótulo saiu inteiro abaixo de 430px.
+
+   Com um botão a menos, medi de novo no painel publicado, com
+   administrador logado. O rótulo pede 100px, e o que ele recebe:
+
+     412px … 100  cabe
+     390px … 100  cabe
+     375px … 100  cabe, no limite exato
+     360px …  93  CORTA
+     344px …  82  corta
+     320px …  58  corta
+
+   Ou seja, o aperto começa abaixo de 375. Acima disso o rótulo
+   aparece no tamanho natural e não empurra a altura da barra.
+   O corte fica em 374px, que é onde ele de fato deixa de caber —
+   e não num número escolhido de véspera.
 
    Vale SÓ no painel. No portal do cliente este mesmo espaço
-   carrega o nome da empresa — ali é informação, não rótulo, e a
-   barra de lá tem menos botões para caber. */
-@media (max-width:430px){
+   carrega o nome da empresa: ali é informação, não rótulo, e é
+   melhor mostrar um pedaço dele do que nada. */
+@media (max-width:374px){
   .pagina-painel .brand__text{display:none}
 }
 .header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
