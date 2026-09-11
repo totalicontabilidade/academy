@@ -1,8 +1,20 @@
 # Servidor HTTP estatico simples para testar o portal localmente.
+#
+# O padrao de $Root e a PASTA DESTE SCRIPT, e nao um caminho escrito a mao.
+# Antes era "C:\Users\Totali\Desktop\Onboarding" fixo, e em 11/09/2026 o
+# repositorio mudou de pasta duas vezes no mesmo dia — o script passou a
+# servir um caminho que nao existia mais, sem dizer o porque. Assim ele
+# acompanha o repositorio para onde ele for.
 param(
-  [string]$Root = "C:\Users\Totali\Desktop\Onboarding",
+  [string]$Root = $PSScriptRoot,
   [int]$Port = 8099
 )
+
+if (-not (Test-Path $Root)) {
+  Write-Host "A pasta '$Root' nao existe. Rode o script de dentro do repositorio," -ForegroundColor Red
+  Write-Host "ou passe o caminho: .\serve.ps1 -Root 'C:\caminho\do\portal'" -ForegroundColor Red
+  exit 1
+}
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://localhost:$Port/")
