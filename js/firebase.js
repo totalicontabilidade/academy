@@ -202,12 +202,25 @@
           email: d.email || "",
           nome: d.nome || "",
           papel: d.papel === "admin" ? "admin" : "equipe",
-          /* Departamentos de que a pessoa cuida. Lista VAZIA quer
-             dizer "cuida de todos" — é o que mantém funcionando
-             quem já estava cadastrado antes desta ideia existir, e
-             é também o padrão certo para um escritório pequeno,
-             onde a mesma pessoa costuma cobrir tudo. */
-          departamentos: (Array.isArray(d.departamentos) ? d.departamentos : [])
+          /* A ÁREA DA EMPRESA onde a pessoa trabalha (Financeiro,
+             Diretoria…). Não filtra nada e não dá poder nenhum: é
+             identificação, e só aparece na tela de Usuários. */
+          departamento: String(d.departamento || "").slice(0, 40),
+
+          /* OS SETORES QUE ELA CONFERE — grupos do checklist. É o
+             que recorta o Início e as Pendências. Lista VAZIA quer
+             dizer "cuida de todos": é o que mantém funcionando quem
+             já estava cadastrado antes desta ideia existir, e é o
+             padrão certo para um escritório pequeno, onde a mesma
+             pessoa costuma cobrir tudo.
+
+             O `departamentos` antigo entra como reserva de leitura:
+             o campo mudou de nome em 11/09/2026, quando
+             "departamento" passou a significar a área da empresa, e
+             quem foi cadastrado antes disso ainda tem o nome velho
+             gravado. */
+          setores: (Array.isArray(d.setores) ? d.setores
+                   : (Array.isArray(d.departamentos) ? d.departamentos : []))
             .filter(function (x) { return typeof x === "string" && x; })
             .slice(0, 20),
           /* Quais tutoriais esta pessoa já viu. Fica no servidor,

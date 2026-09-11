@@ -795,6 +795,26 @@ service cloud.firestore {
                         && blocoIntacto('termo') && blocoIntacto('org'));
     }
 
+    // ---------- Configuração da equipe ----------
+    //
+    // Hoje guarda um documento só: `departamentos`, a lista de
+    // áreas da empresa (Financeiro, Comercial, Diretoria…) que o
+    // cadastro de membro oferece.
+    //
+    // POR QUE NÃO FICA EM /conteudo, que seria o lugar óbvio: lá a
+    // leitura é pública e a escrita é da equipe inteira. Isto não
+    // precisa ser público — é organização interna — e o Raoni pediu
+    // que só o administrador pudesse mexer. Uma regra mais estrita
+    // DENTRO de /conteudo não resolveria: no Firestore as regras se
+    // somam, então a permissiva de lá continuaria valendo.
+    //
+    // Não confundir com os SETORES que cada pessoa confere, que são
+    // os grupos do checklist e vivem em /usuarios/{uid}.setores.
+    match /configuracoes/{doc} {
+      allow read: if ehEquipe();
+      allow write: if ehAdmin();
+    }
+
     // ---------- Equipe ----------
     //
     // O PRIMEIRO documento aqui é criado à mão pelo console.

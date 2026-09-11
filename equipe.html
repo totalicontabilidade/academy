@@ -407,6 +407,11 @@
       </div>
       <button type="button" class="btn btn--quiet btn--sm" id="pdAtualizar">Atualizar</button></div>
 
+      <!-- O seletor de setor vem ANTES dos filtros de situação, e em
+           linha própria: ele decide QUAIS pendências existem, e os
+           de baixo só recortam essas. Misturados na mesma linha, os
+           cinco botões pareceriam cinco recortes irmãos. -->
+      <div class="filtros" id="pdSetor"></div>
       <div class="filtros" id="pdFiltros"></div>
       <div id="pdLista" style="margin-top:14px"></div>
     </section>
@@ -637,6 +642,11 @@
       </button></div>
 
       <div id="eqLista"></div>
+
+      <!-- A lista de departamentos da empresa. Fica depois da
+           equipe, e só o administrador a enxerga: é configuração,
+           não trabalho do dia. O JavaScript preenche e esconde. -->
+      <div id="eqAreas" hidden></div>
 
       <div class="notice notice--info" style="margin-top:14px">
         <span class="notice__icon">

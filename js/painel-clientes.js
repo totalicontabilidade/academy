@@ -634,7 +634,14 @@
       var est = estadoDoCliente(c);
       if (est.chave === "correcao") correcao++;
       else if (est.chave === "conferir") conferir++;
-      pendencias += global.Situacao.pendencias(c.dados, DATA.GRUPOS).length;
+      /* O selo do menu conta o que a aba REALMENTE vai mostrar —
+         ou seja, só os setores desta pessoa. Contando tudo, o menu
+         anunciaria 30 pendências e a aba abriria com 9, e o número
+         do menu viraria decoração. Aqui o recorte é sempre o do
+         setor, mesmo que a aba esteja com "Todos os departamentos"
+         ligado: o selo fala do trabalho de quem está olhando. */
+      pendencias += global.Situacao.pendencias(c.dados, DATA.GRUPOS)
+        .filter(function (p) { return global.Departamentos.cuida(equipe, p.grupo.id); }).length;
       naoLidas += naoLidasDe(c);
     });
 
@@ -688,9 +695,34 @@
   var abertosPend = {};     /* empresas abertas   */
   var fechadosSetor = {};   /* setores fechados   */
 
+  /* ---------- O setor também recorta as Pendências ----------
+
+     Antes só a tela de Início filtrava por setor, e o resultado era
+     incoerente: a mesma pessoa via "3 documentos a conferir" no
+     Início e uma lista de Pendências com os documentos de todo
+     mundo. Foi o Raoni quem apontou, em 11/09/2026 — as duas telas
+     falam da mesma fila e precisam concordar.
+
+     O filtro continua sendo AVISO, não permissão: o botão "Todos
+     os departamentos" desliga em um clique, para quem cobre o
+     colega. E quem não tem setor definido cuida de tudo, então nem
+     vê o seletor. */
+  var soMeuSetorPend = true;
+
+  function daMinhaAreaPend(grupoId) {
+    if (!soMeuSetorPend) return true;
+    return global.Departamentos.cuida(equipe, grupoId);
+  }
+
+  function temSetorPend() {
+    return !global.Departamentos.veTudo(equipe);
+  }
+
   function pendenciasPorEmpresa() {
     return empresas.filter(function (c) { return !arquivada(c); }).map(function (c) {
-      var lista = global.Situacao.pendencias(c.dados, DATA.GRUPOS);
+      var lista = global.Situacao.pendencias(c.dados, DATA.GRUPOS).filter(function (p) {
+        return daMinhaAreaPend(p.grupo.id);
+      });
       if (filtroPendencia === "correcao") {
         lista = lista.filter(function (p) { return p.sit === "pendencia"; });
       } else if (filtroPendencia === "faltando") {
@@ -719,12 +751,33 @@
     }
 
     var grupos = pendenciasPorEmpresa();
+    /* Os contadores contam o MESMO recorte da lista. Somando tudo,
+       eles anunciariam pendências que a lista abaixo não mostra. */
     var totalCorrecao = 0, totalFaltando = 0;
     empresas.forEach(function (c) {
+      if (arquivada(c)) return;
       global.Situacao.pendencias(c.dados, DATA.GRUPOS).forEach(function (p) {
+        if (!daMinhaAreaPend(p.grupo.id)) return;
         if (p.sit === "pendencia") totalCorrecao++; else totalFaltando++;
       });
     });
+
+    /* O seletor de setor, igual ao do Início. Só existe para quem
+       tem setor: para quem cuida de tudo seria um botão inerte. */
+    var setor = $("#pdSetor");
+    if (setor) {
+      if (!temSetorPend()) setor.innerHTML = "";
+      else {
+        setor.innerHTML = '<button type="button" class="filtro' +
+            (soMeuSetorPend ? " filtro--on" : "") + '" id="pdSoMeu">' +
+            U.esc(global.Departamentos.nomesDos(global.Departamentos.meus(equipe))) + '</button>' +
+          '<button type="button" class="filtro' + (soMeuSetorPend ? "" : " filtro--on") +
+            '" id="pdTudo">Todos os departamentos</button>';
+        var s1 = $("#pdSoMeu"), s2 = $("#pdTudo");
+        if (s1) s1.addEventListener("click", function () { soMeuSetorPend = true; desenharPendencias(); });
+        if (s2) s2.addEventListener("click", function () { soMeuSetorPend = false; desenharPendencias(); });
+      }
+    }
 
     var filtros = $("#pdFiltros");
     if (filtros) {

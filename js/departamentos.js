@@ -44,8 +44,20 @@
     });
   }
 
+  /* OS SETORES QUE A PESSOA CONFERE.
+
+     O campo passou a se chamar `setores` em 11/09/2026. Antes era
+     `departamentos`, e o nome ficou errado no dia em que
+     "departamento" passou a significar outra coisa — a área da
+     empresa onde a pessoa trabalha (ver `AREAS` mais abaixo). Dois
+     conceitos com nomes quase iguais é armadilha para quem for
+     mexer aqui depois.
+
+     A leitura aceita o nome velho para quem já estava cadastrado;
+     a gravação usa só o novo. */
   function meus(equipe) {
     if (!equipe) return [];
+    if (Array.isArray(equipe.setores)) return equipe.setores;
     return Array.isArray(equipe.departamentos) ? equipe.departamentos : [];
   }
 
@@ -78,9 +90,92 @@
     return (ids || []).map(tituloDe).join(", ");
   }
 
+  /* ============================================================
+     A ÁREA DA EMPRESA ONDE A PESSOA TRABALHA
+
+     Isto é OUTRA COISA dos setores acima, e vale insistir porque
+     os nomes se parecem:
+
+       setores que confere  → grupos de DOCUMENTO (Societário,
+                              Fiscal…). Filtram a fila do Início.
+       departamento         → área da EMPRESA (Financeiro,
+                              Diretoria…). Não filtra nada; diz
+                              onde a pessoa trabalha.
+
+     Foram separados a pedido do Raoni em 11/09/2026. Numa lista
+     só, quem fosse marcado apenas como "Comercial" não casaria
+     com nenhum grupo de documento e abriria o painel com a tela
+     de Início VAZIA, sem entender o motivo.
+
+     A LISTA MORA NO SERVIDOR, e não aqui. Escrita no código, ela
+     exigiria uma publicação no dia em que entrasse "Marketing" —
+     contra a regra de que tudo se altera pelo painel. Quem edita
+     é o administrador, pela tela de Usuários.
+
+     O padrão abaixo só vale enquanto o documento não existir: é o
+     que evita a tela nascer sem opção nenhuma.
+     ============================================================ */
+  var AREAS_PADRAO = ["Financeiro", "Comercial", "Diretoria", "Gerência", "TI"];
+  var areasCache = null;
+
+  function limparAreas(lista) {
+    if (!Array.isArray(lista)) return [];
+    var vistos = {};
+    return lista.map(function (a) { return String(a || "").trim().slice(0, 40); })
+      .filter(function (a) {
+        if (!a) return false;
+        var k = a.toLowerCase();
+        if (vistos[k]) return false;      /* sem repetir, ignorando maiúsculas */
+        vistos[k] = 1;
+        return true;
+      })
+      .slice(0, 30);
+  }
+
+  /* O que a tela deve mostrar agora. Nunca devolve vazio: sem
+     opção nenhuma, o campo viraria um selo morto no formulário. */
+  function areas() {
+    return (areasCache && areasCache.length) ? areasCache.slice() : AREAS_PADRAO.slice();
+  }
+
+  function carregarAreas() {
+    var FB = global.FB;
+    if (!FB || !FB.ligado || !FB.db) return Promise.resolve(areas());
+    return FB.db.collection("configuracoes").doc("departamentos").get()
+      .then(function (d) {
+        var lista = d.exists ? limparAreas((d.data() || {}).lista) : [];
+        areasCache = lista.length ? lista : null;
+        return areas();
+      }, function () { return areas(); });
+  }
+
+  function salvarAreas(lista) {
+    var FB = global.FB;
+    if (!FB || !FB.ligado || !FB.db) return Promise.reject(new Error("sem-conexao"));
+    var limpa = limparAreas(lista);
+    if (!limpa.length) return Promise.reject(new Error("lista-vazia"));
+    return FB.db.collection("configuracoes").doc("departamentos").set({
+      lista: limpa,
+      atualizadoEm: Date.now(),
+      atualizadoPor: (FB.equipe && (FB.equipe.nome || FB.equipe.email)) || "equipe"
+    }).then(function () { areasCache = limpa; return areas(); });
+  }
+
+  /* A área de uma pessoa. Some da tela quando ela sai da lista —
+     em vez de mostrar um setor que já não existe. */
+  function areaDe(equipe) {
+    var a = String((equipe && equipe.departamento) || "").trim();
+    return a && areas().indexOf(a) > -1 ? a : "";
+  }
+
   global.Departamentos = {
     todos: todos,
     meus: meus,
+    areas: areas,
+    areasPadrao: function () { return AREAS_PADRAO.slice(); },
+    carregarAreas: carregarAreas,
+    salvarAreas: salvarAreas,
+    areaDe: areaDe,
     veTudo: veTudo,
     cuida: cuida,
     cuidaDaChave: cuidaDaChave,

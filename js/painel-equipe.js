@@ -94,7 +94,14 @@
           nome: m.nome || "",
           email: m.email || "",
           papel: m.papel === "admin" ? "admin" : "equipe",
-          departamentos: Array.isArray(m.departamentos) ? m.departamentos : []
+          /* `departamento` é a área da empresa; `setores` são os
+             grupos de documento que a pessoa confere. Nomes
+             parecidos, coisas diferentes — ver departamentos.js.
+             O `departamentos` antigo é lido como reserva, para
+             quem foi cadastrado antes de 11/09/2026. */
+          departamento: String(m.departamento || ""),
+          setores: Array.isArray(m.setores) ? m.setores
+                 : (Array.isArray(m.departamentos) ? m.departamentos : [])
         });
       });
       membros.sort(function (a, b) {
@@ -147,8 +154,95 @@
     '</div>';
   }
 
+  /* ---------- Os departamentos da empresa ----------
+
+     Lista simples de texto: Financeiro, Comercial, Diretoria… É o
+     que o campo "Departamento" do cadastro oferece.
+
+     SÓ ADMINISTRADOR VÊ E MEXE, a pedido do Raoni. A tela esconde
+     para quem não é, e a regra do servidor recusa a gravação — a
+     tela é conveniência, a barreira é a regra
+     (`/configuracoes/{doc}`: leitura da equipe, escrita do admin).
+
+     Mora no servidor e não no código porque ela muda: no dia em
+     que entrar "Marketing", o administrador acrescenta sozinho,
+     sem publicação. */
+  function desenharAreas() {
+    var caixa = $("#eqAreas");
+    if (!caixa) return;
+    caixa.hidden = !souAdmin();
+    if (!souAdmin()) { caixa.innerHTML = ""; return; }
+
+    var lista = global.Departamentos.areas();
+    caixa.innerHTML = '<div class="card card--pad" style="margin-top:12px">' +
+      '<div class="eyebrow">Configuração</div>' +
+      '<div class="item__name" style="margin-top:6px">Departamentos da empresa</div>' +
+      '<p class="text-sm text-muted" style="margin:6px 0 12px">' +
+        'As opções que aparecem no cadastro de cada membro. Não mudam o que ninguém vê nem ' +
+        'pode fazer — servem para saber onde a pessoa trabalha.</p>' +
+      '<div class="deptos" id="eqAreasLista">' +
+        lista.map(function (a, i) {
+          return '<span class="depto" style="gap:8px">' +
+            '<span class="depto__txt">' + U.esc(a) + '</span>' +
+            '<button type="button" class="btn btn--quiet btn--sm" data-tirar-area="' + i +
+              '" aria-label="Tirar ' + U.escAttr(a) + '">Tirar</button>' +
+          '</span>';
+        }).join("") +
+      '</div>' +
+      '<div class="item__actions" style="margin-top:12px">' +
+        '<input class="input" id="eqAreaNova" maxlength="40" placeholder="Novo departamento" ' +
+          'style="max-width:260px">' +
+        '<button type="button" class="btn btn--quiet btn--sm" id="eqAreaAdd">Acrescentar</button>' +
+      '</div>' +
+      '<div class="field__hint" style="margin-top:8px">Tirar um departamento não mexe em quem ' +
+        'já está marcado com ele — só deixa de ser oferecido em cadastros novos.</div>' +
+    '</div>';
+
+    var campo = $("#eqAreaNova");
+    var acrescentar = function () {
+      var novo = (campo.value || "").trim();
+      if (!novo) { campo.focus(); return; }
+      var atual = global.Departamentos.areas();
+      if (atual.some(function (a) { return a.toLowerCase() === novo.toLowerCase(); })) {
+        UI.toast("Esse departamento já está na lista.", "erro");
+        campo.focus();
+        return;
+      }
+      gravarAreas(atual.concat([novo]));
+    };
+    var botao = $("#eqAreaAdd");
+    if (botao) botao.addEventListener("click", acrescentar);
+    if (campo) campo.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); acrescentar(); }
+    });
+
+    $$("[data-tirar-area]", caixa).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var i = Number(b.getAttribute("data-tirar-area"));
+        var atual = global.Departamentos.areas();
+        if (atual.length <= 1) {
+          UI.toast("A lista não pode ficar vazia — o cadastro precisa de ao menos uma opção.",
+                   "erro", 8000);
+          return;
+        }
+        var fora = atual.filter(function (_, k) { return k !== i; });
+        gravarAreas(fora);
+      });
+    });
+  }
+
+  function gravarAreas(lista) {
+    global.Departamentos.salvarAreas(lista).then(function () {
+      desenharAreas();
+      UI.toast("Departamentos atualizados.", "ok");
+    }, function (e) {
+      UI.toast("Não foi possível salvar: " + FB.explicar(e), "erro", 9000);
+    });
+  }
+
   /* ---------- Tela ---------- */
   function desenhar() {
+    desenharAreas();
     var caixa = $("#eqLista");
     if (!caixa) return;
 
@@ -198,10 +292,15 @@
               /* O setor fica na linha de baixo, junto do papel: é a
                  segunda coisa que se quer saber ao olhar a lista. */
               '<div class="item__row">' +
+                (m.departamento
+                  ? '<span class="text-xs" style="font-weight:600">' +
+                      U.esc(m.departamento) + '</span>' +
+                    '<span class="text-xs text-muted">/</span>'
+                  : '') +
                 '<span class="text-xs" style="color:var(--gold-2);font-weight:600">' +
-                  (m.departamentos.length
-                    ? U.esc(global.Departamentos.nomesDos(m.departamentos))
-                    : "Todos os departamentos") + '</span>' +
+                  (m.setores.length
+                    ? U.esc(global.Departamentos.nomesDos(m.setores))
+                    : "Confere todos os setores") + '</span>' +
               '</div>'
             : '') +
           /* Sem poder de mexer, a linha é só informação: nome,
@@ -210,7 +309,7 @@
           (podeMexer
             ? '<div class="item__actions">' +
                 '<button type="button" class="btn btn--quiet btn--sm" data-deptos="' +
-                  U.escAttr(m.uid) + '">Departamentos</button>' +
+                  U.escAttr(m.uid) + '">Setores</button>' +
                 (euMesmo
                   ? '<span class="text-xs text-muted">Você não pode alterar o próprio papel — ' +
                     'é o que impede o painel de ficar sem administrador.</span>'
@@ -269,8 +368,30 @@
           '<option value="admin">Administrador — tudo isso, mais gerenciar a equipe, excluir ' +
             'cliente e apagar qualquer mensagem</option>' +
         '</select></div>' +
+      /* DOIS CAMPOS, E NÃO UM, porque são duas perguntas
+         diferentes sobre a mesma pessoa:
+
+           Departamento        onde ela trabalha (Financeiro,
+                               Diretoria…). Não filtra nada.
+           Setores que confere quais documentos ela confere. Recorta
+                               o Início e as Pendências.
+
+         Antes existia um campo só, chamado "Departamentos", que na
+         verdade continha grupos de documento. Juntar as áreas da
+         empresa ali faria quem fosse só "Comercial" não casar com
+         nenhum grupo e abrir o painel vazio. */
       '<div class="field">' +
-        '<span class="field__label">Departamentos</span>' +
+        '<span class="field__label">Departamento</span>' +
+        '<select class="select" id="mbArea">' +
+          '<option value="">Não informado</option>' +
+          global.Departamentos.areas().map(function (a) {
+            return '<option value="' + U.escAttr(a) + '">' + U.esc(a) + '</option>';
+          }).join("") +
+        '</select>' +
+        '<div class="field__hint">Onde a pessoa trabalha. Não muda o que ela vê nem o que ' +
+          'pode fazer.</div></div>' +
+      '<div class="field">' +
+        '<span class="field__label">Setores que confere</span>' +
         '<div class="deptos">' +
           global.Departamentos.todos().map(function (g) {
             return '<label class="depto">' +
@@ -279,8 +400,9 @@
             '</label>';
           }).join("") +
         '</div>' +
-        '<div class="field__hint">A tela de início mostra primeiro o que é destes setores. ' +
-          'Nenhum marcado = cuida de todos.</div></div>';
+        '<div class="field__hint">O Início e as Pendências mostram primeiro o que é destes ' +
+          'setores. Nenhum marcado = cuida de todos. Continua podendo conferir documento de ' +
+          'qualquer setor.</div></div>';
   }
 
   function abrirFormulario() {
@@ -336,6 +458,7 @@
     var email = $("#mbEmail", m.caixa).value.trim();
     var senha = $("#mbSenha", m.caixa).value;
     var papel = $("#mbPapel", m.caixa).value === "admin" ? "admin" : "equipe";
+    var area = ($("#mbArea", m.caixa) || {}).value || "";
     var deptos = [];
     UI.$$("[data-depto]", m.caixa).forEach(function (c) {
       if (c.checked) deptos.push(c.getAttribute("data-depto"));
@@ -372,7 +495,7 @@
     ocupar(m, true);
 
     comLimite(FB.criarContaEquipe(email, senha), m).then(function (uid) {
-      gravarMembro(uid, nome, email, papel, deptos, m);
+      gravarMembro(uid, nome, email, papel, area, deptos, m);
     }, function (e) {
       ocupar(m, false);
       var msg = FB.explicar(e);
@@ -380,7 +503,7 @@
     });
   }
 
-  function gravarMembro(uid, nome, email, papel, deptos, m) {
+  function gravarMembro(uid, nome, email, papel, area, deptos, m) {
     if (membros.some(function (x) { return x.uid === uid; })) {
       UI.toast(FB.explicar(new Error("ja-e-membro")), "erro");
       return;
@@ -388,7 +511,8 @@
     ocupar(m, true, "Gravando…");
 
     comLimite(FB.db.collection("usuarios").doc(uid).set(assinado({
-      nome: nome, email: email, papel: papel, departamentos: deptos || []
+      nome: nome, email: email, papel: papel,
+      departamento: area || "", setores: deptos || []
     })), m).then(function () {
       UI.fecharModal();
       UI.toast(nome + " agora tem acesso ao painel.", "ok", 7000);
@@ -416,14 +540,14 @@
 
     var lista = global.Departamentos.todos();
     var m = UI.modal({
-      titulo: "Departamentos de " + (alvo.nome || alvo.email),
+      titulo: "Setores que " + (alvo.nome || alvo.email) + " confere",
       corpoHTML:
         '<p style="font-size:13.5px;line-height:1.65;color:var(--txt-2);margin-bottom:14px">' +
-          'A tela de início mostra primeiro o que é dos setores marcados. Mexer em documento ' +
-          'de outro setor continua permitido — só aparece um aviso antes.</p>' +
+          'O Início e as Pendências mostram só o que é dos setores marcados. Conferir documento ' +
+          'de outro setor continua permitido: isto é recorte de tela, não permissão.</p>' +
         '<div class="deptos">' +
           lista.map(function (g) {
-            var ligado = alvo.departamentos.indexOf(g.id) > -1;
+            var ligado = alvo.setores.indexOf(g.id) > -1;
             return '<label class="depto' + (ligado ? " depto--on" : "") + '">' +
               '<input type="checkbox" data-depto="' + U.escAttr(g.id) + '"' +
                 (ligado ? " checked" : "") + '>' +
@@ -431,8 +555,8 @@
             '</label>';
           }).join("") +
         '</div>' +
-        '<p class="text-xs text-muted" style="margin-top:12px">Nenhum marcado = cuida de todos ' +
-          'os departamentos.</p>',
+        '<p class="text-xs text-muted" style="margin-top:12px">Nenhum marcado = confere todos ' +
+          'os setores.</p>',
       acoes: [
         { rotulo: "Cancelar", classe: "btn--ghost" },
         {
@@ -459,10 +583,14 @@
 
   function salvarDepartamentos(alvo, escolhidos, m) {
     ocupar(m, true, "Salvando…");
-    comLimite(FB.db.collection("usuarios").doc(alvo.uid).set({
+    /* `departamento` vai junto porque este `set` grava o documento
+       inteiro: sem ele, mexer nos setores apagaria a area da pessoa.
+       E `assinado` entrou junto — sem assinatura, a trilha registra
+       a mudanca sem dizer quem a fez. */
+    comLimite(FB.db.collection("usuarios").doc(alvo.uid).set(assinado({
       nome: alvo.nome, email: alvo.email, papel: alvo.papel,
-      departamentos: escolhidos
-    }), m).then(function () {
+      departamento: alvo.departamento || "", setores: escolhidos
+    })), m).then(function () {
       UI.fecharModal();
       UI.toast(escolhidos.length
         ? (alvo.nome || alvo.email) + " agora cuida de " +
@@ -472,7 +600,7 @@
       /* Mudou o próprio setor: a tela de início precisa refazer a
          conta na hora, senão continua mostrando a fila antiga. */
       if (equipe && alvo.uid === equipe.uid) {
-        equipe.departamentos = escolhidos;
+        equipe.setores = escolhidos;
         if (global.PainelInicio) global.PainelInicio.redesenhar();
       }
     }, function (e) {
@@ -497,12 +625,12 @@
       confirmar: "Confirmar"
     }).then(function (ok) {
       if (!ok) return;
-      /* `departamentos` vai junto de propósito: este `set` grava o
-         documento inteiro, e sem repetir o campo a troca de papel
-         apagaria os setores da pessoa sem ninguém notar. */
+      /* Os dois campos vão junto de propósito: este `set` grava o
+         documento inteiro, e sem repeti-los a troca de papel
+         apagaria o departamento e os setores sem ninguém notar. */
       FB.db.collection("usuarios").doc(uid).set(assinado({
         nome: alvo.nome, email: alvo.email, papel: novo,
-        departamentos: alvo.departamentos || []
+        departamento: alvo.departamento || "", setores: alvo.setores || []
       })).then(function () {
         UI.toast("Papel alterado.", "ok");
         carregar();
@@ -780,8 +908,13 @@
     ligar();
     FB.observarSessao(function (quem) {
       equipe = quem;
-      if (quem) carregar();
-      else { membros = []; desenhar(); }
+      if (!quem) { membros = []; desenhar(); return; }
+      /* A lista de departamentos vem antes da lista de membros: o
+         formulário e a linha de cada pessoa usam os nomes dela, e
+         com o cache vazio o campo nasceria mostrando só o padrão.
+         Falhando a leitura, `carregarAreas` devolve o padrão em vez
+         de rejeitar — a tela nunca fica sem opção. */
+      global.Departamentos.carregarAreas().then(carregar, carregar);
     });
   }
 
