@@ -661,10 +661,17 @@
       departamento: area || "", setores: escolhidos, semSetores: !!semSetores
     })), m).then(function () {
       UI.fecharModal();
-      UI.toast(escolhidos.length
-        ? (alvo.nome || alvo.email) + " agora cuida de " +
-          global.Departamentos.nomesDos(escolhidos) + "."
-        : (alvo.nome || alvo.email) + " passa a cuidar de todos os departamentos.", "ok", 7000);
+      /* Os TRÊS estados têm de ter as três frases. Sem o primeiro
+         caso, quem marcasse "não confere nenhum" lia "passa a
+         cuidar de todos os departamentos" — o oposto exato do que
+         tinha acabado de fazer. */
+      var quem = alvo.nome || alvo.email;
+      UI.toast(
+        semSetores ? quem + " não confere mais nenhum setor."
+        : escolhidos.length
+          ? quem + " agora confere " + global.Departamentos.nomesDos(escolhidos) + "."
+          : quem + " passa a conferir todos os setores.",
+        "ok", 7000);
       carregar();
       /* Mudou o próprio setor: a tela de início precisa refazer a
          conta na hora, senão continua mostrando a fila antiga. */
