@@ -138,9 +138,10 @@
         linhas.push({
           peso: PESO.naoLida, em: (maisAntiga && maisAntiga.em) || 0,
           cliente: c, icone: "ic-chat", acao: "conversa",
+          empresa: nome,
           titulo: naoLidas.length === 1
-            ? "Mensagem nova de " + nome
-            : naoLidas.length + " mensagens novas de " + nome,
+            ? "Mensagem nova"
+            : naoLidas.length + " mensagens novas",
           detalhe: String((maisAntiga && maisAntiga.texto) || "").slice(0, 110),
           selo: "Responder", seloCls: "badge--pendencia"
         });
@@ -165,9 +166,10 @@
         linhas.push({
           peso: PESO.conferir, em: maisVelho,
           cliente: c, icone: "ic-check-circle", acao: "ficha",
+          empresa: nome,
           titulo: fila.length === 1
-            ? "1 documento de " + nome + " esperando conferência"
-            : fila.length + " documentos de " + nome + " esperando conferência",
+            ? "1 documento esperando conferência"
+            : fila.length + " documentos esperando conferência",
           detalhe: fila.slice(0, 3).map(function (x) { return x.item.nome; }).join(" · ") +
                    (fila.length > 3 ? " · e mais " + (fila.length - 3) : ""),
           selo: "Conferir", seloCls: diasDe(maisVelho) >= 3 ? "badge--pendencia" : "badge--analise"
@@ -195,9 +197,10 @@
         linhas.push({
           peso: PESO.conferir, em: maisAntiga,
           cliente: c, icone: "ic-chat", acao: "ficha",
+          empresa: nome,
           titulo: respondidos.length === 1
-            ? nome + " respondeu sobre um documento"
-            : nome + " respondeu sobre " + respondidos.length + " documentos",
+            ? "Respondeu sobre um documento"
+            : "Respondeu sobre " + respondidos.length + " documentos",
           detalhe: respondidos.slice(0, 2).map(function (x) {
             return x.item.nome + ": " + String(x.reg.obs || "").slice(0, 60);
           }).join(" · "),
@@ -218,9 +221,10 @@
         linhas.push({
           peso: PESO.aResolver, em: (velha && velha.em) || 0,
           cliente: c, icone: "ic-chat", acao: "conversa",
+          empresa: nome,
           titulo: aResolver.length === 1
-            ? "Pedido de " + nome + " sem providência"
-            : aResolver.length + " pedidos de " + nome + " sem providência",
+            ? "Pedido sem providência"
+            : aResolver.length + " pedidos sem providência",
           detalhe: String((velha && velha.texto) || "").slice(0, 110),
           selo: "Resolver", seloCls: "badge--analise"
         });
@@ -235,7 +239,12 @@
         linhas.push({
           peso: PESO.parado, em: Date.now() - parado * DIA,
           cliente: c, icone: "ic-clock", acao: "ficha",
-          titulo: nome + " parado " + faz(Date.now() - parado * DIA),
+          empresa: nome,
+          /* Só "Parado": o quando vem logo abaixo, na linha de tempo
+             que toda tarefa tem. Escrito aqui também, a linha dizia
+             "Parado há uma semana" e repetia "há uma semana" três
+             pixels abaixo. */
+          titulo: "Parado",
           detalhe: est.resumo.pendentesObrigatorios + " " +
             U.plural(est.resumo.pendentesObrigatorios,
                      "documento obrigatório ainda falta", "documentos obrigatórios ainda faltam"),
@@ -254,7 +263,8 @@
           linhas.push({
             peso: PESO.convite, em: maisAntigoConvite,
             cliente: c, icone: "ic-mail", acao: "ficha",
-            titulo: nome + " ainda não entrou no portal",
+            empresa: nome,
+            titulo: "Ainda não entrou no portal",
             detalhe: "O convite foi gerado " + faz(maisAntigoConvite) +
                      " e ninguém abriu. Vale reenviar o link.",
             selo: "Reenviar", seloCls: "badge--pendente"
@@ -576,7 +586,22 @@
             '" data-alvo="' + U.escAttr(l.cliente.id) + '">' +
           '<span class="tarefa__icone">' + ic(l.icone) + '</span>' +
           '<span class="tarefa__txt">' +
-            '<span class="tarefa__t">' + U.esc(l.titulo) + '</span>' +
+            /* EMPRESA E AVISO SÃO DUAS COISAS, E PRECISAM PARECER DUAS.
+
+               Antes o nome da empresa era concatenado dentro da frase
+               — "META ACESSORIOS E FERRAGENS LTDA parado há uma
+               semana" — e, com tudo no mesmo peso e na mesma cor, o
+               aviso era lido como continuação do nome. Em nome longo e
+               em maiúsculas, que é a regra aqui, ficava impossível ver
+               onde um termina e o outro começa.
+
+               Agora o nome vem no peso forte, o aviso em seguida mais
+               claro, com um ponto no meio. Quem bate o olho lê primeiro
+               DE QUEM é, depois O QUE é. */
+            '<span class="tarefa__t">' +
+              (l.empresa ? '<span class="tarefa__emp">' + U.esc(l.empresa) + '</span>' : '') +
+              '<span class="tarefa__aviso">' + U.esc(l.titulo) + '</span>' +
+            '</span>' +
             '<span class="tarefa__d">' + U.esc(l.detalhe) + '</span>' +
             (l.em ? '<span class="tarefa__q">' + U.esc(faz(l.em)) + '</span>' : '') +
           '</span>' +

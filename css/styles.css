@@ -3092,6 +3092,26 @@ details.rec:not([open]) > .rec__body{display:none}
 .tarefa__t{
   display:block;font-size:14px;font-weight:640;color:var(--txt);line-height:1.35;
 }
+
+/* O NOME DA EMPRESA E O AVISO, SEPARADOS.
+
+   Os dois moram na mesma linha, mas não podem ter o mesmo peso: com
+   nome longo e em maiúsculas — que é como os nomes chegam aqui — o
+   aviso colado atrás era lido como parte do nome ("META ACESSORIOS E
+   FERRAGENS LTDA parado há uma semana").
+
+   O nome fica no peso forte; o aviso vem depois, mais claro e um
+   pouco mais leve, precedido de um ponto que o `::before` desenha.
+   O ponto sai quando o aviso é o primeiro filho, para o caso de uma
+   linha sem empresa. */
+.tarefa__emp{font-weight:680;color:var(--txt)}
+.tarefa__aviso{font-weight:520;color:var(--txt-2)}
+.tarefa__emp + .tarefa__aviso::before{
+  content:"·";
+  margin:0 7px;
+  color:var(--txt-4);
+  font-weight:400;
+}
 .tarefa__d{
   display:block;font-size:12.5px;color:var(--txt-3);line-height:1.45;margin-top:3px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
