@@ -59,6 +59,48 @@
     return !!(equipe && equipe.papel === "admin");
   }
 
+  /* NÃO CONFERE NENHUM SETOR — o terceiro estado.
+
+     Lista vazia sempre quis dizer "confere todos", e continua
+     querendo: inverter isso esvaziaria o painel de quem está
+     cadastrado sem setor. Para dizer "nenhum" era preciso uma
+     marca própria, e é esta — pedido do Raoni em 11/09/2026, para
+     quem trabalha no Comercial ou na Diretoria e não confere
+     documento.
+
+     Vem depois das caixinhas de propósito: é a exceção, e lida
+     como tal. Marcada, ela apaga e desliga as caixinhas — deixá-las
+     marcadas ao lado de "não confere nenhum" seria a tela dizendo
+     duas coisas ao mesmo tempo. */
+  function semSetoresHTML(marcado) {
+    return '<label class="depto' + (marcado ? " depto--on" : "") +
+        '" style="margin-top:8px">' +
+      '<input type="checkbox" id="mbSemSetores"' + (marcado ? " checked" : "") + '>' +
+      '<span class="depto__txt">Não confere nenhum setor</span>' +
+    '</label>';
+  }
+
+  /* Liga a exceção às caixinhas, nos dois formulários. */
+  function ligarSemSetores(raiz) {
+    var marca = $("#mbSemSetores", raiz);
+    if (!marca) return;
+    var aplicar = function () {
+      UI.$$("[data-depto]", raiz).forEach(function (c) {
+        c.disabled = marca.checked;
+        if (marca.checked) c.checked = false;
+        var caixa = c.closest(".depto");
+        if (caixa) {
+          caixa.classList.toggle("depto--on", c.checked);
+          caixa.style.opacity = marca.checked ? ".45" : "";
+        }
+      });
+      var minha = marca.closest(".depto");
+      if (minha) minha.classList.toggle("depto--on", marca.checked);
+    };
+    marca.addEventListener("change", aplicar);
+    aplicar();
+  }
+
   /* QUEM FEZ A MUDANÇA, carimbado na própria gravação.
 
      A trilha de /auditoria é escrita por uma função que observa o
@@ -101,7 +143,8 @@
              quem foi cadastrado antes de 11/09/2026. */
           departamento: String(m.departamento || ""),
           setores: Array.isArray(m.setores) ? m.setores
-                 : (Array.isArray(m.departamentos) ? m.departamentos : [])
+                 : (Array.isArray(m.departamentos) ? m.departamentos : []),
+          semSetores: m.semSetores === true
         });
       });
       membros.sort(function (a, b) {
@@ -298,9 +341,11 @@
                     '<span class="text-xs text-muted">/</span>'
                   : '') +
                 '<span class="text-xs" style="color:var(--gold-2);font-weight:600">' +
-                  (m.setores.length
-                    ? U.esc(global.Departamentos.nomesDos(m.setores))
-                    : "Confere todos os setores") + '</span>' +
+                  (m.semSetores
+                    ? "Não confere nenhum setor"
+                    : (m.setores.length
+                        ? U.esc(global.Departamentos.nomesDos(m.setores))
+                        : "Confere todos os setores")) + '</span>' +
               '</div>'
             : '') +
           /* Sem poder de mexer, a linha é só informação: nome,
@@ -400,8 +445,9 @@
             '</label>';
           }).join("") +
         '</div>' +
+        semSetoresHTML(false) +
         '<div class="field__hint">O Início e as Pendências mostram primeiro o que é destes ' +
-          'setores. Nenhum marcado = cuida de todos. Continua podendo conferir documento de ' +
+          'setores. Nenhum marcado = confere todos. Continua podendo conferir documento de ' +
           'qualquer setor.</div></div>';
   }
 
@@ -419,6 +465,7 @@
         }
       ]
     });
+    ligarSemSetores(m.caixa);
   }
 
   /* O botão nunca pode ficar preso em "Criando…".
@@ -459,6 +506,7 @@
     var senha = $("#mbSenha", m.caixa).value;
     var papel = $("#mbPapel", m.caixa).value === "admin" ? "admin" : "equipe";
     var area = ($("#mbArea", m.caixa) || {}).value || "";
+    var semSetores = !!($("#mbSemSetores", m.caixa) || {}).checked;
     var deptos = [];
     UI.$$("[data-depto]", m.caixa).forEach(function (c) {
       if (c.checked) deptos.push(c.getAttribute("data-depto"));
@@ -495,7 +543,7 @@
     ocupar(m, true);
 
     comLimite(FB.criarContaEquipe(email, senha), m).then(function (uid) {
-      gravarMembro(uid, nome, email, papel, area, deptos, m);
+      gravarMembro(uid, nome, email, papel, area, deptos, semSetores, m);
     }, function (e) {
       ocupar(m, false);
       var msg = FB.explicar(e);
@@ -503,7 +551,7 @@
     });
   }
 
-  function gravarMembro(uid, nome, email, papel, area, deptos, m) {
+  function gravarMembro(uid, nome, email, papel, area, deptos, semSetores, m) {
     if (membros.some(function (x) { return x.uid === uid; })) {
       UI.toast(FB.explicar(new Error("ja-e-membro")), "erro");
       return;
@@ -512,7 +560,7 @@
 
     comLimite(FB.db.collection("usuarios").doc(uid).set(assinado({
       nome: nome, email: email, papel: papel,
-      departamento: area || "", setores: deptos || []
+      departamento: area || "", setores: deptos || [], semSetores: !!semSetores
     })), m).then(function () {
       UI.fecharModal();
       UI.toast(nome + " agora tem acesso ao painel.", "ok", 7000);
@@ -572,6 +620,7 @@
             '</label>';
           }).join("") +
         '</div>' +
+        semSetoresHTML(!!alvo.semSetores) +
         '<p class="text-xs text-muted" style="margin-top:12px">Nenhum marcado = confere todos ' +
           'os setores.</p>',
       acoes: [
@@ -584,7 +633,8 @@
               if (c.checked) escolhidos.push(c.getAttribute("data-depto"));
             });
             var area = ($("#mbAreaEdit", m.caixa) || {}).value || "";
-            salvarDepartamentos(alvo, area, escolhidos, m);
+            var semSetores = !!($("#mbSemSetores", m.caixa) || {}).checked;
+            salvarDepartamentos(alvo, area, escolhidos, semSetores, m);
           }
         }
       ]
@@ -597,9 +647,10 @@
       if (!c) return;
       c.closest(".depto").classList.toggle("depto--on", c.checked);
     });
+    ligarSemSetores(m.caixa);
   }
 
-  function salvarDepartamentos(alvo, area, escolhidos, m) {
+  function salvarDepartamentos(alvo, area, escolhidos, semSetores, m) {
     ocupar(m, true, "Salvando…");
     /* `departamento` vai junto porque este `set` grava o documento
        inteiro: sem ele, mexer nos setores apagaria a area da pessoa.
@@ -607,7 +658,7 @@
        a mudanca sem dizer quem a fez. */
     comLimite(FB.db.collection("usuarios").doc(alvo.uid).set(assinado({
       nome: alvo.nome, email: alvo.email, papel: alvo.papel,
-      departamento: area || "", setores: escolhidos
+      departamento: area || "", setores: escolhidos, semSetores: !!semSetores
     })), m).then(function () {
       UI.fecharModal();
       UI.toast(escolhidos.length
@@ -619,7 +670,14 @@
          conta na hora, senão continua mostrando a fila antiga. */
       if (equipe && alvo.uid === equipe.uid) {
         equipe.setores = escolhidos;
+        equipe.semSetores = !!semSetores;
         if (global.PainelInicio) global.PainelInicio.redesenhar();
+        /* O Inicio ja se refazia; o selo do menu e as Pendencias
+           nao. Ficavam no numero velho ate alguem clicar em
+           Atualizar ou trocar de aba. */
+        if (global.PainelClientes && global.PainelClientes.refazerRecorte) {
+          global.PainelClientes.refazerRecorte();
+        }
       }
     }, function (e) {
       ocupar(m, false, "Salvar");
@@ -648,7 +706,8 @@
          apagaria o departamento e os setores sem ninguém notar. */
       FB.db.collection("usuarios").doc(uid).set(assinado({
         nome: alvo.nome, email: alvo.email, papel: novo,
-        departamento: alvo.departamento || "", setores: alvo.setores || []
+        departamento: alvo.departamento || "", setores: alvo.setores || [],
+        semSetores: !!alvo.semSetores
       })).then(function () {
         UI.toast("Papel alterado.", "ok");
         carregar();

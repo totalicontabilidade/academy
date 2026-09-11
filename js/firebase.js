@@ -223,6 +223,13 @@
                    : (Array.isArray(d.departamentos) ? d.departamentos : []))
             .filter(function (x) { return typeof x === "string" && x; })
             .slice(0, 20),
+
+          /* NÃO CONFERE SETOR NENHUM. Terceiro estado, e é preciso
+             porque lista vazia já queria dizer "confere todos" —
+             ver departamentos.js. Quem trabalha no Comercial ou na
+             Diretoria não confere documento, e antes não havia como
+             dizer isso. */
+          semSetores: d.semSetores === true,
           /* Quais tutoriais esta pessoa já viu. Fica no servidor,
              igual ao portal do cliente: quem já aprendeu não precisa
              rever a explicação ao trocar de computador. */

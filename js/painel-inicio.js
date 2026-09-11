@@ -235,7 +235,25 @@
             certo de estar quieto. */
       var est = PC.estadoDoCliente(c);
       var parado = PC.diasParado(c);
-      if (parado !== null && parado >= 7 && est.chave !== "emdia" && !fila.length) {
+
+      /* O QUE ESTE CLIENTE DEVE, DENTRO DO MEU SETOR.
+
+         Este aviso não passava pelo filtro, e isso o tornava
+         confuso: o Raoni marcou Societário e Documentos dos sócios,
+         trocou o filtro e a tela não mudou nada — porque todos os
+         avisos dele eram deste tipo. Um filtro que não filtra é
+         pior que filtro nenhum.
+
+         Cobrar um cliente é sobre o que ele DEVE. Se o que falta
+         não é de nenhum setor meu, não é minha cobrança — e o
+         número na linha de baixo tem de contar a mesma coisa,
+         senão a tarefa diz "9 documentos faltam" e eu abro a ficha
+         para achar dois. */
+      var obrigatoriosMeus = global.Situacao.pendencias(c.dados, global.DATA.GRUPOS)
+        .filter(function (p) { return p.item.obrigatorio && daMinhaArea(p.grupo.id); }).length;
+
+      if (parado !== null && parado >= 7 && est.chave !== "emdia" &&
+          !fila.length && obrigatoriosMeus > 0) {
         linhas.push({
           peso: PESO.parado, em: Date.now() - parado * DIA,
           cliente: c, icone: "ic-clock", acao: "ficha",
@@ -245,8 +263,8 @@
              "Parado há uma semana" e repetia "há uma semana" três
              pixels abaixo. */
           titulo: "Parado",
-          detalhe: est.resumo.pendentesObrigatorios + " " +
-            U.plural(est.resumo.pendentesObrigatorios,
+          detalhe: obrigatoriosMeus + " " +
+            U.plural(obrigatoriosMeus,
                      "documento obrigatório ainda falta", "documentos obrigatórios ainda faltam"),
           selo: "Cobrar", seloCls: "badge--pendente"
         });
@@ -516,9 +534,23 @@
       else {
         chave.innerHTML = '<button type="button" class="filtro' +
             (soMeuSetor ? " filtro--on" : "") + '" id="inSoMeu">' +
-            U.esc(global.Departamentos.nomesDos(global.Departamentos.meus(souDe()))) + '</button>' +
+            U.esc(global.Departamentos.rotuloDoRecorte(souDe())) + '</button>' +
           '<button type="button" class="filtro' + (soMeuSetor ? "" : " filtro--on") +
-            '" id="inTudo">Todos os departamentos</button>';
+            '" id="inTudo">Todos os departamentos</button>' +
+          /* O QUE O FILTRO NÃO ALCANÇA, DITO EM VOZ ALTA.
+
+             Mensagem e convite não pertencem a setor nenhum:
+             pergunta sem resposta é de quem estiver por perto, e
+             cliente que nunca abriu o portal não deve documento a
+             ninguém ainda. Eles aparecem para toda a equipe, de
+             propósito.
+
+             Sem esta linha, alguém marca os próprios setores, troca
+             o filtro, vê a tela inalterada e conclui que está
+             quebrado — foi o que aconteceu com o Raoni em
+             11/09/2026. Uma frase evita a dúvida inteira. */
+          '<span class="text-xs text-muted" style="flex-basis:100%;margin-top:6px">' +
+            'Mensagens e convites não pertencem a setor: aparecem para toda a equipe.</span>';
         var b1 = $("#inSoMeu"), b2 = $("#inTudo");
         if (b1) b1.addEventListener("click", function () { soMeuSetor = true; desenhar(); });
         if (b2) b2.addEventListener("click", function () { soMeuSetor = false; desenhar(); });
@@ -560,7 +592,7 @@
             ? 'Ainda não há cliente cadastrado. Comece por “Novo cliente”.'
             : (temSetor() && soMeuSetor)
               ? 'Nada esperando em ' +
-                U.esc(global.Departamentos.nomesDos(global.Departamentos.meus(souDe()))) +
+                U.esc(global.Departamentos.rotuloDoRecorte(souDe())) +
                 '. Toque em “Todos os departamentos” para ver o resto do escritório.'
               : 'Toda mensagem foi respondida, todo documento que chegou já foi conferido e ' +
                 'ninguém está parado. Bom dia de trabalho.') + '</div>' +

@@ -61,14 +61,52 @@
     return Array.isArray(equipe.departamentos) ? equipe.departamentos : [];
   }
 
-  /* Vê tudo quem não tem setor definido. */
+  /* ---------- Os três estados possíveis ----------
+
+       semSetores         não confere setor NENHUM
+       lista vazia        confere TODOS
+       lista com ids      confere só esses
+
+     A lista vazia continua querendo dizer "todos", e não "nenhum",
+     mesmo agora que "nenhum" existe. Inverter isso esvaziaria o
+     painel de todo mundo que está cadastrado sem setor — Hesley,
+     Raoni e a conta de teste — no instante da publicação, e sem
+     ninguém ter pedido.
+
+     Também não serve marcar os cinco grupos para dizer "todos": os
+     grupos do checklist se editam pelo painel, e no dia em que
+     nascesse um sexto, quem tivesse os cinco marcados deixaria de
+     vê-lo sem entender por quê. Vazio é vazio de propósito: quer
+     dizer "o que houver".
+
+     O estado "nenhum" existe porque quem trabalha no Comercial ou
+     na Diretoria não confere documento — pedido do Raoni em
+     11/09/2026. Mensagem continua chegando para essa pessoa: ela
+     não pertence a setor nenhum, e pergunta sem resposta é de quem
+     estiver por perto. */
+  function semSetores(equipe) {
+    return !!(equipe && equipe.semSetores === true);
+  }
+
+  /* Vê tudo quem não tem setor definido — e não quem declarou não
+     conferir nenhum. */
   function veTudo(equipe) {
+    if (semSetores(equipe)) return false;
     return meus(equipe).length === 0;
   }
 
   function cuida(equipe, grupoId) {
+    if (semSetores(equipe)) return false;
     if (veTudo(equipe)) return true;
     return meus(equipe).indexOf(String(grupoId)) > -1;
+  }
+
+  /* Como o recorte se chama na tela. Sem isto, o botão do filtro
+     nascia com o rótulo vazio para quem não confere nada. */
+  function rotuloDoRecorte(equipe) {
+    if (semSetores(equipe)) return "Nenhum setor";
+    var ids = meus(equipe);
+    return ids.length ? nomesDos(ids) : "Todos os setores";
   }
 
   /* O grupo a que uma chave de documento pertence.
@@ -171,6 +209,8 @@
   global.Departamentos = {
     todos: todos,
     meus: meus,
+    semSetores: semSetores,
+    rotuloDoRecorte: rotuloDoRecorte,
     areas: areas,
     areasPadrao: function () { return AREAS_PADRAO.slice(); },
     carregarAreas: carregarAreas,

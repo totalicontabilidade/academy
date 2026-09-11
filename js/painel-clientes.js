@@ -770,7 +770,7 @@
       else {
         setor.innerHTML = '<button type="button" class="filtro' +
             (soMeuSetorPend ? " filtro--on" : "") + '" id="pdSoMeu">' +
-            U.esc(global.Departamentos.nomesDos(global.Departamentos.meus(equipe))) + '</button>' +
+            U.esc(global.Departamentos.rotuloDoRecorte(equipe)) + '</button>' +
           '<button type="button" class="filtro' + (soMeuSetorPend ? "" : " filtro--on") +
             '" id="pdTudo">Todos os departamentos</button>';
         var s1 = $("#pdSoMeu"), s2 = $("#pdTudo");
@@ -6157,7 +6157,17 @@
     /* Para quem ACABOU de mexer no banco e sabe que a lista ficou
        velha — criar cliente, por exemplo. Melhor do que esperar o
        tempo passar: o cliente novo aparece na hora. */
-    recarregar: function () { carregadaEm = 0; return carregarLista(); }
+    recarregar: function () { carregadaEm = 0; return carregarLista(); },
+
+    /* Quando o SETOR de quem esta olhando muda, nada no banco
+       mudou — mas o recorte sim. O selo do menu e a aba Pendencias
+       precisam refazer a conta na hora, senao o menu anuncia 30 e a
+       aba, ja redesenhada, abre com 6. O Raoni topou com isso em
+       11/09/2026. */
+    refazerRecorte: function () {
+      atualizarContadores();
+      desenharPendencias();
+    }
   };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);
