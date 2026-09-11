@@ -309,7 +309,7 @@
           (podeMexer
             ? '<div class="item__actions">' +
                 '<button type="button" class="btn btn--quiet btn--sm" data-deptos="' +
-                  U.escAttr(m.uid) + '">Setores</button>' +
+                  U.escAttr(m.uid) + '">Departamento e setores</button>' +
                 (euMesmo
                   ? '<span class="text-xs text-muted">Você não pode alterar o próprio papel — ' +
                     'é o que impede o painel de ficar sem administrador.</span>'
@@ -540,8 +540,25 @@
 
     var lista = global.Departamentos.todos();
     var m = UI.modal({
-      titulo: "Setores que " + (alvo.nome || alvo.email) + " confere",
+      titulo: "Departamento e setores de " + (alvo.nome || alvo.email),
       corpoHTML:
+        /* OS DOIS CAMPOS MORAM AQUI, e não só no cadastro de
+           membro novo. Posto só lá, o departamento não teria como
+           ser preenchido para quem JÁ estava na equipe — e a
+           função nasceria inútil justamente para as pessoas que
+           usam o painel hoje. Apareceu ao testar, em 11/09/2026. */
+        '<div class="field">' +
+          '<span class="field__label">Departamento</span>' +
+          '<select class="select" id="mbAreaEdit">' +
+            '<option value="">Não informado</option>' +
+            global.Departamentos.areas().map(function (a) {
+              return '<option value="' + U.escAttr(a) + '"' +
+                (alvo.departamento === a ? " selected" : "") + '>' + U.esc(a) + '</option>';
+            }).join("") +
+          '</select>' +
+          '<div class="field__hint">Onde a pessoa trabalha. Não muda o que ela vê nem o que ' +
+            'pode fazer.</div></div>' +
+        '<span class="field__label" style="display:block;margin-top:4px">Setores que confere</span>' +
         '<p style="font-size:13.5px;line-height:1.65;color:var(--txt-2);margin-bottom:14px">' +
           'O Início e as Pendências mostram só o que é dos setores marcados. Conferir documento ' +
           'de outro setor continua permitido: isto é recorte de tela, não permissão.</p>' +
@@ -566,7 +583,8 @@
             UI.$$("[data-depto]", m.caixa).forEach(function (c) {
               if (c.checked) escolhidos.push(c.getAttribute("data-depto"));
             });
-            salvarDepartamentos(alvo, escolhidos, m);
+            var area = ($("#mbAreaEdit", m.caixa) || {}).value || "";
+            salvarDepartamentos(alvo, area, escolhidos, m);
           }
         }
       ]
@@ -581,7 +599,7 @@
     });
   }
 
-  function salvarDepartamentos(alvo, escolhidos, m) {
+  function salvarDepartamentos(alvo, area, escolhidos, m) {
     ocupar(m, true, "Salvando…");
     /* `departamento` vai junto porque este `set` grava o documento
        inteiro: sem ele, mexer nos setores apagaria a area da pessoa.
@@ -589,7 +607,7 @@
        a mudanca sem dizer quem a fez. */
     comLimite(FB.db.collection("usuarios").doc(alvo.uid).set(assinado({
       nome: alvo.nome, email: alvo.email, papel: alvo.papel,
-      departamento: alvo.departamento || "", setores: escolhidos
+      departamento: area || "", setores: escolhidos
     })), m).then(function () {
       UI.fecharModal();
       UI.toast(escolhidos.length
