@@ -113,6 +113,11 @@
 
     if (item.kind === "arquivo" && r.arquivos && r.arquivos.length) return "enviado";
     if (item.kind === "dado" && String(r.valor || "").trim()) return "enviado";
+    /* O certificado digital vem da contabilidade anterior como
+       ARQUIVO (.pfx), registrado pela equipe. Um acesso com arquivo
+       recebido está entregue, mesmo sem o cliente ter escolhido
+       forma nenhuma. */
+    if (item.kind === "acesso" && r.arquivos && r.arquivos.length) return "enviado";
     if (item.kind === "acesso" && r.forma) {
       /* Escolher "informar o acesso" só resolve depois que a
          credencial é realmente guardada. */

@@ -55,7 +55,10 @@
       var alvos = g.escopo === "socio" ? (c.dados.socios || []) : [null];
       alvos.forEach(function (socio) {
         g.itens.forEach(function (item) {
-          if (item.kind !== "arquivo") return;
+          /* Documento de arquivo, ou acesso que vem da contabilidade
+             anterior — o certificado digital chega como arquivo. */
+          var acessoDaAnterior = item.kind === "acesso" && S.fonteDe(item) === "anterior";
+          if (item.kind !== "arquivo" && !acessoDaAnterior) return;
           var socioId = socio ? socio.id : null;
           var sit = S.de(c.dados, g, item, socioId);
           if (sit === "na" || sit === "substituido") return;
@@ -87,7 +90,8 @@
     [/financeira/i, "ficha-financeira"],
     [/informe|rendiment/i, "informe-rendimentos"],
     [/extrato/i, "extrato-folha"],
-    [/dirf/i, "dirf"]
+    [/dirf/i, "dirf"],
+    [/certific|e-?cnpj|\.pfx$|\.p12$/i, "certificado-digital"]
   ];
 
   function palpite(nome, lista) {

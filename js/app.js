@@ -1294,6 +1294,24 @@
 
       /* ---- tipo ACESSO ---- */
       if (item.kind === "acesso") {
+        /* O certificado que a contabilidade anterior mandou e a
+           equipe registrou. Só leitura: não é do cliente para
+           apagar, e a senha dele continua sendo pedida abaixo. */
+        if (reg.arquivos && reg.arquivos.length) {
+          html += '<div class="files">' + reg.arquivos.map(function (a) {
+            return '<div class="file">' +
+              '<span class="file__icon">' + ic(U.iconePorExtensao(U.extensao(a.nome))) + '</span>' +
+              '<span class="file__info">' +
+                '<span class="file__name">' + U.esc(a.nome) + '</span>' +
+                '<span class="file__meta">' + U.esc(U.bytes(a.tamanho)) +
+                  (a.origem === "anterior" ? ' · recebido da contabilidade anterior em ' : ' · enviado em ') +
+                  U.esc(U.dataCurta(a.em)) + '</span>' +
+              '</span>' +
+              '<button type="button" class="file__del" data-baixar="' + U.escAttr(a.id) +
+                '" aria-label="Abrir arquivo">' + ic("ic-download") + '</button>' +
+            '</div>';
+          }).join("") + '</div>';
+        }
         var FORMAS = [
           { id: "informar",   rot: "Informar o acesso agora" },
           { id: "procuracao", rot: "Vou conceder procuração eletrônica" },
