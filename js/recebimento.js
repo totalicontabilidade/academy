@@ -358,8 +358,8 @@
       }).then(function (n) {
         UI.fecharModal();
         var falhas = validos.length - n;
-        UI.toast(n + " " + U.plural(n, "arquivo registrado", "arquivos registrados") +
-          " como recebidos da contabilidade anterior." +
+        UI.toast(n + " " + U.plural(n, "arquivo registrado como recebido", "arquivos registrados como recebidos") +
+          " da contabilidade anterior." +
           (falhas ? " " + falhas + " " + U.plural(falhas, "não subiu.", "não subiram.") : ""),
           falhas ? "erro" : "ok", 8000);
         if (typeof o.aoGravar === "function") o.aoGravar();
