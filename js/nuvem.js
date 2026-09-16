@@ -108,10 +108,17 @@
     function payloadItem(r) {
       return {
         arquivos: (r.arquivos || []).map(function (a) {
-          return {
+          var m = {
             id: txt(a.id, 60), nome: txt(a.nome, 160),
             tamanho: num(a.tamanho), tipo: txt(a.tipo, 120), em: num(a.em)
           };
+          /* A procedência vai junto, senão a gravação seguinte do
+             cliente apaga do servidor o que a equipe registrou. */
+          if (a.origem === "anterior") {
+            m.origem = "anterior";
+            if (a.recebidoPor) m.recebidoPor = txt(a.recebidoPor, 120);
+          }
+          return m;
         }),
         valor: txt(r.valor, 400),
         na: r.na === true,
@@ -245,6 +252,11 @@
         resumo = {
           total: num(r.total), ok: num(r.ok),
           pendentesObrigatorios: num(r.pendentesObrigatorios),
+          /* Só o que depende do cliente: é este que o lembrete
+             automático cobra. O de cima segue para a barra de
+             progresso e para o painel. */
+          pendentesObrigatoriosDoCliente: num(r.pendentesObrigatoriosDoCliente),
+          pendentesDoCliente: num(r.pendentesDoCliente),
           pendencias: num(r.pendencias), aprovados: num(r.aprovados),
           pct: num(r.pct)
         };
@@ -289,6 +301,8 @@
              `payloadEmpresa` é o que o cliente GRAVA de volta, e
              este campo não é dele para gravar. */
           extratosCodigo: txt(e.extratosCodigo, 40),
+          contabilidadeAnterior: (e.contabilidadeAnterior && typeof e.contabilidadeAnterior === "object")
+            ? { nome: txt(e.contabilidadeAnterior.nome, 120) } : null,
           empresa: {
             razaoSocial: txt(e.razaoSocial, 200),
             nomeFantasia: txt(e.nomeFantasia, 200),

@@ -150,6 +150,11 @@
          portal apenas lê, para oferecer o atalho na etapa 4 a quem
          usa o portal. Quem chega pelo link não passa por aqui. */
       extratosCodigo: "",
+      /* Quem era o contador antes. A equipe grava no painel; o
+         portal só lê, para dizer ao cliente de quem se espera cada
+         documento. Fora de `empresa` porque `empresa` é o que o
+         cliente grava de volta. */
+      contabilidadeAnterior: null,
       empresa: {
         razaoSocial: "", nomeFantasia: "", cnpj: "", regime: "",
         responsavelNome: "", responsavelEmail: "", responsavelTelefone: "", responsavelCargo: ""
@@ -247,6 +252,10 @@
     s.cadastroPelaEquipe = bruto.cadastroPelaEquipe === true;
     if (typeof bruto.extratosCodigo === "string") {
       s.extratosCodigo = bruto.extratosCodigo.slice(0, 40);
+    }
+    if (bruto.contabilidadeAnterior && typeof bruto.contabilidadeAnterior === "object" &&
+        typeof bruto.contabilidadeAnterior.nome === "string" && bruto.contabilidadeAnterior.nome) {
+      s.contabilidadeAnterior = { nome: bruto.contabilidadeAnterior.nome.slice(0, 120) };
     }
 
     /* Estado gravado antes do esquema 2 não tem empresaId: ganha um
@@ -379,13 +388,23 @@
           novo.arquivos = r.arquivos.slice(0, 40).filter(function (a) {
             return a && typeof a === "object" && typeof a.id === "string";
           }).map(function (a) {
-            return {
+            var limpo = {
               id: String(a.id).slice(0, 60),
               nome: typeof a.nome === "string" ? a.nome.slice(0, 160) : "arquivo",
               tamanho: typeof a.tamanho === "number" ? a.tamanho : 0,
               tipo: typeof a.tipo === "string" ? a.tipo.slice(0, 120) : "",
               em: typeof a.em === "number" ? a.em : 0
             };
+            /* PROCEDÊNCIA. Arquivo que a equipe registrou vindo da
+               contabilidade anterior traz `origem` e quem o
+               recebeu. Sem preservar aqui, a primeira gravação do
+               cliente no mesmo documento reescreveria o vetor e a
+               procedência sumiria do servidor. */
+            if (a.origem === "anterior") {
+              limpo.origem = "anterior";
+              if (typeof a.recebidoPor === "string") limpo.recebidoPor = a.recebidoPor.slice(0, 120);
+            }
+            return limpo;
           });
         }
         s.itens[String(k).slice(0, 160)] = novo;

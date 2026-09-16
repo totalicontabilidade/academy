@@ -1934,6 +1934,7 @@
             '<span class="conf__s">' + U.esc(p.grupo.titulo) +
               (p.socio ? ' · ' + U.esc(p.socio.nome || "sócio") : '') +
               (p.item.obrigatorio ? ' · obrigatório' : '') +
+              (p.fonte === "anterior" ? ' · vem da contabilidade anterior' : '') +
               (resumo && arquivos.length
                 ? ' · ' + arquivos.length + " " +
                   U.plural(arquivos.length, "arquivo", "arquivos") : '') + '</span>' +
@@ -1969,8 +1970,13 @@
                merece menu. */
             : '<div class="conf__acoes">' +
                 (acoesDeRevisao(c, p.chave, p.sit) ||
-                  '<button type="button" class="btn btn--ghost btn--sm" data-cobrar-item="' +
-                    U.escAttr(p.chave) + '" data-emp="' + U.escAttr(c.id) + '">Cobrar</button>') +
+                  /* O que vem da contabilidade anterior não se cobra
+                     do cliente: registra-se quando chega. */
+                  (p.fonte === "anterior"
+                    ? '<button type="button" class="btn btn--ghost btn--sm" data-receber-item="' +
+                      U.escAttr(p.chave) + '" data-emp="' + U.escAttr(c.id) + '">Registrar recebido</button>'
+                    : '<button type="button" class="btn btn--ghost btn--sm" data-cobrar-item="' +
+                      U.escAttr(p.chave) + '" data-emp="' + U.escAttr(c.id) + '">Cobrar</button>')) +
               '</div>') + '</td>' +
         '</tr>';
       }).join("") +
@@ -2306,6 +2312,10 @@
             linhaDado("Nome fantasia", e.nomeFantasia) +
             linhaDado("CNPJ", e.cnpj) +
             linhaDado("Regime", e.regime) +
+            linhaDado("Contabilidade anterior", (e.contabilidadeAnterior && e.contabilidadeAnterior.nome)
+              ? e.contabilidadeAnterior.nome +
+                (e.contabilidadeAnterior.contato ? " · " + e.contabilidadeAnterior.contato : "")
+              : "") +
             '<hr class="hr">' +
             linhaDado("Responsável", e.responsavelNome) +
             linhaDado("Função", e.responsavelCargo) +
@@ -2380,6 +2390,11 @@
             ic("ic-refresh") + 'Atualizar</button>' +
           '<button type="button" class="btn btn--quiet btn--sm" id="clAplicacao">' +
             'Quais se aplicam</button>' +
+          /* O que chega da contabilidade anterior por e-mail entra
+             por aqui: a equipe solta os arquivos e diz a qual
+             documento cada um pertence. O cliente vê como recebido. */
+          '<button type="button" class="btn btn--primary btn--sm" id="clReceber">' +
+            ic("ic-upload") + 'Receber da contabilidade anterior</button>' +
         '</div>' +
         DATA.GRUPOS.map(function (g) { return grupoHTML(c, g); }).join("");
     }
@@ -2801,8 +2816,14 @@
   var SECOES = [
     { id: "voce",    rot: "Esperando você", cor: "voce",
       sits: ["enviado", "analise"] },
+    /* O que a CONTABILIDADE ANTERIOR ainda não mandou é uma faixa
+       própria: cobra-se de outra pessoa, por outro canal. Correção
+       pedida fica com o cliente mesmo quando a fonte é a anterior —
+       foi ele quem mandou o arquivo errado. */
+    { id: "anterior", rot: "Com a contabilidade anterior", cor: "anterior",
+      sits: ["pendente"], fonte: "anterior" },
     { id: "cliente", rot: "Com o cliente",  cor: "cliente",
-      sits: ["pendencia", "pendente"] },
+      sits: ["pendencia", "pendente"], fonte: "cliente" },
     { id: "pronto",  rot: "Concluído",      cor: "pronto",
       sits: ["aprovado", "substituido", "na"] }
   ];
@@ -2819,6 +2840,8 @@
     } else if (x.sit === "pendencia") {
       var rev = (c.dados.itens[x.chave] || {}).revisao || {};
       if (rev.em) partes.push("correção pedida " + faz(emMs(rev.em) || rev.em));
+    } else if (x.sit === "pendente" && x.fonte === "anterior") {
+      partes.push("vem da contabilidade anterior");
     } else if (x.sit === "pendente") {
       var ms = ((c.dados.itens[x.chave] || {}).lembrete) || 0;
       if (ms) {
@@ -2861,7 +2884,8 @@
         var reg = c.dados.itens[chave] || {};
         todos.push({
           g: g, item: item, socio: socio, sit: sit, chave: chave,
-          em: emMs(reg.atualizadoEm) || 0, obrigatorio: !!item.obrigatorio
+          em: emMs(reg.atualizadoEm) || 0, obrigatorio: !!item.obrigatorio,
+          fonte: sit === "pendencia" ? "cliente" : global.Situacao.fonteDe(item)
         });
       });
     });
@@ -2873,7 +2897,12 @@
 
     var html = "";
     SECOES.forEach(function (sec) {
-      var lista = todos.filter(function (x) { return sec.sits.indexOf(x.sit) > -1; });
+      var lista = todos.filter(function (x) {
+        if (sec.sits.indexOf(x.sit) === -1) return false;
+        /* "Pendente" se divide pela fonte; as outras situações não. */
+        if (sec.fonte && x.sit === "pendente" && x.fonte !== sec.fonte) return false;
+        return true;
+      });
       if (!lista.length) return;
 
       /* Dentro da faixa, o mais antigo primeiro: é o que espera há
@@ -2934,7 +2963,11 @@
             'data-emp="' + U.escAttr(c.id) + '" data-nome="' + U.escAttr(a.nome) + '">' +
             ic(U.iconePorExtensao(U.extensao(a.nome))) +
             '<span class="arq__n">' + U.esc(a.nome) + '</span>' +
-            '<span class="arq__t">' + U.esc(U.bytes(a.tamanho)) + '</span></button>' +
+            '<span class="arq__t">' + U.esc(U.bytes(a.tamanho)) + '</span>' +
+            (a.origem === "anterior"
+              ? '<span class="arq__ant" title="Recebido da contabilidade anterior' +
+                (a.recebidoPor ? ', registrado por ' + U.escAttr(a.recebidoPor) : '') + '">anterior</span>'
+              : '') + '</button>' +
           '<button type="button" class="arq-x" data-remover-doc="' + U.escAttr(chave) +
             '" data-arq="' + U.escAttr(a.id) + '" data-emp="' + U.escAttr(c.id) +
             '" data-nome="' + U.escAttr(a.nome) + '" ' +
@@ -4486,6 +4519,12 @@
             '</select></div>' +
         '</div>' +
         '<hr class="hr">' +
+        '<div class="grid-2">' +
+          campoTexto("edAntNome", "Contabilidade anterior", (e.contabilidadeAnterior || {}).nome) +
+          campoTexto("edAntContato", "Contato dela", (e.contabilidadeAnterior || {}).contato,
+                     'placeholder="e-mail ou telefone"') +
+        '</div>' +
+        '<hr class="hr">' +
         campoTexto("edRespNome", "Responsável", e.responsavelNome) +
         campoTexto("edRespCargo", "Função", e.responsavelCargo) +
         '<div class="grid-2">' +
@@ -4540,6 +4579,13 @@
       responsavelCargo: pega("#edRespCargo").trim().slice(0, 200),
       responsavelEmail: pega("#edRespEmail").trim().slice(0, 200),
       responsavelTelefone: pega("#edRespTel").trim().slice(0, 200),
+      /* Quem era o contador antes. O portal mostra o nome ao
+         cliente ("quem envia é a sua contabilidade anterior, X");
+         o contato é só nosso, para cobrar por fora. */
+      contabilidadeAnterior: {
+        nome: pega("#edAntNome").trim().slice(0, 120),
+        contato: pega("#edAntContato").trim().slice(0, 160)
+      },
       atualizadoEm: Date.now()
     };
 
@@ -4990,7 +5036,9 @@
      chegar ao cliente. */
   function preencherModelo(texto, c) {
     var e = c.empresa || {};
-    var faltantes = global.Situacao.pendencias(c.dados, DATA.GRUPOS).map(function (p) {
+    /* Só o que depende dele: balanço que a contabilidade anterior
+       ainda não mandou não entra na cobrança ao cliente. */
+    var faltantes = global.Situacao.pendencias(c.dados, DATA.GRUPOS, { soDoCliente: true }).map(function (p) {
       return "• " + p.item.nome +
         (p.socio ? " (" + (p.socio.nome || "sócio") + ")" : "") +
         (p.sit === "pendencia" ? " — precisa corrigir e reenviar" : "");
@@ -5338,7 +5386,7 @@
      Functions não há disparo automático — quem decide a hora é a
      equipe, e fica registrado na conversa do cliente. */
   function montarCobranca(c) {
-    var pendentes = global.Situacao.pendencias(c.dados, DATA.GRUPOS);
+    var pendentes = global.Situacao.pendencias(c.dados, DATA.GRUPOS, { soDoCliente: true });
     if (!pendentes.length) return "";
 
     var linhas = pendentes.map(function (p) {
@@ -5558,9 +5606,39 @@
   /* =========================================================
      Eventos
      ========================================================= */
+  /* A ficha é carregada uma vez e fica parada; isto a traz de volta
+     do servidor. Serve ao botão Atualizar e a tudo o que grava por
+     fora dela, como o recebimento da contabilidade anterior. */
+  function recarregarAberto() {
+    var id = aberto && aberto.id;
+    if (!id) return Promise.resolve();
+    return carregarCliente(id).then(function (c) {
+      empresas = empresas.map(function (x) { return x.id === id ? c : x; });
+      aberto = c;
+      desenharFicha();
+      desenharTudo();
+    });
+  }
+
+  function abrirRecebimento(c, chave) {
+    if (!global.Recebimento) {
+      UI.toast("A tela de recebimento não carregou. Recarregue a página.", "erro", 8000);
+      return;
+    }
+    global.Recebimento.abrir({
+      cliente: c, equipe: equipe, chave: chave || "",
+      aoGravar: recarregarAberto
+    });
+  }
+
   function ligarFicha() {
     var voltar = $("#clVoltar");
     if (voltar) voltar.addEventListener("click", fecharCliente);
+
+    var receber = $("#clReceber");
+    if (receber) receber.addEventListener("click", function () {
+      if (aberto) abrirRecebimento(aberto, "");
+    });
 
     ligarExtratos();
     ligarJornada();
@@ -6044,6 +6122,18 @@
          aberta, então o botão Cobrar existia na tela e não fazia
          nada — nem erro. Como nas outras três, a correção é o botão
          dizer de quem é o documento em vez de a função adivinhar. */
+      var ri = alvo.closest("[data-receber-item]");
+      if (ri) {
+        var cR = (empresas || []).filter(function (x) { return x.id === ri.getAttribute("data-emp"); })[0];
+        if (!cR) return;
+        /* A tela de recebimento grava e recarrega a FICHA aberta.
+           Vindo da aba Pendências não há ficha aberta, então abre a
+           do cliente antes — assim o que for gravado aparece. */
+        if (!aberto || aberto.id !== cR.id) abrirCliente(cR.id, "documentos");
+        abrirRecebimento(cR, ri.getAttribute("data-receber-item"));
+        return;
+      }
+
       var ci = alvo.closest("[data-cobrar-item]");
       if (ci) {
         var cCob = ci.getAttribute("data-emp")
@@ -6417,6 +6507,22 @@
   /* =========================================================
      Início
      ========================================================= */
+  /* O CATÁLOGO QUE VALE É O PUBLICADO.
+
+     O portal do cliente aplica o que a equipe publica na aba
+     Conteúdo; o painel usava o padrão de js/data.js. Enquanto as
+     duas listas eram iguais ninguém notava. Com "quem envia" sendo
+     editável por lá, o painel precisa ler a mesma coisa que o
+     cliente vê — senão a ficha diz "vem da contabilidade anterior"
+     e o portal diz o contrário. Falhando a leitura, vale o padrão,
+     como no portal. */
+  function aplicarConteudoPublicado() {
+    return FB.db.collection("conteudo").doc("portal").get().then(function (d) {
+      var dados = d.exists ? (d.data() || {}) : {};
+      if (dados.blocos && DATA.aplicarConteudo) DATA.aplicarConteudo(dados.blocos);
+    }, function () {});
+  }
+
   function iniciar() {
     FB = global.FB;
 
@@ -6456,8 +6562,10 @@
     FB.observarSessao(function (quem) {
       equipe = quem;
       if (quem) {
-        carregarModelos();
-        carregarLista();
+        aplicarConteudoPublicado().then(function () {
+          carregarModelos();
+          carregarLista();
+        });
       } else {
         /* A SESSÃO CAIU. Limpar as variáveis não basta: a ficha do
            cliente continuava desenhada na tela, com dados de quem

@@ -174,6 +174,15 @@
           var t = carimboDe(reg);
           if (t.recebido || t.aprovado) carimbados++;
 
+          /* PROCEDÊNCIA. Arquivo registrado pela equipe como vindo
+             da contabilidade anterior traz `origem` e quem o
+             recebeu. Documento ainda não recebido diz de quem se
+             espera, para o dossiê não cobrar do cliente o que não
+             é dele. */
+          var daAnterior = (reg.arquivos || []).filter(function (a) {
+            return a && a.origem === "anterior";
+          });
+
           var linha = {
             nome: item.nome + (socio && socio.nome ? " — " + socio.nome : ""),
             grupo: g.titulo,
@@ -194,7 +203,10 @@
             recebidoLocal: chegadaMaisAntiga(reg),
             aprovado: t.aprovado || 0,
             aprovadoPor: t.por || ((reg.revisao || {}).por || ""),
-            decidiuEquipe: typeof reg.naEquipe === "boolean"
+            decidiuEquipe: typeof reg.naEquipe === "boolean",
+            daAnterior: daAnterior.length > 0,
+            recebidoPor: daAnterior.length ? (daAnterior[0].recebidoPor || "") : "",
+            fonte: S.fonteDe ? S.fonteDe(item) : "cliente"
           };
 
           if (sit === "na") naoAplicaveis.push(linha);
@@ -213,6 +225,7 @@
       naoAplicaveis: naoAplicaveis,
       pendentes: pendentes,
       financeiro: c.financeiro || null,
+      contabilidadeAnterior: (e.contabilidadeAnterior && e.contabilidadeAnterior.nome) || "",
       /* Os acessos já vêm com o cliente. `porEquipe` separa o
          acesso que a equipe deu no painel daquele que o próprio
          cliente abriu pelo convite. */
@@ -420,7 +433,9 @@
             doc.setFont("helvetica", "normal");
             doc.setFontSize(9.5);
             doc.setTextColor(TINTA[0], TINTA[1], TINTA[2]);
-            doc.text(doc.splitTextToSize(l.nome, LARG - 46)[0], L + 4, y);
+            doc.text(doc.splitTextToSize(l.nome +
+              (l.fonte === "anterior" ? " — aguardando a contabilidade anterior" : ""),
+              LARG - 46)[0], L + 4, y);
             doc.setFontSize(8.5);
             doc.setTextColor(CINZA[0], CINZA[1], CINZA[2]);
             doc.text(l.grupo, DIR, y, { align: "right" });
@@ -517,6 +532,11 @@
           var detalhe = [l.grupo];
           if (l.arquivos.length) detalhe.push(l.arquivos.join(", "));
           if (l.valor) detalhe.push(l.valor);
+          if (l.daAnterior) {
+            detalhe.push("recebido da contabilidade anterior" +
+                         (d.contabilidadeAnterior ? " (" + d.contabilidadeAnterior + ")" : "") +
+                         (l.recebidoPor ? ", registrado por " + l.recebidoPor : ""));
+          }
           if (l.aprovado) {
             detalhe.push("aprovado em " + data(l.aprovado) +
                          (l.aprovadoPor ? " por " + l.aprovadoPor : ""));

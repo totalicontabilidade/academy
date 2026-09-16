@@ -188,7 +188,15 @@ async function faltamObrigatorios(empresaRef) {
   if (!geral.exists) return null;
   const g = geral.data() || {};
   const r = g.resumo;
-  if (!r || typeof r.pendentesObrigatorios !== "number") return null;
+  if (!r) return null;
+  /* Desde 16/09/2026 a maior parte dos documentos vem da
+     CONTABILIDADE ANTERIOR do cliente, e o portal passou a gravar
+     também o que falta só do lado dele. É esse que se cobra: o
+     cliente não tem como mandar o balanço que outro escritório
+     ainda não entregou. O número antigo segue como reserva para
+     empresa que ainda não gravou o novo. */
+  if (typeof r.pendentesObrigatoriosDoCliente === "number") return r.pendentesObrigatoriosDoCliente;
+  if (typeof r.pendentesObrigatorios !== "number") return null;
   return r.pendentesObrigatorios;
 }
 

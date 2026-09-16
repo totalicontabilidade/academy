@@ -253,7 +253,10 @@
          número na linha de baixo tem de contar a mesma coisa,
          senão a tarefa diz "9 documentos faltam" e eu abro a ficha
          para achar dois. */
-      var obrigatoriosMeus = global.Situacao.pendencias(c.dados, global.DATA.GRUPOS)
+      /* E SÓ O QUE É DELE: o que a contabilidade anterior ainda não
+         mandou não se cobra do cliente — isso é a etapa D8 da
+         jornada, e tem outra pessoa do outro lado. */
+      var obrigatoriosMeus = global.Situacao.pendencias(c.dados, global.DATA.GRUPOS, { soDoCliente: true })
         .filter(function (p) { return p.item.obrigatorio && daMinhaArea(p.grupo.id); }).length;
 
       if (parado !== null && parado >= 7 && est.chave !== "emdia" &&

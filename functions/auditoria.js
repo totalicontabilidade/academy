@@ -138,6 +138,10 @@ exports.auditarItem = onDocumentWritten(
       await anotar(empresaId, "item:enviado", {
         ...base, ...assinatura,
         arquivos: novos.map((a) => texto(a && a.nome, 160)),
+        /* De onde veio: "anterior" quando a equipe registrou um
+           arquivo mandado pela contabilidade anterior do cliente.
+           A assinatura acima já diz QUEM registrou. */
+        origem: novos.some((a) => a && a.origem === "anterior") ? "anterior" : "cliente",
         total: nDepois
       });
     } else if (nDepois < nAntes) {

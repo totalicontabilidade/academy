@@ -198,6 +198,29 @@
     return '<span class="badge ' + m.cls + '"><span class="dot"></span>' + m.texto + '</span>';
   }
 
+  /* DE QUEM SE ESPERA O DOCUMENTO.
+
+     Desde 16/09/2026 a maior parte da lista chega pela contabilidade
+     anterior do cliente, direto para a Totali. Para o cliente isso
+     muda uma coisa só, mas importante: "Pendente" deixava de ser
+     verdade — parecia que ELE devia algo que não é dele. O selo
+     passa a dizer com quem está. O envio continua aberto: se ele
+     tiver o arquivo em mãos, manda e adianta. */
+  function fonteDoItem(item) {
+    return DATA.fonteDe ? DATA.fonteDe(item) : "cliente";
+  }
+  function nomeDaAnterior() {
+    var a = Store.estado.contabilidadeAnterior;
+    return (a && a.nome) || "";
+  }
+  function badgeDoItem(item, sit) {
+    if (sit === "pendente" && fonteDoItem(item) === "anterior") {
+      return '<span class="badge badge--pendente"><span class="dot"></span>' +
+        'Com a contabilidade anterior</span>';
+    }
+    return badgeSituacao(sit);
+  }
+
   /* ============================================================
      Porta de entrada do cliente
 
@@ -644,7 +667,10 @@
   /* Correções pedidas pela Totali vêm primeiro: são o que trava a
      migração. Depois, os obrigatórios que ainda não chegaram. */
   function proximosPendentes(limite) {
-    return global.Situacao.pendencias(Store.dadosSituacao(), DATA.GRUPOS)
+    /* Só o que depende dele. Apontar como "próximo passo" um
+       balanço que a contabilidade anterior ainda não mandou é
+       mandar o cliente fazer o trabalho de outro. */
+    return global.Situacao.pendencias(Store.dadosSituacao(), DATA.GRUPOS, { soDoCliente: true })
       /* As correções saem daqui: elas ganharam bloco próprio, no
          alto da tela. Repetidas nos dois lugares, viravam ruído. */
       .filter(function (p) { return p.sit !== "pendencia"; })
@@ -673,7 +699,7 @@
      pendentes estiverem adiados, mostramos o primeiro mesmo
      assim — melhor que uma tela sem próximo passo. */
   function proximoPasso() {
-    var l = global.Situacao.pendencias(Store.dadosSituacao(), DATA.GRUPOS)
+    var l = global.Situacao.pendencias(Store.dadosSituacao(), DATA.GRUPOS, { soDoCliente: true })
       /* Pelo mesmo motivo do aviso lá em cima: documento já
          respondido não é "o próximo passo" dele — é o próximo
          passo da Totali. Apontar para ele manda o cliente fazer
@@ -749,6 +775,28 @@
         : '');
   }
 
+  /* "Faltam N documentos" era verdade quando tudo vinha do cliente.
+     Agora a frase separa o que é dele do que a contabilidade anterior
+     manda — senão o número cobra dele o que não é dele. */
+  function textoDoQueFalta(resumo) {
+    var seus = resumo.pendentesDoCliente || 0;
+    var deles = resumo.pendentes - seus;
+    var quem = nomeDaAnterior();
+    var anterior = "sua contabilidade anterior" + (quem ? " (" + quem + ")" : "");
+    if (!deles) {
+      return "Faltam " + seus + " " + U.plural(seus, "documento", "documentos") +
+        " para concluirmos sua migração. Você pode enviar aos poucos.";
+    }
+    if (!seus) {
+      return "Do seu lado está tudo enviado. " + (deles === 1
+        ? "Falta 1 documento que a " + anterior + " envia direto para nós."
+        : "Faltam " + deles + " documentos que a " + anterior + " envia direto para nós.");
+    }
+    return "Faltam " + resumo.pendentes + " documentos: " + seus + " " +
+      U.plural(seus, "é seu", "são seus") + " para enviar e " + deles + " " +
+      U.plural(deles, "vem", "vêm") + " da " + anterior + ".";
+  }
+
   function viewInicio() {
     var st = Store.estado;
     var resumo = Store.resumoGeral();
@@ -793,8 +841,7 @@
               : "Comece cadastrando os dados da empresa. Em seguida a lista de documentos aparece aqui.")
           : resumo.pendentes === 0
             ? "Documentação completa. Nossa equipe já pode conferir tudo."
-            : "Faltam " + resumo.pendentes + " " + U.plural(resumo.pendentes, "documento", "documentos") +
-              " para concluirmos sua migração. Você pode enviar aos poucos.") +
+            : textoDoQueFalta(resumo)) +
       '</p>' +
       '<div class="hero__row" id="blocoResumo">' +
         anelHTML(resumo) +
@@ -803,8 +850,8 @@
             '<div class="stat__lbl">Já enviados</div></div>' +
           '<div><div class="stat__num" data-count="' + resumo.pendentes + '">0</div>' +
             '<div class="stat__lbl">Ainda faltam</div></div>' +
-          '<div><div class="stat__num" data-count="' + resumo.pendentesObrigatorios + '">0</div>' +
-            '<div class="stat__lbl">Obrigatórios a enviar</div></div>' +
+          '<div><div class="stat__num" data-count="' + resumo.pendentesObrigatoriosDoCliente + '">0</div>' +
+            '<div class="stat__lbl">Obrigatórios seus a enviar</div></div>' +
         '</div>' +
       '</div>' +
       acoesDoHero(passo) +
@@ -1061,7 +1108,7 @@
           '<div class="item__row">' +
             (sit === "pendencia" && reg.obs
               ? '<span class="badge badge--analise"><span class="dot"></span>Respondido</span>'
-              : badgeSituacao(sit)) +
+              : badgeDoItem(item, sit)) +
             /* Com o documento fechado, a linha resume o que há lá
                dentro — sem isso, fechar esconderia informação em
                vez de arrumá-la. */
@@ -1075,6 +1122,19 @@
 
     html += '<div class="item__corpo"><div class="item__main">' +
       (item.resumo ? '<div class="item__desc">' + U.esc(item.resumo) + '</div>' : '');
+
+    /* Quem manda é a contabilidade anterior — dito uma vez, aqui,
+       onde a pessoa está lendo o documento. O botão de enviar fica:
+       não é proibição, é expectativa. */
+    if (sit === "pendente" && !grupoNA && fonteDoItem(item) === "anterior") {
+      var quemAnt = nomeDaAnterior();
+      html += '<div class="notice notice--info" style="margin-top:10px;padding:10px 12px;font-size:12.5px">' +
+          '<span class="notice__icon">' + ic("ic-info") + '</span>' +
+          '<span><strong>Quem envia este documento é a sua contabilidade anterior' +
+          (quemAnt ? ' (' + U.esc(quemAnt) + ')' : '') + '.</strong> Nós pedimos diretamente a ela ' +
+          'e você acompanha por aqui. Se tiver o arquivo em mãos, pode enviar também — adianta.' +
+          '</span></div>';
+    }
 
     /* A CONVERSA SOBRE ESTE DOCUMENTO, EM ORDEM.
 
@@ -1181,13 +1241,20 @@
               '<span class="file__icon">' + ic(U.iconePorExtensao(ext)) + '</span>' +
               '<span class="file__info">' +
                 '<span class="file__name">' + U.esc(a.nome) + '</span>' +
-                '<span class="file__meta">' + U.esc(U.bytes(a.tamanho)) + ' · enviado em ' +
+                '<span class="file__meta">' + U.esc(U.bytes(a.tamanho)) +
+                  (a.origem === "anterior"
+                    ? ' · recebido da contabilidade anterior em '
+                    : ' · enviado em ') +
                   U.esc(U.dataCurta(a.em)) + '</span>' +
               '</span>' +
               '<button type="button" class="file__del" data-baixar="' + U.escAttr(a.id) +
                 '" aria-label="Abrir arquivo">' + ic("ic-download") + '</button>' +
+              /* O que a Totali recebeu da contabilidade anterior não
+                 é do cliente para apagar: se estiver errado, ele
+                 avisa pela conversa e a equipe troca. */
+              (a.origem === "anterior" ? '' :
               '<button type="button" class="file__del" data-remover="' + U.escAttr(a.id) +
-                '" aria-label="Remover arquivo">' + ic("ic-trash") + '</button>' +
+                '" aria-label="Remover arquivo">' + ic("ic-trash") + '</button>') +
             '</div>';
           }).join("") + '</div>';
         }
@@ -1603,6 +1670,25 @@
     return html;
   }
 
+  /* A explicação de quem manda o quê, uma vez, no alto da lista.
+     Só existe enquanto houver documento esperado da contabilidade
+     anterior — se a equipe passar tudo para o cliente na aba
+     Conteúdo, a faixa some sozinha. */
+  function faixaDaAnteriorHTML() {
+    var temAnterior = DATA.GRUPOS.some(function (g) {
+      return g.itens.some(function (it) { return fonteDoItem(it) === "anterior"; });
+    });
+    if (!temAnterior) return "";
+    var quem = nomeDaAnterior();
+    return '<div class="notice notice--info" style="margin-bottom:16px">' +
+      '<span class="notice__icon">' + ic("ic-info") + '</span>' +
+      '<span><strong>Boa parte desta lista chega pela sua contabilidade anterior' +
+      (quem ? ' (' + U.esc(quem) + ')' : '') + '.</strong> Contrato social, balanços, livros e ' +
+      'folha nós pedimos diretamente a ela, e você acompanha por aqui. O que é seu — documentos ' +
+      'dos sócios e acessos com senha — só você pode enviar. Se tiver algum outro arquivo em ' +
+      'mãos, pode enviar também.</span></div>';
+  }
+
   function viewDocumentos() {
     var resumo = Store.resumoGeral();
     var usado = Store.bytesUsados();
@@ -1631,6 +1717,7 @@
         (usado ? '<div class="text-xs text-muted" style="margin-top:9px">' +
           U.esc(U.bytes(usado)) + ' enviados até agora</div>' : '') +
       '</div>' +
+      faixaDaAnteriorHTML() +
     '</section>';
 
     html += DATA.GRUPOS.map(grupoHTML).join("");

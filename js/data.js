@@ -752,6 +752,37 @@
     }
   ];
 
+  /* ---------- Quem envia cada documento ----------
+     Desde 16/09/2026 a maior parte da documentação chega da
+     CONTABILIDADE ANTERIOR do cliente, por e-mail, e a equipe a
+     registra pelo painel. O cliente só acompanha. Continua podendo
+     enviar ele mesmo, como alternativa — a fonte diz de quem se
+     ESPERA o documento, não quem está proibido de mandar.
+
+       "anterior"  a contabilidade anterior manda para a Totali
+       "cliente"   só o cliente tem (documentos dos sócios, senhas)
+
+     A regra do padrão veio do Raoni: societário, contábil, fiscal e
+     DP vêm da firma anterior, e o certificado digital também; RG e
+     CNH dos sócios e todo acesso com senha só o cliente pode dar.
+     O campo é editável na aba Conteúdo, documento a documento. */
+  var GRUPOS_DO_ANTERIOR = ["societario", "contabil", "fiscal", "trabalhista"];
+
+  function fontePadrao(grupoId, item) {
+    if (item.fonte === "anterior" || item.fonte === "cliente") return item.fonte;
+    if (item.id === "certificado-digital") return "anterior";
+    if (item.kind === "arquivo" && GRUPOS_DO_ANTERIOR.indexOf(grupoId) > -1) return "anterior";
+    return "cliente";
+  }
+
+  function fonteDe(item) {
+    return item && item.fonte === "anterior" ? "anterior" : "cliente";
+  }
+
+  GRUPOS_PADRAO.forEach(function (g) {
+    g.itens.forEach(function (it) { it.fonte = fontePadrao(g.id, it); });
+  });
+
   /* ---------- Vídeos ----------
      Os vídeos ficam no YouTube, como "não listados", e aqui
      guardamos só o identificador. Não listado quer dizer: não
@@ -1039,6 +1070,7 @@
       if (!g || typeof g !== "object") return null;
       var titulo = txt(g.titulo, 80);
       if (!titulo) return null;
+      var gid = txt(g.id, 60, "grupo-" + (i + 1)).replace(/[^a-zA-Z0-9_-]/g, "") || ("grupo-" + (i + 1));
       var itens = (Array.isArray(g.itens) ? g.itens.slice(0, 60) : []).map(function (it, j) {
         if (!it || typeof it !== "object") return null;
         var nome = txt(it.nome, 140);
@@ -1048,6 +1080,9 @@
           kind: KINDS.indexOf(it.kind) > -1 ? it.kind : "arquivo",
           nome: nome,
           obrigatorio: it.obrigatorio === true,
+          /* Conteúdo publicado antes de o campo existir não o tem:
+             vale o mesmo padrão do catálogo, e não "cliente". */
+          fonte: fontePadrao(gid, { id: txt(it.id, 60), kind: it.kind, fonte: it.fonte }),
           resumo: txt(it.resumo, 240),
           ajuda: {
             oque: txt(it.ajuda && it.ajuda.oque, 800),
@@ -1087,7 +1122,7 @@
 
       if (!itens.length) return null;
       var novoG = {
-        id: txt(g.id, 60, "grupo-" + (i + 1)).replace(/[^a-zA-Z0-9_-]/g, "") || ("grupo-" + (i + 1)),
+        id: gid,
         escopo: ESCOPOS.indexOf(g.escopo) > -1 ? g.escopo : "empresa",
         icone: ICONES.indexOf(g.icone) > -1 ? g.icone : "ic-file",
         titulo: titulo,
@@ -1397,6 +1432,8 @@
     JORNADA: JORNADA_PADRAO,
     nomesDo: nomesDo,
     acharNoCatalogo: acharNoCatalogo,
+    fonteDe: fonteDe,
+    fontePadrao: fontePadrao,
     /* Um só julgador para os dois lados, como acontece com a capa
        da Academy: o painel usa para saber se já há manual naquele
        banco, e a página do cliente para não montar link com

@@ -138,8 +138,22 @@
     return (dados.socios || []).map(function (s) { return s.id; });
   }
 
+  /* De quem se espera o documento: "anterior" (a contabilidade
+     anterior manda para a Totali) ou "cliente". Vive no catálogo;
+     aqui só se lê, com o mesmo julgador dos dois lados. */
+  function fonteDe(item) {
+    var D = global.DATA;
+    if (D && typeof D.fonteDe === "function") return D.fonteDe(item);
+    return item && item.fonte === "anterior" ? "anterior" : "cliente";
+  }
+
   function resumoGrupo(dados, grupo) {
     var total = 0, ok = 0, pendentesObrig = 0, pendencias = 0, aprovados = 0;
+    /* O que falta E É DO CLIENTE. É o número que se cobra dele e o
+       que o lembrete automático usa: cobrar do cliente um balanço
+       que a contabilidade anterior ainda não mandou é cobrar a
+       pessoa errada. */
+    var pendentesCli = 0, pendentesObrigCli = 0;
 
     alvosDoGrupo(dados, grupo).forEach(function (socioId) {
       grupo.itens.forEach(function (item) {
@@ -149,13 +163,22 @@
         if (sit === "pendencia") pendencias++;
         if (sit === "aprovado") aprovados++;
         if (resolvida(sit)) ok++;
-        else if (item.obrigatorio) pendentesObrig++;
+        else {
+          var doCliente = fonteDe(item) === "cliente" || sit === "pendencia";
+          if (item.obrigatorio) pendentesObrig++;
+          if (doCliente) {
+            pendentesCli++;
+            if (item.obrigatorio) pendentesObrigCli++;
+          }
+        }
       });
     });
 
     return {
       total: total, ok: ok, pendentes: total - ok,
       pendentesObrigatorios: pendentesObrig,
+      pendentesDoCliente: pendentesCli,
+      pendentesObrigatoriosDoCliente: pendentesObrigCli,
       pendencias: pendencias, aprovados: aprovados,
       pct: total ? Math.round((ok / total) * 100) : 0,
       completo: total > 0 && ok === total,
@@ -164,21 +187,32 @@
   }
 
   function resumoGeral(dados, grupos) {
-    var total = 0, ok = 0, obrig = 0, pend = 0, aprov = 0;
+    var total = 0, ok = 0, obrig = 0, pend = 0, aprov = 0, cli = 0, obrigCli = 0;
     (grupos || []).forEach(function (g) {
       var r = resumoGrupo(dados, g);
       total += r.total; ok += r.ok; obrig += r.pendentesObrigatorios;
       pend += r.pendencias; aprov += r.aprovados;
+      cli += r.pendentesDoCliente; obrigCli += r.pendentesObrigatoriosDoCliente;
     });
     return {
       total: total, ok: ok, pendentes: total - ok,
       pendentesObrigatorios: obrig, pendencias: pend, aprovados: aprov,
+      pendentesDoCliente: cli, pendentesObrigatoriosDoCliente: obrigCli,
       pct: total ? Math.round((ok / total) * 100) : 0
     };
   }
 
   /* Lista plana do que está faltando — é o que a equipe cobra e o
-     que o cliente vê como "próximos passos". */
+     que o cliente vê como "próximos passos".
+
+     Cada entrada diz de quem se espera o documento (`fonte`).
+     Correção pedida é sempre do cliente: foi ele quem mandou o
+     arquivo errado, seja de onde for a fonte de origem.
+
+     `soDoCliente: true` devolve só o que depende dele — é o
+     recorte do portal e das cobranças. Sem a opção, vem tudo, que
+     é o recorte da equipe: o que a contabilidade anterior deve
+     também é trabalho pendente, só que de outra cobrança. */
   function pendencias(dados, grupos, opcoes) {
     var o = opcoes || {};
     var correcoes = [], faltando = [];
@@ -194,9 +228,12 @@
           if (sit !== "pendencia" && !faltaObrigatorio) {
             if (!(o.incluirOpcionais && sit === "pendente")) return;
           }
+          var fonte = sit === "pendencia" ? "cliente" : fonteDe(item);
+          if (o.soDoCliente && fonte !== "cliente") return;
           var entrada = {
             grupo: g, item: item, sit: sit, socio: socio,
-            chave: chaveItem(g.id, item.id, socioId)
+            chave: chaveItem(g.id, item.id, socioId),
+            fonte: fonte
           };
           if (sit === "pendencia") correcoes.push(entrada);
           else faltando.push(entrada);
@@ -215,6 +252,7 @@
     resolvida: resolvida,
     resumoGrupo: resumoGrupo,
     resumoGeral: resumoGeral,
-    pendencias: pendencias
+    pendencias: pendencias,
+    fonteDe: fonteDe
   };
 })(window);

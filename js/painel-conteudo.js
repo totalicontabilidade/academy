@@ -919,7 +919,9 @@
                   '<span style="flex:1;min-width:0">' +
                     '<span class="ac-trilha__t" style="font-size:13.5px">' + U.esc(it.nome || "(sem nome)") + '</span>' +
                     '<span class="ac-trilha__d">' + U.esc(it.kind) +
-                      (it.obrigatorio ? " · obrigatório" : " · opcional") + '</span>' +
+                      (it.obrigatorio ? " · obrigatório" : " · opcional") +
+                      (DATA.fontePadrao && DATA.fontePadrao(g.id, it) === "anterior"
+                        ? " · contabilidade anterior" : "") + '</span>' +
                   '</span>' +
                   '<button type="button" class="btn btn--quiet btn--sm" data-secao="' + U.escAttr(base) + '">' +
                     (aberto ? "Fechar" : "Editar") + '</button>' +
@@ -933,6 +935,13 @@
                             [{ v: "arquivo", r: "Envio de arquivo" }, { v: "dado", r: "Informação digitada" },
                              { v: "acesso", r: "Acesso a sistema" }]) +
                     campo("Resumo", base + ".resumo", it.resumo, { max: 240 }) +
+                    /* De quem se espera. Conteúdo publicado antes de o
+                       campo existir cai no mesmo padrão que o portal
+                       aplica — o editor mostra o que VALE, não vazio. */
+                    selecao("Quem envia", base + ".fonte",
+                            DATA.fontePadrao ? DATA.fontePadrao(g.id, it) : (it.fonte || "cliente"),
+                            [{ v: "anterior", r: "A contabilidade anterior" },
+                             { v: "cliente", r: "O cliente" }]) +
                   '</div>' +
                   marcador("Documento obrigatório", base + ".obrigatorio", it.obrigatorio === true) +
                   campo("O que é", base + ".ajuda.oque", it.ajuda && it.ajuda.oque, { max: 800, linhas: 3 }) +
@@ -1159,7 +1168,7 @@
       return { id: "", escopo: "empresa", icone: "ic-file", titulo: "", desc: "", itens: [] };
     },
     itens: function () {
-      return { id: "", kind: "arquivo", nome: "", obrigatorio: false, resumo: "",
+      return { id: "", kind: "arquivo", nome: "", obrigatorio: false, resumo: "", fonte: "cliente",
                ajuda: { oque: "", onde: [], dica: "", passosTitulo: "", passos: [], passosNota: "" } };
     },
     credenciais: function () { return { id: "", rotulo: "", tipo: "texto", dica: "", placeholder: "" }; },
@@ -1189,7 +1198,15 @@
        painel gerou nem quebrar dado já enviado sem necessidade. */
     (saida.grupos || []).forEach(function (g, i) {
       if (!g.id) g.id = "grupo-" + (i + 1);
-      (g.itens || []).forEach(function (it, j) { if (!it.id) it.id = "item-" + (j + 1); });
+      (g.itens || []).forEach(function (it, j) {
+        if (!it.id) it.id = "item-" + (j + 1);
+        /* Publicado fica explícito: o que hoje é padrão calculado
+           vira valor gravado, e mudar o padrão no código depois
+           não muda o que a equipe já publicou. */
+        if (it.fonte !== "anterior" && it.fonte !== "cliente" && DATA.fontePadrao) {
+          it.fonte = DATA.fontePadrao(g.id, it);
+        }
+      });
     });
     (saida.academy || []).forEach(function (t, i) { if (!t.id) t.id = "trilha-" + (i + 1); });
     return saida;
