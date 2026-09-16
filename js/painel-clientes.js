@@ -2439,7 +2439,7 @@
 
   function aceiteDaJornada(c) {
     var j = (c && c.jornada) || {};
-    return emMs(j.aceiteEm) || emMs((c && c.empresa || {}).criadoEm) || 0;
+    return emMs(j.aceiteEm) || emMs((c && c.empresa || {}).criadaEm) || emMs((c && c.empresa || {}).criadoEm) || 0;
   }
 
   function prazoDaEtapa(c, e) {
