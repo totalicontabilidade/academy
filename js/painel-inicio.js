@@ -282,8 +282,12 @@
             gerente de contas, não de um setor de documento. E só
             cobra nos primeiros 60 dias depois do aceite — ver
             `jornadaPendente` no painel de clientes. */
-      (PC.jornadaPendente ? PC.jornadaPendente(c) : []).forEach(function (p) {
-        var atrasada = p.atraso > 0;
+      /* Uma linha por empresa, na etapa mais antiga em aberto: com oito
+         etapas vencidas de tres clientes, o Inicio virava so jornada e
+         empurrava documento e mensagem para tras do "Mais". */
+      var pend = PC.jornadaPendente ? PC.jornadaPendente(c) : [];
+      if (pend.length) {
+        var p = pend[0], atrasada = p.atraso > 0, resto = pend.length - 1;
         linhas.push({
           peso: PESO.jornada, em: p.prazo,
           cliente: c, icone: "ic-clock", acao: "ficha", vista: "jornada",
@@ -292,11 +296,12 @@
           detalhe: (atrasada
                       ? "Atrasada há " + p.atraso + (p.atraso === 1 ? " dia" : " dias")
                       : "Vence hoje") +
+                   (resto ? " · mais " + resto + (resto === 1 ? " etapa" : " etapas") + " em aberto" : "") +
                    (p.etapa.quem ? " · " + p.etapa.quem : ""),
           selo: atrasada ? "Atrasada" : "Hoje",
           seloCls: atrasada ? "badge--pendencia" : "badge--analise"
         });
-      });
+      }
 
       /* 5. Convite entregue e nunca aberto: a migração não
             começou, e ninguém do lado de cá percebeu. */
