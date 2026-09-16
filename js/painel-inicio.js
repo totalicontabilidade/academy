@@ -67,8 +67,12 @@
   /* ------------------------------------------------------------
      Reunir o trabalho
      ------------------------------------------------------------ */
+  /* A jornada entra logo abaixo de "documento esperando
+     conferência": uma ligação de D0 atrasada é mais urgente do que
+     uma mensagem lida e não resolvida — o cliente acabou de
+     assinar e o silêncio é onde nasce o arrependimento. */
   var PESO = {
-    naoLida: 1, conferir: 2, aResolver: 3, parado: 4, convite: 5
+    naoLida: 1, conferir: 2, jornada: 3, aResolver: 4, parado: 5, convite: 6
   };
 
   /* ---------- Filtro por departamento ----------
@@ -269,6 +273,30 @@
           selo: "Cobrar", seloCls: "badge--pendente"
         });
       }
+
+      /* 6. Etapa da jornada de 30 dias vencendo hoje ou já
+            vencida. É o que faz o procedimento ser cumprido sem
+            depender de alguém lembrar de abrir a aba.
+
+            Não filtra por setor de propósito: a jornada é do
+            gerente de contas, não de um setor de documento. E só
+            cobra nos primeiros 60 dias depois do aceite — ver
+            `jornadaPendente` no painel de clientes. */
+      (PC.jornadaPendente ? PC.jornadaPendente(c) : []).forEach(function (p) {
+        var atrasada = p.atraso > 0;
+        linhas.push({
+          peso: PESO.jornada, em: p.prazo,
+          cliente: c, icone: "ic-clock", acao: "ficha", vista: "jornada",
+          empresa: nome,
+          titulo: "D" + p.etapa.dia + " · " + p.etapa.titulo,
+          detalhe: (atrasada
+                      ? "Atrasada há " + p.atraso + (p.atraso === 1 ? " dia" : " dias")
+                      : "Vence hoje") +
+                   (p.etapa.quem ? " · " + p.etapa.quem : ""),
+          selo: atrasada ? "Atrasada" : "Hoje",
+          seloCls: atrasada ? "badge--pendencia" : "badge--analise"
+        });
+      });
 
       /* 5. Convite entregue e nunca aberto: a migração não
             começou, e ninguém do lado de cá percebeu. */
@@ -615,7 +643,11 @@
     alvo.innerHTML = '<div class="card">' +
       lista.map(function (l) {
         return '<button type="button" class="tarefa" data-ir="' + U.escAttr(l.acao) +
-            '" data-alvo="' + U.escAttr(l.cliente.id) + '">' +
+            '" data-alvo="' + U.escAttr(l.cliente.id) + '"' +
+            /* Qual aba da ficha abrir. Só a jornada usa, por
+               enquanto: as outras tarefas caem em Documentos, que é
+               o padrão da ficha. */
+            (l.vista ? ' data-vista="' + U.escAttr(l.vista) + '"' : '') + '>' +
           '<span class="tarefa__icone">' + ic(l.icone) + '</span>' +
           '<span class="tarefa__txt">' +
             /* EMPRESA E AVISO SÃO DUAS COISAS, E PRECISAM PARECER DUAS.
@@ -682,7 +714,7 @@
         PC.abrirConversa(id);
       } else {
         if (global.Painel) global.Painel.abrir("clientes");
-        PC.abrirFicha(id);
+        PC.abrirFicha(id, b.getAttribute("data-vista") || "");
       }
     });
 

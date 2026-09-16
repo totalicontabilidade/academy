@@ -1221,6 +1221,170 @@
   MAQUINETAS = normalizarCatalogo(CFG.maquinetas, true).length
     ? normalizarCatalogo(CFG.maquinetas, true) : normalizarCatalogo(MAQUINETAS, true);
 
+  /* ============================================================
+     A JORNADA DE 30 DIAS — o procedimento da EQUIPE, não do cliente
+
+     Não confundir com ETAPAS, logo acima: aquelas são o que o
+     CLIENTE vê no portal como progresso dele. Esta é a trilha
+     interna que a Totali segue do aceite da proposta até o D30 —
+     quem liga, quem conduz a reunião, quando pedir feedback. O
+     cliente nunca vê nada disto.
+
+     Transcrita do treinamento "Jornada do cliente no onboarding",
+     em 16/09/2026. O documento original tem dez etapas; o Raoni
+     fundiu as duas últimas (D28 e D30) numa só, em D30, reduzida
+     a um pedido de feedback.
+
+     `dia` conta a partir do aceite da proposta. `marco` marca os
+     três momentos que, segundo o próprio treinamento, decidem a
+     percepção do cliente: a ligação em D0, a entrega de valor em
+     D15 e o fechamento em D30.
+     ============================================================ */
+  var JORNADA_PADRAO = [
+    {
+      id: "d0", dia: 0, marco: true,
+      titulo: "A hora de ouro",
+      objetivo: "Ligar nas duas primeiras horas. O gesto de maior impacto e de menor custo de todo o processo.",
+      quem: "Sócio responsável e/ou gerente de contas",
+      tarefas: [
+        "Registre o cliente e classifique a trilha (A, B ou C).",
+        "Nomeie o gerente responsável e comunique internamente.",
+        "Ligue. Não mande mensagem primeiro: ligue.",
+        "Apresente o gerente pelo nome e diga o que vem a seguir.",
+        "Agende a reunião de boas-vindas ainda nessa ligação.",
+        "Mande um WhatsApp curto confirmando o combinado."
+      ],
+      erro: "Sumir depois do aceite. O silêncio entre a assinatura e o primeiro contato é onde " +
+            "nasce o arrependimento. Mandar um contrato e um formulário como primeira interação, " +
+            "sem antes falar com o cliente."
+    },
+    {
+      id: "d1", dia: 1,
+      titulo: "Kit de boas-vindas e abertura do canal",
+      objetivo: "Dar ao cliente, por escrito, tudo o que ele precisa para não ficar em dúvida sobre nada.",
+      quem: "Gerente de contas, com apoio da implantação",
+      tarefas: [
+        "Envie o e-mail de boas-vindas com o kit completo.",
+        "Inclua quem é quem, canais, horários e o passo a passo dos próximos 30 dias.",
+        "Pergunte a preferência de canal antes de criar um grupo, se for o caso.",
+        "Combine horário de atendimento e prazo de resposta.",
+        "Envie a lista de documentos em uma folha só, com exemplos."
+      ],
+      erro: "Enviar a lista de documentos em partes, conforme alguém lembra — passa desorganização " +
+            "de forma imediata. Adicionar o cliente em um grupo com dez pessoas da firma que ele " +
+            "nunca viu."
+    },
+    {
+      id: "d2", dia: 2,
+      titulo: "Reunião de boas-vindas",
+      objetivo: "Entender o negócio do cliente e sair com um plano combinado, não apenas apresentado.",
+      quem: "Gerente de contas. Sócio nas trilhas B e C",
+      tarefas: [
+        "Prepare-se antes: leia a proposta e pesquise a empresa.",
+        "Abra pelo cliente, não pela firma. Pergunte do negócio dele.",
+        "Escute a experiência anterior. Ali está o que ele valoriza.",
+        "Descubra a maior dor atual. Ela vira a entrega de valor do D15.",
+        "Saia com uma data acordada para cada pendência."
+      ],
+      erro: "Falar da firma nos primeiros quinze minutos. O cliente já contratou: ele não precisa " +
+            "mais ser convencido, precisa ser ouvido. Sair da reunião sem uma data acordada para " +
+            "cada pendência."
+    },
+    {
+      id: "d5", dia: 5,
+      titulo: "Documentos, acessos e autorizações",
+      objetivo: "Reunir tudo o que é necessário para operar, com o menor esforço possível para o cliente.",
+      quem: "Analista de implantação, ou o gerente acompanhando",
+      tarefas: [
+        "Trabalhe na mesma lista já enviada. Não crie listas novas.",
+        "Confira o certificado digital: tipo, titularidade e validade, caso seja adquirido.",
+        "Oriente a autorização de acesso no e-CAC da Receita Federal.",
+        "Valide a autorização: ela cai sozinha se não for confirmada em 30 dias.",
+        "Obtenha os demais acessos e confirme o Domicílio Tributário Eletrônico.",
+        "A cada 48 horas envie só o que falta, nunca o que já veio."
+      ],
+      erro: "Deixar a validação da autorização de acesso para depois. Perdido o prazo, todo o " +
+            "processo recomeça e o cliente percebe. Pedir documentos aos poucos, conforme cada " +
+            "área interna lembra."
+    },
+    {
+      id: "d8", dia: 8,
+      titulo: "Transição do contador anterior",
+      objetivo: "Assumir a responsabilidade técnica sem lacunas e sem colocar o cliente no meio de um conflito.",
+      quem: "Sócio responsável e/ou gerente",
+      tarefas: [
+        "Confirme se houve distrato por escrito do contrato anterior.",
+        "Formalize o Termo de Transferência de Responsabilidade Técnica.",
+        "Solicite livros, documentos e arquivos eletrônicos ao anterior.",
+        "Conduza a conversa entre profissionais, com cortesia.",
+        "Levante obrigações em atraso, débitos e parcelamentos.",
+        "Avise o cliente quando a transição estiver concluída."
+      ],
+      erro: "Criticar o contador anterior. Além de antiético, planta no cliente a dúvida sobre " +
+            "como você falará dele um dia. Pedir que o próprio cliente cobre os documentos do " +
+            "profissional anterior."
+    },
+    {
+      id: "d12", dia: 12,
+      titulo: "Implantação técnica interna",
+      objetivo: "Deixar a operação pronta e produzir um diagnóstico honesto da situação encontrada.",
+      quem: "Contábil, fiscal e folha, coordenados pelo gerente",
+      tarefas: [
+        "Cadastre a empresa com dados societários conferidos.",
+        "Importe e concilie os saldos com os últimos balancetes.",
+        "Analise o regime tributário e registre o resultado.",
+        "Implante a folha e configure o calendário de obrigações.",
+        "Levante pendências, riscos e divergências.",
+        "Escreva o diagnóstico em uma página, para o cliente ler."
+      ],
+      erro: "Entregar o diagnóstico em linguagem técnica: o cliente não vai admitir que não " +
+            "entendeu, vai deduzir que não é importante. Guardar más notícias para não desagradar — " +
+            "o problema aparece depois, com juros de confiança."
+    },
+    {
+      id: "d15", dia: 15, marco: true,
+      titulo: "A primeira entrega de valor",
+      objetivo: "Dar um ganho concreto que o cliente consiga perceber e contar para alguém.",
+      quem: "Gerente de contas, com a área técnica",
+      tarefas: [
+        "Retome a dor principal que ele relatou na reunião de D2.",
+        "Escolha algo rápido e visível. Não precisa ser grande.",
+        "Execute e confira antes de comunicar.",
+        "Comunique em benefício, não em tarefa: quanto economizou, quanto tempo poupou.",
+        "Se não houver ganho financeiro, entregue tranquilidade."
+      ],
+      erro: "Deixar a primeira entrega de valor para depois do primeiro fechamento — no D30 o " +
+            "cliente já formou a opinião. Escolher uma entrega que interessa à firma, e não ao " +
+            "cliente."
+    },
+    {
+      id: "d20", dia: 20,
+      titulo: "Treinamento do cliente na rotina",
+      objetivo: "Ensinar o cliente a trabalhar com a firma, para a rotina fluir sem atrito.",
+      quem: "Gerente de contas",
+      tarefas: [
+        "Explique o ciclo mensal: o que ele envia, o que recebe e quando.",
+        "Entregue o calendário de rotina em uma página.",
+        "Treine o envio: por qual canal e em que formato.",
+        "Ensine a ler o que recebe. Relatório não explicado é papel.",
+        "Combine o que é urgência de verdade e como acioná-la.",
+        "Diga quem procurar na sua ausência, com nome e contato."
+      ],
+      erro: "Presumir que o cliente já sabe como funciona. Ele conhecia o método do contador " +
+            "anterior, não o seu."
+    },
+    {
+      id: "d30", dia: 30, marco: true,
+      titulo: "Fechamento e feedback",
+      objetivo: "Colher a avaliação do cliente sobre os 30 dias. Acontece mesmo que esteja tudo perfeito — principalmente se estiver.",
+      quem: "Gerente de contas e sócio responsável",
+      tarefas: [
+        "Peça ao cliente o feedback sobre os 30 dias, com pergunta aberta, e cale-se para ouvir."
+      ],
+      erro: "Transformar a conversa em apresentação da firma, sem espaço real para o cliente falar."
+    }
+  ];
+
   global.DATA = {
     ORG: ORG,
     ETAPAS: ETAPAS,
@@ -1230,6 +1394,7 @@
     FAQ: FAQ,
     BANCOS: BANCOS,
     MAQUINETAS: MAQUINETAS,
+    JORNADA: JORNADA_PADRAO,
     nomesDo: nomesDo,
     acharNoCatalogo: acharNoCatalogo,
     /* Um só julgador para os dois lados, como acontece com a capa

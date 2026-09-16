@@ -587,6 +587,27 @@ service cloud.firestore {
         allow delete: if ehEquipe();
       }
 
+      // ---------- A jornada de 30 dias ----------
+      //
+      // O andamento do procedimento interno de onboarding desta
+      // empresa: qual etapa foi concluída, por quem, quais tarefas
+      // estão feitas, anotações. Um documento só, `andamento`.
+      //
+      // SÓ A EQUIPE, e o dono da empresa NÃO. Isto é procedimento
+      // interno da Totali — quem ligou, quem conduz a reunião, o
+      // que se anotou sobre a dor do cliente. Aqui não vale o
+      // `equipeOuDono` das outras subcoleções: o cliente nunca vê,
+      // e a regra é o que garante isso, não a tela.
+      //
+      // A definição das etapas (títulos, tarefas, quem conduz) não
+      // mora aqui: vem do código, com o padrão do treinamento, e
+      // pode ser sobreposta em /configuracoes/jornada.
+      match /jornada/{doc} {
+        allow read: if ehEquipe();
+        allow create, update: if ehEquipe() && assinaturaConfere();
+        allow delete: if ehAdmin();
+      }
+
       // ---------- Acompanhamento da empresa ----------
       //
       // ATENÇÃO, e isto precisa estar claro: quem grava AQUI é o

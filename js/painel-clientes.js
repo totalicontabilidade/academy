@@ -129,8 +129,14 @@
          revogado, senão um link vazado só morre apagando a
          empresa inteira. */
       FB.db.collection("convites").where("empresaId", "==", id).get()
-        .catch(function () { return { forEach: function () {} }; })
+        .catch(function () { return { forEach: function () {} }; }),
+      /* O andamento da jornada de 30 dias. Só a equipe lê — a
+         regra nega ao dono da empresa. Falhando, a ficha abre com a
+         jornada zerada em vez de não abrir. */
+      raiz.collection("jornada").doc("andamento").get()
+        .catch(function () { return { exists: false, data: function () { return {}; } }; })
     ]).then(function (r) {
+      var jornada = (r[8] && r[8].exists) ? (r[8].data() || {}) : {};
       var itens = {};
       r[1].forEach(function (d) { itens[global.Nuvem.decodificar(d.id)] = d.data() || {}; });
 
@@ -218,7 +224,8 @@
           recibos: recibos,
           mensagens: mensagens,
           financeiro: financeiro,
-          notas: notas
+          notas: notas,
+          jornada: jornada
         };
       });
     });
@@ -1661,7 +1668,7 @@
   /* =========================================================
      Tela 2 — ficha do cliente
      ========================================================= */
-  function abrirCliente(id) {
+  function abrirCliente(id, vista) {
     var c = empresas.filter(function (x) { return x.id === id; })[0];
     if (!c) return;
     aberto = c;
@@ -1675,8 +1682,14 @@
     /* Cada cliente abre em Documentos, sempre. A vista é lembrada
        enquanto se trabalha num mesmo cliente, mas carregá-la para
        o próximo surpreende: abre-se uma ficha nova e cai numa
-       conversa que ficou de vinte minutos atrás. */
-    vistaFicha = "documentos";
+       conversa que ficou de vinte minutos atrás.
+
+       A EXCEÇÃO é quem já chega pedindo uma aba: o aviso de etapa
+       da jornada no Início abre direto em "Jornada" — mandar a
+       pessoa para Documentos e deixá-la procurar seria o clique
+       que não leva aonde prometeu. */
+    var vistasValidas = VISTAS.map(function (v) { return v.id; });
+    vistaFicha = (vista && vistasValidas.indexOf(vista) > -1) ? vista : "documentos";
     $("#clLista").hidden = true;
     $("#clTopo").hidden = true;
     $("#clFicha").hidden = false;
@@ -1745,7 +1758,12 @@
     { id: "documentos", rotulo: "Documentos", cauda: "",           icone: "ic-folder" },
     { id: "financeiro", rotulo: "Bancos",     cauda: " e senhas",  icone: "ic-card" },
     { id: "cadastro",   rotulo: "Cadastro",   cauda: " e acesso",  icone: "ic-building" },
-    { id: "conversa",   rotulo: "Conversa",   cauda: "",           icone: "ic-chat" }
+    { id: "conversa",   rotulo: "Conversa",   cauda: "",           icone: "ic-chat" },
+    /* A jornada de 30 dias: o procedimento INTERNO de onboarding.
+       Mora na ficha porque a ficha já é só da equipe; o cliente
+       nunca chega aqui, e a regra do servidor nega a leitura a
+       ele de qualquer jeito. */
+    { id: "jornada",    rotulo: "Jornada",    cauda: " de 30 dias", icone: "ic-clock" }
   ];
   var vistaFicha = "documentos";
 
@@ -2388,8 +2406,349 @@
       html += mensagensHTML(c);
     }
 
+    if (vistaFicha === "jornada") {
+      html += jornadaHTML(c);
+    }
+
     $("#clFicha").innerHTML = html;
     ligarFicha();
+  }
+
+  /* ============================================================
+     A JORNADA DE 30 DIAS
+
+     O procedimento interno de onboarding, etapa por etapa, do
+     aceite da proposta ao D30. É da EQUIPE: o cliente não vê, e a
+     regra do servidor garante isso.
+
+     Três coisas moram aqui:
+       • a definição das etapas vem de DATA.JORNADA (o treinamento
+         transcrito), não deste arquivo;
+       • o ANDAMENTO desta empresa mora em
+         empresas/{id}/jornada/andamento — aceite, tarefas feitas,
+         etapas concluídas, anotações;
+       • o relógio é o aceite da proposta. Nasce igual à data do
+         cadastro, mas é editável: a proposta costuma ser aceita
+         antes de alguém cadastrar a empresa aqui.
+     ============================================================ */
+  var DIA_MS = 86400000;
+
+  function etapasDaJornada() {
+    return (DATA.JORNADA || []).slice();
+  }
+
+  function aceiteDaJornada(c) {
+    var j = (c && c.jornada) || {};
+    return emMs(j.aceiteEm) || emMs((c && c.empresa || {}).criadoEm) || 0;
+  }
+
+  function prazoDaEtapa(c, e) {
+    var base = aceiteDaJornada(c);
+    return base ? base + e.dia * DIA_MS : 0;
+  }
+
+  function andamentoDaEtapa(c, e) {
+    var j = (c && c.jornada) || {};
+    return (j.etapas || {})[e.id] || {};
+  }
+
+  /* Dias INTEIROS entre o prazo e hoje, comparando datas e não
+     instantes: uma etapa que vence hoje às 8h não está atrasada
+     às 9h. */
+  function diasDesde(ms) {
+    if (!ms) return 0;
+    var a = new Date(ms), b = new Date();
+    a.setHours(0, 0, 0, 0); b.setHours(0, 0, 0, 0);
+    return Math.round((b - a) / DIA_MS);
+  }
+
+  function estadoDaEtapa(c, e) {
+    var a = andamentoDaEtapa(c, e);
+    if (a.concluidaEm) return "feita";
+    var prazo = prazoDaEtapa(c, e);
+    if (!prazo) return "futura";
+    var d = diasDesde(prazo);
+    if (d > 0) return "atrasada";
+    if (d === 0) return "hoje";
+    return "futura";
+  }
+
+  /* O que a tela de Início cobra: etapas vencendo hoje ou já
+     vencidas, ainda não concluídas.
+
+     SÓ NOS PRIMEIROS 60 DIAS depois do aceite. Uma empresa
+     cadastrada há meses, com a jornada nunca preenchida, poria
+     nove avisos atrasados no Início de todo mundo, para sempre — e
+     um aviso que ninguém vai atender é ruído que esconde os
+     outros. Passado esse prazo, a jornada continua na ficha, só
+     deixa de cobrar. */
+  function jornadaPendente(c) {
+    var base = aceiteDaJornada(c);
+    if (!base || diasDesde(base) > 60) return [];
+    var fora = [];
+    etapasDaJornada().forEach(function (e) {
+      var est = estadoDaEtapa(c, e);
+      if (est !== "hoje" && est !== "atrasada") return;
+      var prazo = prazoDaEtapa(c, e);
+      fora.push({ etapa: e, prazo: prazo, atraso: diasDesde(prazo) });
+    });
+    return fora;
+  }
+
+  function isoDia(ms) {
+    if (!ms) return "";
+    var d = new Date(ms);
+    var m = d.getMonth() + 1, dia = d.getDate();
+    return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (dia < 10 ? "0" : "") + dia;
+  }
+
+  function jornadaHTML(c) {
+    var etapas = etapasDaJornada();
+    var feitas = etapas.filter(function (e) { return estadoDaEtapa(c, e) === "feita"; }).length;
+    var base = aceiteDaJornada(c);
+    var temAceiteProprio = !!emMs((c.jornada || {}).aceiteEm);
+
+    /* A primeira etapa NÃO concluída nasce aberta, e as atrasadas
+       também: é onde está o trabalho. Concluídas e futuras ficam
+       recolhidas — nove cartões abertos de uma vez é uma parede
+       de texto. */
+    var abriuPrimeira = false;
+
+    var html = '<div class="card card--pad" style="margin-top:12px">' +
+      '<div class="eyebrow">Procedimento interno</div>' +
+      '<div class="item__name" style="margin-top:6px">Jornada de 30 dias</div>' +
+      '<p class="text-sm text-muted" style="margin:6px 0 12px">' +
+        'Do aceite da proposta ao fechamento, o que a equipe faz e quando. ' +
+        'O cliente não vê esta aba. ' +
+        (feitas ? feitas + ' de ' + etapas.length + ' etapas concluídas.'
+                : 'Nenhuma etapa concluída ainda.') + '</p>' +
+      '<div class="jornada__cabeca">' +
+        '<span class="field__label" style="margin:0">Aceite da proposta</span>' +
+        '<input class="input" type="date" id="jAceite" value="' + isoDia(base) + '">' +
+        '<span class="text-xs text-muted">' +
+          (temAceiteProprio ? 'Os prazos contam a partir desta data.'
+                            : 'Nasceu com a data do cadastro. Ajuste se a proposta foi aceita antes.') +
+        '</span>' +
+      '</div>' +
+    '</div>';
+
+    html += '<div class="jornada">' + etapas.map(function (e) {
+      var est = estadoDaEtapa(c, e);
+      var a = andamentoDaEtapa(c, e);
+      var prazo = prazoDaEtapa(c, e);
+      var feitasTarefas = e.tarefas.filter(function (_, i) { return a.tarefas && a.tarefas[i]; }).length;
+
+      var aberta = false;
+      if (est === "atrasada") aberta = true;
+      else if ((est === "hoje" || est === "futura") && !abriuPrimeira) { aberta = true; abriuPrimeira = true; }
+      if (est === "atrasada" && !abriuPrimeira) abriuPrimeira = true;
+
+      var quando;
+      if (est === "feita") {
+        quando = 'Concluída em <b>' + U.esc(U.dataCurta(a.concluidaEm)) + '</b>' +
+                 (a.concluidaPor ? ' por ' + U.esc(a.concluidaPor) : '');
+      } else if (est === "hoje") {
+        quando = 'Vence <b>hoje</b>' + (prazo ? ' · ' + U.esc(U.dataCurta(prazo)) : '');
+      } else if (est === "atrasada") {
+        var d = diasDesde(prazo);
+        quando = '<b>Atrasada há ' + d + (d === 1 ? ' dia' : ' dias') + '</b> · vencia ' +
+                 U.esc(U.dataCurta(prazo));
+      } else {
+        quando = prazo ? 'Vence em ' + U.esc(U.dataCurta(prazo)) : 'Sem data: informe o aceite';
+      }
+      if (est !== "feita" && e.tarefas.length) {
+        quando += ' · ' + feitasTarefas + ' de ' + e.tarefas.length + ' tarefas';
+      }
+
+      return '<section class="card jetapa jetapa--' + est + (e.marco ? ' jetapa--marco' : '') +
+          '" data-jetapa="' + U.escAttr(e.id) + '">' +
+        '<span class="jetapa__marca" aria-hidden="true">D' + e.dia + '</span>' +
+        '<button type="button" class="jetapa__cab" data-jtoggle="' + U.escAttr(e.id) +
+            '" aria-expanded="' + (aberta ? "true" : "false") + '">' +
+          '<span class="jetapa__txt">' +
+            '<span class="jetapa__t">' + U.esc(e.titulo) + '</span>' +
+            '<span class="jetapa__quando">' + quando + '</span>' +
+          '</span>' +
+          '<span class="group__chev">' + ic("ic-chevron-down") + '</span>' +
+        '</button>' +
+        '<div class="jetapa__corpo"' + (aberta ? '' : ' hidden') + '>' +
+          '<p class="jetapa__obj">' + U.esc(e.objetivo) + '</p>' +
+          '<p class="jetapa__quem">Quem conduz: <b>' + U.esc(e.quem) + '</b></p>' +
+          e.tarefas.map(function (t, i) {
+            var feita = !!(a.tarefas && a.tarefas[i]);
+            return '<label class="jtarefa' + (feita ? ' jtarefa--feita' : '') + '">' +
+              '<input type="checkbox" data-jtarefa="' + U.escAttr(e.id) + '" data-n="' + i + '"' +
+                (feita ? ' checked' : '') + (est === "feita" ? ' disabled' : '') + '>' +
+              '<span>' + U.esc(t) + '</span>' +
+            '</label>';
+          }).join("") +
+          (e.erro ? '<div class="jetapa__erro"><b>Erro comum:</b> ' + U.esc(e.erro) + '</div>' : '') +
+          '<textarea class="input jetapa__notas" data-jnotas="' + U.escAttr(e.id) + '" ' +
+            'placeholder="Anotações desta etapa — a dor que o cliente contou, o que foi combinado, datas."' +
+            (est === "feita" ? ' readonly' : '') + '>' + U.esc(a.notas || "") + '</textarea>' +
+          '<div class="jetapa__acoes">' +
+            (est === "feita"
+              ? '<button type="button" class="btn btn--ghost btn--sm" data-jreabrir="' +
+                  U.escAttr(e.id) + '">Reabrir etapa</button>'
+              : '<button type="button" class="btn btn--primary btn--sm" data-jconcluir="' +
+                  U.escAttr(e.id) + '">Concluir etapa</button>') +
+          '</div>' +
+        '</div>' +
+      '</section>';
+    }).join("") + '</div>';
+
+    return html;
+  }
+
+  /* Toda gravação da jornada passa por aqui: assinada, com merge,
+     e espelhada na memória para a tela responder na hora. */
+  function salvarJornada(c, patch, depois) {
+    var dados = patch;
+    dados.porUid = (equipe && equipe.uid) || "";
+    dados.porNome = (equipe && (equipe.nome || equipe.email)) || "equipe";
+    dados.atualizadoEm = Date.now();
+    return FB.db.collection("empresas").doc(c.id).collection("jornada").doc("andamento")
+      .set(dados, { merge: true })
+      .then(function () {
+        if (typeof depois === "function") depois();
+        desenharFicha();
+        /* Etapa concluída ou aceite mudado altera o que o Início
+           cobra. Mesmo aviso que as outras mudanças de estado. */
+        atualizarContadores();
+      }, function (e) {
+        UI.toast("Não foi possível gravar a jornada: " + FB.explicar(e), "erro", 9000);
+        desenharFicha();
+      });
+  }
+
+  function garantirJornada(c) {
+    if (!c.jornada) c.jornada = {};
+    if (!c.jornada.etapas) c.jornada.etapas = {};
+    return c.jornada;
+  }
+
+  function marcarTarefaDaJornada(c, etapaId, n, feita) {
+    var j = garantirJornada(c);
+    if (!j.etapas[etapaId]) j.etapas[etapaId] = {};
+    if (!j.etapas[etapaId].tarefas) j.etapas[etapaId].tarefas = {};
+    j.etapas[etapaId].tarefas[n] = !!feita;
+    var patch = { etapas: {} };
+    patch.etapas[etapaId] = { tarefas: {} };
+    patch.etapas[etapaId].tarefas[n] = !!feita;
+    return salvarJornada(c, patch);
+  }
+
+  function anotarNaJornada(c, etapaId, texto) {
+    var j = garantirJornada(c);
+    var t = String(texto || "").slice(0, 2000);
+    if (!j.etapas[etapaId]) j.etapas[etapaId] = {};
+    if ((j.etapas[etapaId].notas || "") === t) return;
+    j.etapas[etapaId].notas = t;
+    var patch = { etapas: {} };
+    patch.etapas[etapaId] = { notas: t };
+    return salvarJornada(c, patch);
+  }
+
+  function concluirEtapaDaJornada(c, etapaId) {
+    var j = garantirJornada(c);
+    var quem = (equipe && (equipe.nome || equipe.email)) || "equipe";
+    var agora = Date.now();
+    if (!j.etapas[etapaId]) j.etapas[etapaId] = {};
+    j.etapas[etapaId].concluidaEm = agora;
+    j.etapas[etapaId].concluidaPor = quem;
+    var patch = { etapas: {} };
+    patch.etapas[etapaId] = { concluidaEm: agora, concluidaPor: quem };
+    return salvarJornada(c, patch, function () {
+      var e = etapasDaJornada().filter(function (x) { return x.id === etapaId; })[0];
+      UI.toast((e ? "D" + e.dia + " · " + e.titulo : "Etapa") + " concluída.", "ok", 4000);
+    });
+  }
+
+  function reabrirEtapaDaJornada(c, etapaId) {
+    var j = garantirJornada(c);
+    if (j.etapas[etapaId]) {
+      delete j.etapas[etapaId].concluidaEm;
+      delete j.etapas[etapaId].concluidaPor;
+    }
+    /* Apagar campo aninhado pede `update` com caminho pontuado —
+       `set` com merge não sabe apagar. O documento existe: a etapa
+       só pode ser reaberta se foi concluída antes. */
+    var mudanca = {};
+    mudanca["etapas." + etapaId + ".concluidaEm"] = firebase.firestore.FieldValue.delete();
+    mudanca["etapas." + etapaId + ".concluidaPor"] = firebase.firestore.FieldValue.delete();
+    mudanca.porUid = (equipe && equipe.uid) || "";
+    mudanca.porNome = (equipe && (equipe.nome || equipe.email)) || "equipe";
+    mudanca.atualizadoEm = Date.now();
+    return FB.db.collection("empresas").doc(c.id).collection("jornada").doc("andamento")
+      .update(mudanca)
+      .then(function () { desenharFicha(); atualizarContadores(); },
+            function (e) {
+              UI.toast("Não foi possível reabrir: " + FB.explicar(e), "erro", 9000);
+              desenharFicha();
+            });
+  }
+
+  function definirAceiteDaJornada(c, iso) {
+    var partes = String(iso || "").split("-");
+    if (partes.length !== 3) return;
+    var ms = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2])).getTime();
+    if (!ms || isNaN(ms)) return;
+    var j = garantirJornada(c);
+    j.aceiteEm = ms;
+    return salvarJornada(c, { aceiteEm: ms });
+  }
+
+  function ligarJornada() {
+    var raiz = $("#clFicha");
+    var c = aberto;
+    if (!raiz || !c || vistaFicha !== "jornada") return;
+
+    var aceite = $("#jAceite", raiz);
+    if (aceite) aceite.addEventListener("change", function () {
+      definirAceiteDaJornada(c, aceite.value);
+    });
+
+    raiz.addEventListener("click", function (ev) {
+      var t = ev.target.closest("[data-jtoggle]");
+      if (t) {
+        var corpo = t.closest(".jetapa").querySelector(".jetapa__corpo");
+        var vai = corpo.hidden;
+        corpo.hidden = !vai;
+        t.setAttribute("aria-expanded", vai ? "true" : "false");
+        return;
+      }
+      var fim = ev.target.closest("[data-jconcluir]");
+      if (fim) {
+        var e = etapasDaJornada().filter(function (x) { return x.id === fim.getAttribute("data-jconcluir"); })[0];
+        var a = andamentoDaEtapa(c, e);
+        var faltam = e ? e.tarefas.filter(function (_, i) { return !(a.tarefas && a.tarefas[i]); }).length : 0;
+        var ir = function () { concluirEtapaDaJornada(c, fim.getAttribute("data-jconcluir")); };
+        /* Concluir com tarefa em aberto é permitido — a etapa pode
+           ter terminado de outro jeito —, mas não sem perceber. */
+        if (faltam) {
+          UI.confirmar({
+            titulo: "Concluir com tarefas em aberto",
+            mensagem: faltam + " " + U.plural(faltam, "tarefa desta etapa ainda não foi marcada",
+                                                     "tarefas desta etapa ainda não foram marcadas") +
+                      ". Concluir mesmo assim?",
+            confirmar: "Concluir"
+          }).then(function (ok) { if (ok) ir(); });
+        } else ir();
+        return;
+      }
+      var re = ev.target.closest("[data-jreabrir]");
+      if (re) { reabrirEtapaDaJornada(c, re.getAttribute("data-jreabrir")); return; }
+    });
+
+    raiz.addEventListener("change", function (ev) {
+      var cx = ev.target.closest("[data-jtarefa]");
+      if (cx) {
+        marcarTarefaDaJornada(c, cx.getAttribute("data-jtarefa"), Number(cx.getAttribute("data-n")), cx.checked);
+        return;
+      }
+      var nt = ev.target.closest("[data-jnotas]");
+      if (nt) anotarNaJornada(c, nt.getAttribute("data-jnotas"), nt.value);
+    });
   }
 
   function grupoHTML(c, g) {
@@ -5204,6 +5563,7 @@
     if (voltar) voltar.addEventListener("click", fecharCliente);
 
     ligarExtratos();
+    ligarJornada();
 
     var recarregar = $("#clRecarregar");
     if (recarregar) recarregar.addEventListener("click", function () {
@@ -6152,6 +6512,8 @@
     diasParado: diasParado,
     emMs: emMs,
     abrirFicha: abrirCliente,
+    /* Para o Início cobrar etapa da jornada vencida ou vencendo. */
+    jornadaPendente: jornadaPendente,
     abrirConversa: abrirConversa,
     aoAtualizar: function (fn) { if (typeof fn === "function") ouvintesLista.push(fn); },
     /* Para quem ACABOU de mexer no banco e sabe que a lista ficou
