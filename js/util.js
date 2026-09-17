@@ -166,6 +166,7 @@
      extensão nem por tipo MIME.
   ------------------------------------------------- */
   var MAX_ARQUIVO = 20 * 1024 * 1024;      /* 20 MB por arquivo   */
+  var MAX_ARQUIVO_EQUIPE = 60 * 1024 * 1024; /* o que a equipe registra pelo painel */
   var MAX_TOTAL   = 300 * 1024 * 1024;     /* 300 MB por empresa  */
 
   var TIPOS = {
@@ -223,11 +224,12 @@
   }
 
   /* Retorna null se OK, ou a mensagem de erro. */
-  function validaArquivo(file, totalAtual) {
+  function validaArquivo(file, totalAtual, maximo) {
+    var teto = maximo || MAX_ARQUIVO;
     if (!file) return "Arquivo inválido.";
     if (file.size === 0) return "O arquivo está vazio.";
-    if (file.size > MAX_ARQUIVO) {
-      return "Arquivo muito grande (" + bytes(file.size) + "). O limite é " + bytes(MAX_ARQUIVO) + ".";
+    if (file.size > teto) {
+      return "Arquivo muito grande (" + bytes(file.size) + "). O limite é " + bytes(teto) + ".";
     }
     var ext = extensao(file.name);
     if (!ext || EXTENSOES.indexOf(ext) === -1) {
@@ -463,6 +465,7 @@
     hashCNPJ: hashCNPJ,
     linkOttimizza: linkOttimizza,
     MAX_ARQUIVO: MAX_ARQUIVO,
+    MAX_ARQUIVO_EQUIPE: MAX_ARQUIVO_EQUIPE,
     MAX_TOTAL: MAX_TOTAL,
     ACCEPT_ATTR: ACCEPT_ATTR,
     carregarScript: carregarScript

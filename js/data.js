@@ -1287,7 +1287,8 @@
       quem: "Sócio responsável e/ou gerente de contas",
       tarefas: [
         { texto: "Registre o cliente no painel e classifique a trilha (A, B ou C)." },
-        { texto: "Nomeie o gerente responsável e comunique internamente." },
+        { texto: "Defina o gerente de contas no cadastro do cliente e comunique internamente.",
+          auto: "gerente" },
         { texto: "Ligue. Não mande mensagem primeiro: ligue." },
         { texto: "Apresente o gerente pelo nome e diga o que vem a seguir." },
         { texto: "Agende a reunião de boas-vindas ainda nessa ligação." },
@@ -1440,6 +1441,8 @@
      painel (`automacaoCumprida`); aqui é só o catálogo, para o
      editor oferecer as opções. */
   var AUTOMACOES_JORNADA = [
+    { id: "gerente", rotulo: "Gerente de contas definido",
+      como: "Marca quando o cliente tem gerente de contas no cadastro. Quem cria o cliente nasce como gerente." },
     { id: "convite", rotulo: "Convite do portal gerado",
       como: "Marca quando existe convite ou acesso ao portal desta empresa." },
     { id: "entrou", rotulo: "O cliente entrou no portal",
@@ -1464,10 +1467,13 @@
      sugestão para começar; a definição de verdade é da Totali e se
      edita em Conteúdo do portal › Jornada de 30 dias. */
   var JORNADA_CFG = {
-    trilhas: "A trilha define o peso do acompanhamento. A: empresa simples, sem funcionários, " +
-             "do Simples Nacional. B: empresa com folha de pagamento ou do Lucro Presumido. " +
-             "C: Lucro Real, mais de uma empresa ou operação complexa. Ajuste esta definição " +
-             "em Conteúdo do portal › Jornada de 30 dias."
+    trilhas: "A trilha só orienta o acompanhamento; nenhuma etapa muda por causa dela. " +
+             "Trilha A: empresa simples — MEI ou Simples Nacional, sem funcionários, um sócio; " +
+             "o gerente de contas conduz tudo. Trilha B: empresa com folha de pagamento, ou " +
+             "do Lucro Presumido, ou com mais de um sócio; o sócio responsável entra na reunião " +
+             "de boas-vindas e na primeira entrega de valor. Trilha C: Lucro Real, mais de uma " +
+             "empresa, transição com pendências fiscais ou faturamento acima do que a Totali " +
+             "considera grande; o sócio responsável acompanha a jornada inteira."
   };
 
   var JORNADA = JORNADA_PADRAO.map(function (e) { return e; });

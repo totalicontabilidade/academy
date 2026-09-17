@@ -252,7 +252,7 @@
           ic("ic-upload") +
           '<span class="rc-zona__t">Solte os arquivos ou o pacote aqui, ou clique para escolher</span>' +
           '<span class="rc-zona__d">.zip e .rar abrem sozinhos · PDF, imagem, planilha, Office, XML, ' +
-            'certificado .pfx · até ' + U.esc(U.bytes(U.MAX_ARQUIVO)) + ' cada</span>' +
+            'certificado .pfx · até ' + U.esc(U.bytes(U.MAX_ARQUIVO_EQUIPE)) + ' cada</span>' +
         '</div>' +
         '<div class="rc-lista" id="rcLista"></div>',
       acoes: [
@@ -292,7 +292,7 @@
 
     function entrarNaFila(f, pacote) {
       if (fila.length >= LIMITE) return false;
-      var erro = U.validaArquivo(f, 0);
+      var erro = U.validaArquivo(f, 0, U.MAX_ARQUIVO_EQUIPE);
       fila.push({
         arquivo: f,
         pacote: pacote || "",

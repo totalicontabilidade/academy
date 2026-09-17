@@ -90,6 +90,49 @@ function chaveLegivel(id) {
 /* ------------------------------------------------------------
    Documentos do checklist
    ------------------------------------------------------------ */
+async function ehDaEquipe(uid) {
+  if (!uid) return false;
+  try {
+    const d = await getFirestore().collection("usuarios").doc(uid).get();
+    return d.exists;
+  } catch (e) {
+    return false;
+  }
+}
+
+/* Devolve os nomes dos arquivos cuja marca foi removida, ou null.
+   Altera `depois.arquivos` no lugar, para o resto da função ver a
+   versão limpa. A regravação dispara esta função de novo, mas aí
+   nada resta a limpar e ela segue sem escrever. */
+async function limparProcedenciaForjada(ref, antes, depois, quem) {
+  const lista = Array.isArray(depois.arquivos) ? depois.arquivos : [];
+  const antigos = {};
+  (antes && Array.isArray(antes.arquivos) ? antes.arquivos : []).forEach((a) => {
+    if (a && a.id && a.origem === "anterior") antigos[a.id] = true;
+  });
+  const suspeitos = lista.filter((a) => a && a.origem === "anterior" && !antigos[a.id]);
+  if (!suspeitos.length) return null;
+  if (await ehDaEquipe(quem)) return null;
+
+  const limpos = [];
+  const novos = lista.map((a) => {
+    if (!(a && a.origem === "anterior" && !antigos[a.id])) return a;
+    const copia = { ...a };
+    delete copia.origem;
+    delete copia.recebidoPor;
+    limpos.push(texto(a.nome, 160));
+    return copia;
+  });
+  try {
+    await ref.update({ arquivos: novos });
+    depois.arquivos = novos;
+    return limpos;
+  } catch (e) {
+    console.error("nao consegui limpar procedencia forjada", e && e.message);
+    return null;
+  }
+}
+
 exports.auditarItem = onDocumentWritten(
   { document: "empresas/{empresaId}/itens/{chave}", region: REGIAO },
   async (event) => {
@@ -128,6 +171,23 @@ exports.auditarItem = onDocumentWritten(
       assinatura.por = texto(depois.porNome, 120);
     }
 
+    /* PROCEDÊNCIA CARIMBADA NO SERVIDOR (17/09/2026).
+
+       Arquivo registrado pela equipe como vindo da contabilidade
+       anterior leva `origem: "anterior"`. A regra do Firestore não
+       inspeciona o vetor de arquivos, então o cliente conseguia,
+       tecnicamente, gravar a mesma marca num arquivo que ele mesmo
+       enviou — e o dossiê afirmaria uma procedência falsa.
+
+       Aqui a marca só sobrevive se quem gravou é da equipe (existe
+       em /usuarios) ou se o arquivo já a tinha antes desta gravação
+       (o portal reescreve o vetor inteiro a cada salvamento, e
+       preserva a marca legítima). O resto é limpo, com registro. */
+    const limpos = await limparProcedenciaForjada(event.data.after.ref, antes, depois, quem);
+    if (limpos) {
+      await anotar(empresaId, "item:procedencia-removida", { ...base, ...assinatura, arquivos: limpos });
+    }
+
     /* Arquivos: quantos entraram, quantos saíram. Os nomes vão
        junto porque é o que identifica o documento numa conferência
        depois — mas o conteúdo, nunca. */
@@ -138,6 +198,8 @@ exports.auditarItem = onDocumentWritten(
       await anotar(empresaId, "item:enviado", {
         ...base, ...assinatura,
         arquivos: novos.map((a) => texto(a && a.nome, 160)),
+        /* Depois da limpeza acima, `depois.arquivos` já é a versão
+           que vale. */
         /* De onde veio: "anterior" quando a equipe registrou um
            arquivo mandado pela contabilidade anterior do cliente.
            A assinatura acima já diz QUEM registrou. */

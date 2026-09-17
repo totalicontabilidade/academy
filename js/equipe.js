@@ -620,6 +620,11 @@
           etapa: "boas-vindas",
           aceiteLGPD: null,
           criadaPor: FB.equipe.uid,
+          /* O gerente de contas nasce sendo quem cadastrou. Troca-se
+             em Editar cadastro; é o que o Início usa em "Meus
+             clientes" e o que a jornada marca no D0. */
+          gerenteUid: FB.equipe.uid,
+          gerenteNome: String(FB.equipe.nome || FB.equipe.email || "").slice(0, 120),
           criadaEm: FB.agora(),
           atualizadoEm: FB.agora()
         }).then(function () {

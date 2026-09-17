@@ -42,9 +42,13 @@ service firebase.storage {
       return ehEquipe() || ehDonoDaEmpresa(empresaId);
     }
 
-    // 20 MB por arquivo — o mesmo limite que o portal mostra.
+    // 20 MB por arquivo para o cliente — o mesmo limite que o portal
+    // mostra. A EQUIPE sobe até 60 MB: o que chega da contabilidade
+    // anterior são pacotes com PDF pesado, e 20 MB barrava livro
+    // fiscal inteiro (pedido dele, 17/09/2026).
     function tamanhoOk() {
-      return request.resource.size <= 20 * 1024 * 1024;
+      return request.resource.size <= 20 * 1024 * 1024
+             || (ehEquipe() && request.resource.size <= 60 * 1024 * 1024);
     }
 
     // Lista fechada de tipos. Nada de executável, nada de HTML

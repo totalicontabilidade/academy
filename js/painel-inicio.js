@@ -82,6 +82,22 @@
      desligar aparece. */
   var soMeuSetor = true;
 
+  /* "MEUS CLIENTES": só as empresas em que eu sou o gerente de
+     contas. Cliente sem gerente definido continua aparecendo —
+     ele não é de ninguém, então é de todo mundo. Nasce desligado:
+     quem não é gerente de nada veria a tela vazia. */
+  var soMeusClientes = false;
+  function meuCliente(c) {
+    var g = (c.empresa || {}).gerenteUid;
+    var eu = souDe();
+    return !g || !eu || g === eu.uid;
+  }
+  function haGerentes() {
+    return (global.PainelClientes ? global.PainelClientes.empresas : []).some(function (c) {
+      return !!(c.empresa || {}).gerenteUid;
+    });
+  }
+
   function souDe() { return (global.FB && global.FB.equipe) || null; }
 
   function temSetor() {
@@ -127,6 +143,7 @@
 
     PC.empresas.forEach(function (c) {
       if (PC.arquivada(c)) return;
+      if (soMeusClientes && !meuCliente(c)) return;
       var nome = PC.nomeDe(c);
 
       /* 1. Mensagem que o cliente mandou e ninguém abriu. */
@@ -566,9 +583,14 @@
        que não faz nada. */
     var chave = $("#inSetor");
     if (chave) {
-      if (!temSetor()) chave.innerHTML = "";
+      var meusHTML = haGerentes()
+        ? '<button type="button" class="filtro' + (soMeusClientes ? " filtro--on" : "") + '" id="inMeus" ' +
+            'title="Só as empresas em que você é o gerente de contas. As sem gerente também aparecem.">' +
+            'Meus clientes</button>'
+        : '';
+      if (!temSetor()) chave.innerHTML = meusHTML;
       else {
-        chave.innerHTML = '<button type="button" class="filtro' +
+        chave.innerHTML = meusHTML + '<button type="button" class="filtro' +
             (soMeuSetor ? " filtro--on" : "") + '" id="inSoMeu">' +
             U.esc(global.Departamentos.rotuloDoRecorte(souDe())) + '</button>' +
           '<button type="button" class="filtro' + (soMeuSetor ? "" : " filtro--on") +
@@ -591,6 +613,8 @@
         if (b1) b1.addEventListener("click", function () { soMeuSetor = true; desenhar(); });
         if (b2) b2.addEventListener("click", function () { soMeuSetor = false; desenhar(); });
       }
+      var b3 = $("#inMeus");
+      if (b3) b3.addEventListener("click", function () { soMeusClientes = !soMeusClientes; desenhar(); });
     }
 
     if (PC.carregando) {
