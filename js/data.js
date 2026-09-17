@@ -1282,12 +1282,12 @@
       objetivo: "Ligar nas duas primeiras horas. O gesto de maior impacto e de menor custo de todo o processo.",
       quem: "Sócio responsável e/ou gerente de contas",
       tarefas: [
-        "Registre o cliente e classifique a trilha (A, B ou C).",
-        "Nomeie o gerente responsável e comunique internamente.",
-        "Ligue. Não mande mensagem primeiro: ligue.",
-        "Apresente o gerente pelo nome e diga o que vem a seguir.",
-        "Agende a reunião de boas-vindas ainda nessa ligação.",
-        "Mande um WhatsApp curto confirmando o combinado."
+        { texto: "Registre o cliente no painel e classifique a trilha (A, B ou C)." },
+        { texto: "Nomeie o gerente responsável e comunique internamente." },
+        { texto: "Ligue. Não mande mensagem primeiro: ligue." },
+        { texto: "Apresente o gerente pelo nome e diga o que vem a seguir." },
+        { texto: "Agende a reunião de boas-vindas ainda nessa ligação." },
+        { texto: "Mande um WhatsApp curto confirmando o combinado." }
       ],
       erro: "Sumir depois do aceite. O silêncio entre a assinatura e o primeiro contato é onde " +
             "nasce o arrependimento. Mandar um contrato e um formulário como primeira interação, " +
@@ -1299,11 +1299,13 @@
       objetivo: "Dar ao cliente, por escrito, tudo o que ele precisa para não ficar em dúvida sobre nada.",
       quem: "Gerente de contas, com apoio da implantação",
       tarefas: [
-        "Envie o e-mail de boas-vindas com o kit completo.",
-        "Inclua quem é quem, canais, horários e o passo a passo dos próximos 30 dias.",
-        "Pergunte a preferência de canal antes de criar um grupo, se for o caso.",
-        "Combine horário de atendimento e prazo de resposta.",
-        "Envie a lista de documentos em uma folha só, com exemplos."
+        { texto: "Envie o convite do portal: é o kit de boas-vindas, com quem é quem, canais, horários e o passo a passo dos 30 dias.",
+          auto: "convite" },
+        { texto: "Confirme o canal preferido do cliente. Ele escolhe no cadastro do portal; se não escolher, pergunte antes de criar um grupo.",
+          auto: "canal" },
+        { texto: "Combine horário de atendimento e prazo de resposta." },
+        { texto: "A lista de documentos é o portal, em uma tela só. Confira que o cliente entrou.",
+          auto: "entrou" }
       ],
       erro: "Enviar a lista de documentos em partes, conforme alguém lembra — passa desorganização " +
             "de forma imediata. Adicionar o cliente em um grupo com dez pessoas da firma que ele " +
@@ -1315,11 +1317,11 @@
       objetivo: "Entender o negócio do cliente e sair com um plano combinado, não apenas apresentado.",
       quem: "Gerente de contas. Sócio nas trilhas B e C",
       tarefas: [
-        "Prepare-se antes: leia a proposta e pesquise a empresa.",
-        "Abra pelo cliente, não pela firma. Pergunte do negócio dele.",
-        "Escute a experiência anterior. Ali está o que ele valoriza.",
-        "Descubra a maior dor atual. Ela vira a entrega de valor do D15.",
-        "Saia com uma data acordada para cada pendência."
+        { texto: "Prepare-se antes: leia a proposta e pesquise a empresa." },
+        { texto: "Abra pelo cliente, não pela firma. Pergunte do negócio dele." },
+        { texto: "Escute a experiência anterior. Ali está o que ele valoriza." },
+        { texto: "Descubra a maior dor atual. Ela vira a entrega de valor do D15. Anote abaixo." },
+        { texto: "Saia com uma data acordada para cada pendência." }
       ],
       erro: "Falar da firma nos primeiros quinze minutos. O cliente já contratou: ele não precisa " +
             "mais ser convencido, precisa ser ouvido. Sair da reunião sem uma data acordada para " +
@@ -1331,12 +1333,14 @@
       objetivo: "Reunir tudo o que é necessário para operar, com o menor esforço possível para o cliente.",
       quem: "Analista de implantação, ou o gerente acompanhando",
       tarefas: [
-        "Trabalhe na mesma lista já enviada. Não crie listas novas.",
-        "Confira o certificado digital: tipo, titularidade e validade, caso seja adquirido.",
-        "Oriente a autorização de acesso no e-CAC da Receita Federal.",
-        "Valide a autorização: ela cai sozinha se não for confirmada em 30 dias.",
-        "Obtenha os demais acessos e confirme o Domicílio Tributário Eletrônico.",
-        "A cada 48 horas envie só o que falta, nunca o que já veio."
+        { texto: "Trabalhe na mesma lista já enviada. Não crie listas novas." },
+        { texto: "Confira o certificado digital recebido: tipo (A1 ou A3), titularidade e validade.",
+          auto: "certificado" },
+        { texto: "Oriente a autorização de acesso no e-CAC da Receita Federal." },
+        { texto: "Valide a autorização: ela cai sozinha se não for confirmada em 30 dias." },
+        { texto: "Obtenha os demais acessos e confirme o Domicílio Tributário Eletrônico." },
+        { texto: "O portal cobra sozinho o que falta, uma vez por semana. Confira que o aviso automático está ligado.",
+          auto: "aviso-automatico" }
       ],
       erro: "Deixar a validação da autorização de acesso para depois. Perdido o prazo, todo o " +
             "processo recomeça e o cliente percebe. Pedir documentos aos poucos, conforme cada " +
@@ -1348,12 +1352,14 @@
       objetivo: "Assumir a responsabilidade técnica sem lacunas e sem colocar o cliente no meio de um conflito.",
       quem: "Sócio responsável e/ou gerente",
       tarefas: [
-        "Confirme se houve distrato por escrito do contrato anterior.",
-        "Formalize o Termo de Transferência de Responsabilidade Técnica.",
-        "Solicite livros, documentos e arquivos eletrônicos ao anterior.",
-        "Conduza a conversa entre profissionais, com cortesia.",
-        "Levante obrigações em atraso, débitos e parcelamentos.",
-        "Avise o cliente quando a transição estiver concluída."
+        { texto: "Confirme se houve distrato por escrito do contrato anterior." },
+        { texto: "Formalize o Termo de Transferência de Responsabilidade Técnica." },
+        { texto: "Solicite livros, documentos e arquivos eletrônicos ao anterior e registre no portal o que chegar.",
+          auto: "anterior" },
+        { texto: "Conduza a conversa entre profissionais, com cortesia." },
+        { texto: "Levante obrigações em atraso, débitos e parcelamentos." },
+        { texto: "Conclua a migração no painel: é assim que o cliente vê a transição encerrada.",
+          auto: "migracao-concluida" }
       ],
       erro: "Criticar o contador anterior. Além de antiético, planta no cliente a dúvida sobre " +
             "como você falará dele um dia. Pedir que o próprio cliente cobre os documentos do " +
@@ -1365,12 +1371,12 @@
       objetivo: "Deixar a operação pronta e produzir um diagnóstico honesto da situação encontrada.",
       quem: "Contábil, fiscal e folha, coordenados pelo gerente",
       tarefas: [
-        "Cadastre a empresa com dados societários conferidos.",
-        "Importe e concilie os saldos com os últimos balancetes.",
-        "Analise o regime tributário e registre o resultado.",
-        "Implante a folha e configure o calendário de obrigações.",
-        "Levante pendências, riscos e divergências.",
-        "Escreva o diagnóstico em uma página, para o cliente ler."
+        { texto: "Cadastre a empresa com dados societários conferidos." },
+        { texto: "Importe e concilie os saldos com os últimos balancetes." },
+        { texto: "Analise o regime tributário e registre o resultado." },
+        { texto: "Implante a folha e configure o calendário de obrigações." },
+        { texto: "Levante pendências, riscos e divergências." },
+        { texto: "Escreva o diagnóstico em uma página, para o cliente ler." }
       ],
       erro: "Entregar o diagnóstico em linguagem técnica: o cliente não vai admitir que não " +
             "entendeu, vai deduzir que não é importante. Guardar más notícias para não desagradar — " +
@@ -1382,11 +1388,11 @@
       objetivo: "Dar um ganho concreto que o cliente consiga perceber e contar para alguém.",
       quem: "Gerente de contas, com a área técnica",
       tarefas: [
-        "Retome a dor principal que ele relatou na reunião de D2.",
-        "Escolha algo rápido e visível. Não precisa ser grande.",
-        "Execute e confira antes de comunicar.",
-        "Comunique em benefício, não em tarefa: quanto economizou, quanto tempo poupou.",
-        "Se não houver ganho financeiro, entregue tranquilidade."
+        { texto: "Retome a dor principal que ele relatou na reunião de D2." },
+        { texto: "Escolha algo rápido e visível. Não precisa ser grande." },
+        { texto: "Execute e confira antes de comunicar." },
+        { texto: "Comunique em benefício, não em tarefa: quanto economizou, quanto tempo poupou." },
+        { texto: "Se não houver ganho financeiro, entregue tranquilidade." }
       ],
       erro: "Deixar a primeira entrega de valor para depois do primeiro fechamento — no D30 o " +
             "cliente já formou a opinião. Escolher uma entrega que interessa à firma, e não ao " +
@@ -1398,12 +1404,13 @@
       objetivo: "Ensinar o cliente a trabalhar com a firma, para a rotina fluir sem atrito.",
       quem: "Gerente de contas",
       tarefas: [
-        "Explique o ciclo mensal: o que ele envia, o que recebe e quando.",
-        "Entregue o calendário de rotina em uma página.",
-        "Treine o envio: por qual canal e em que formato.",
-        "Ensine a ler o que recebe. Relatório não explicado é papel.",
-        "Combine o que é urgência de verdade e como acioná-la.",
-        "Diga quem procurar na sua ausência, com nome e contato."
+        { texto: "Explique o ciclo mensal: o que ele envia, o que recebe e quando." },
+        { texto: "Entregue o calendário de rotina em uma página." },
+        { texto: "Treine o envio dos relatórios. O cliente escolhe a forma na tela de bancos e maquininhas do portal.",
+          auto: "relatorios" },
+        { texto: "Ensine a ler o que recebe. Relatório não explicado é papel." },
+        { texto: "Combine o que é urgência de verdade e como acioná-la." },
+        { texto: "Diga quem procurar na sua ausência, com nome e contato." }
       ],
       erro: "Presumir que o cliente já sabe como funciona. Ele conhecia o método do contador " +
             "anterior, não o seu."
@@ -1414,11 +1421,89 @@
       objetivo: "Colher a avaliação do cliente sobre os 30 dias. Acontece mesmo que esteja tudo perfeito — principalmente se estiver.",
       quem: "Gerente de contas e sócio responsável",
       tarefas: [
-        "Peça ao cliente o feedback sobre os 30 dias, com pergunta aberta, e cale-se para ouvir."
+        { texto: "Peça o feedback pelo portal, com pergunta aberta, e cale-se para ouvir. Se colher em conversa, anote abaixo.",
+          auto: "feedback" }
       ],
       erro: "Transformar a conversa em apresentação da firma, sem espaço real para o cliente falar."
     }
   ];
+
+  /* ---------- O que o sistema marca sozinho ----------
+     Cada tarefa pode apontar um fato que o próprio sistema já
+     conhece. Quando o fato acontece, a tarefa aparece marcada
+     "pelo sistema", sem ninguém clicar. A pessoa continua podendo
+     marcar à mão o que o sistema ainda não viu. Quem avalia é o
+     painel (`automacaoCumprida`); aqui é só o catálogo, para o
+     editor oferecer as opções. */
+  var AUTOMACOES_JORNADA = [
+    { id: "convite", rotulo: "Convite do portal gerado",
+      como: "Marca quando existe convite ou acesso ao portal desta empresa." },
+    { id: "entrou", rotulo: "O cliente entrou no portal",
+      como: "Marca no primeiro acesso do cliente ao portal." },
+    { id: "canal", rotulo: "Canal preferido informado",
+      como: "Marca quando o cliente escolhe o canal de contato no cadastro do portal." },
+    { id: "certificado", rotulo: "Certificado digital recebido",
+      como: "Marca quando o certificado digital está enviado ou aprovado." },
+    { id: "aviso-automatico", rotulo: "Aviso automático de pendências ligado",
+      como: "Marca enquanto o aviso automático estiver ligado em Conteúdo do portal." },
+    { id: "anterior", rotulo: "Arquivos da contabilidade anterior registrados",
+      como: "Marca no primeiro arquivo registrado pela tela Receber da contabilidade anterior." },
+    { id: "migracao-concluida", rotulo: "Migração concluída no painel",
+      como: "Marca quando alguém conclui a migração na ficha do cliente." },
+    { id: "relatorios", rotulo: "Forma de enviar relatórios escolhida",
+      como: "Marca quando o cliente escolhe a forma na tela de bancos e maquininhas." },
+    { id: "feedback", rotulo: "Feedback dos 30 dias respondido",
+      como: "Marca quando o cliente responde à pergunta aberta pelo portal." }
+  ];
+
+  /* As trilhas A, B e C que o procedimento cita. O texto é uma
+     sugestão para começar; a definição de verdade é da Totali e se
+     edita em Conteúdo do portal › Jornada de 30 dias. */
+  var JORNADA_CFG = {
+    trilhas: "A trilha define o peso do acompanhamento. A: empresa simples, sem funcionários, " +
+             "do Simples Nacional. B: empresa com folha de pagamento ou do Lucro Presumido. " +
+             "C: Lucro Real, mais de uma empresa ou operação complexa. Ajuste esta definição " +
+             "em Conteúdo do portal › Jornada de 30 dias."
+  };
+
+  var JORNADA = JORNADA_PADRAO.map(function (e) { return e; });
+
+  /* O que vier do painel (configuracoes/jornada) passa por aqui.
+     Lista inválida mantém o padrão — é melhor a jornada de sempre
+     do que uma jornada vazia. */
+  function aplicarJornada(bruto) {
+    if (!bruto || typeof bruto !== "object") return false;
+    var ids = AUTOMACOES_JORNADA.map(function (a) { return a.id; });
+    var etapas = (Array.isArray(bruto.etapas) ? bruto.etapas.slice(0, 20) : []).map(function (e, i) {
+      if (!e || typeof e !== "object") return null;
+      var titulo = txt(e.titulo, 80);
+      if (!titulo) return null;
+      var dia = Number(e.dia);
+      if (!isFinite(dia) || dia < 0 || dia > 120) dia = i;
+      var tarefas = (Array.isArray(e.tarefas) ? e.tarefas.slice(0, 12) : []).map(function (t) {
+        var texto = typeof t === "string" ? txt(t, 240) : txt(t && t.texto, 240);
+        if (!texto) return null;
+        var auto = (t && typeof t === "object" && ids.indexOf(t.auto) > -1) ? t.auto : "";
+        return auto ? { texto: texto, auto: auto } : { texto: texto };
+      }).filter(Boolean);
+      return {
+        id: txt(e.id, 30, "e" + (i + 1)).replace(/[^a-zA-Z0-9_-]/g, "") || ("e" + (i + 1)),
+        dia: Math.round(dia),
+        marco: e.marco === true,
+        titulo: titulo,
+        objetivo: txt(e.objetivo, 300),
+        quem: txt(e.quem, 120),
+        tarefas: tarefas,
+        erro: txt(e.erro, 600)
+      };
+    }).filter(Boolean);
+    if (!etapas.length) return false;
+    etapas.sort(function (a, b) { return a.dia - b.dia; });
+    JORNADA.length = 0;
+    etapas.forEach(function (e) { JORNADA.push(e); });
+    if (typeof bruto.trilhas === "string") JORNADA_CFG.trilhas = txt(bruto.trilhas, 800);
+    return true;
+  }
 
   global.DATA = {
     ORG: ORG,
@@ -1429,7 +1514,11 @@
     FAQ: FAQ,
     BANCOS: BANCOS,
     MAQUINETAS: MAQUINETAS,
-    JORNADA: JORNADA_PADRAO,
+    JORNADA: JORNADA,
+    JORNADA_PADRAO: JORNADA_PADRAO,
+    JORNADA_CFG: JORNADA_CFG,
+    AUTOMACOES_JORNADA: AUTOMACOES_JORNADA,
+    aplicarJornada: aplicarJornada,
     nomesDo: nomesDo,
     acharNoCatalogo: acharNoCatalogo,
     fonteDe: fonteDe,

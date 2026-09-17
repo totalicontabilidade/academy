@@ -42,8 +42,23 @@
       maquinetas: clonar(DATA.MAQUINETAS),
       etapas: clonar(DATA.ETAPAS),
       formasRelatorio: clonar(DATA.FORMAS_RELATORIO),
-      lembretes: clonar(DATA.LEMBRETES)
+      lembretes: clonar(DATA.LEMBRETES),
+      jornada: jornadaDoPadrao()
     };
+  }
+
+  /* O que está publicado da jornada chega depois da sessão. Sem
+     rascunho, a tela passa a mostrar o publicado; com rascunho,
+     vale o rascunho — é o que a pessoa estava editando. */
+  var origemDaCarga = "padrao";
+  function sincronizarJornada() {
+    var FB = global.FB;
+    if (!FB || !FB.ligado || !FB.equipe) return;
+    FB.db.collection("configuracoes").doc("jornada").get().then(function (d) {
+      if (!d.exists) return;
+      if (DATA.aplicarJornada) DATA.aplicarJornada(d.data() || {});
+      if (origemDaCarga !== "rascunho") { C.jornada = jornadaDoPadrao(); desenhar(); }
+    }, function () {});
   }
 
   /* ---------- O que só o administrador edita ----------
@@ -68,7 +83,18 @@
      Esconder aqui é conforto. Quem decide de verdade é a regra do
      Firestore, que recusa a gravação destes blocos vinda de quem
      não é administrador — inclusive de um rascunho antigo. */
-  var SO_ADMIN = ["etapas", "faq", "textos", "org"];
+  var SO_ADMIN = ["etapas", "faq", "textos", "org", "jornada"];
+
+  /* A jornada de 30 dias mora em `C.jornada`, mas NÃO vai para o
+     documento público do portal: é procedimento interno, e o
+     cliente nunca deve ler. Publicar grava em configuracoes/jornada,
+     que só a equipe lê e só o administrador escreve. */
+  function jornadaDoPadrao() {
+    return {
+      trilhas: (DATA.JORNADA_CFG && DATA.JORNADA_CFG.trilhas) || "",
+      etapas: clonar(DATA.JORNADA || [])
+    };
+  }
 
   function souAdmin() {
     var FB = global.FB;
@@ -101,6 +127,9 @@
          mensagem vazia para os clientes. */
       if (!C.lembretes || typeof C.lembretes !== "object" || !C.lembretes.corpo) {
         C.lembretes = clonar(DATA.LEMBRETES);
+      }
+      if (!C.jornada || !Array.isArray(C.jornada.etapas) || !C.jornada.etapas.length) {
+        C.jornada = jornadaDoPadrao();
       }
       return "rascunho";
     }
@@ -318,6 +347,69 @@
      que se edita aqui é o que se lê — o que o sistema faz com
      elas continua no código, e é por isso que não há botão de
      adicionar. */
+  /* ---------- Jornada de 30 dias ----------
+
+     O procedimento interno de onboarding, etapa por etapa. Cada
+     tarefa pode apontar um fato que o sistema já sabe verificar —
+     aí ela aparece marcada sozinha na ficha do cliente. */
+  function secaoJornada() {
+    var j = C.jornada || (C.jornada = jornadaDoPadrao());
+    var autos = DATA.AUTOMACOES_JORNADA || [];
+    return '<p class="text-sm text-muted" style="margin-bottom:12px">O que a equipe faz do aceite ' +
+      'da proposta ao fechamento dos 30 dias. Aparece na aba Jornada da ficha de cada cliente; o ' +
+      'cliente não vê nada disto. Uma tarefa ligada a um fato do sistema fica marcada sozinha ' +
+      'quando o fato acontece.</p>' +
+      campo("O que são as trilhas A, B e C", "jornada.trilhas", j.trilhas,
+            { max: 800, linhas: 3, dica: "Aparece na etapa D0. Defina aqui o critério que a Totali usa." }) +
+      (j.etapas || []).map(function (e, i) {
+        var base = "jornada.etapas." + i;
+        return caixaRecolhivel({
+          chave: base,
+          titulo: "D" + (Number(e.dia) || 0) + " · " + (e.titulo || "(sem título)"),
+          resumo: (e.tarefas || []).length + " " + U.plural((e.tarefas || []).length, "tarefa", "tarefas") +
+                  (e.marco ? " · marco" : ""),
+          antes: ordemBtns("jornada.etapas", i),
+          depois: '<button type="button" class="ac-mini ac-mini--x" data-remove="jornada.etapas:' + i +
+                  '" aria-label="Remover etapa">&#215;</button>',
+          corpo: function () {
+            return '<div class="grid-2">' +
+                campo("Título", base + ".titulo", e.titulo, { max: 80 }) +
+                campo("Dia (contado do aceite)", base + ".dia", String(e.dia == null ? 0 : e.dia),
+                      { tipo: "number", max: 3 }) +
+              '</div>' +
+              marcador("Marco da jornada (destaque na linha do tempo)", base + ".marco", e.marco === true) +
+              campo("Objetivo", base + ".objetivo", e.objetivo, { max: 300, linhas: 2 }) +
+              campo("Quem conduz", base + ".quem", e.quem, { max: 120 }) +
+              '<div class="field"><label class="field__label">Tarefas</label>' +
+                (e.tarefas || []).map(function (t, k) {
+                  var tb = base + ".tarefas." + k;
+                  var texto = typeof t === "string" ? t : (t && t.texto) || "";
+                  var auto = (t && typeof t === "object" && t.auto) || "";
+                  return '<div class="ac-aula__linha" style="margin-bottom:6px;flex-wrap:wrap">' +
+                    '<input type="text" class="input" data-campo="' + U.escAttr(tb + ".texto") + '" ' +
+                      'maxlength="240" value="' + U.escAttr(texto) + '" style="flex:1 1 240px">' +
+                    '<select class="select" data-campo="' + U.escAttr(tb + ".auto") + '" style="flex:0 1 240px" ' +
+                      'title="Fato que marca esta tarefa sozinha">' +
+                      '<option value=""' + (auto ? "" : " selected") + '>Marcada à mão</option>' +
+                      autos.map(function (a) {
+                        return '<option value="' + U.escAttr(a.id) + '"' + (auto === a.id ? " selected" : "") + '>' +
+                          U.esc(a.rotulo) + '</option>';
+                      }).join("") +
+                    '</select>' +
+                    '<button type="button" class="ac-mini ac-mini--x" data-remove="' + U.escAttr(base + ".tarefas") +
+                      ':' + k + '" aria-label="Remover">&#215;</button></div>';
+                }).join("") +
+                '<button type="button" class="btn btn--quiet btn--sm" data-add="' + U.escAttr(base + ".tarefas") +
+                  '">Adicionar tarefa</button>' +
+                '<div class="field__hint">' + autos.map(function (a) { return a.rotulo + ": " + a.como; }).join(" ") + '</div>' +
+              '</div>' +
+              campo("Erro comum", base + ".erro", e.erro, { max: 600, linhas: 3 });
+          }
+        });
+      }).join("") +
+      '<button type="button" class="btn btn--ghost btn--sm" data-add="jornada.etapas">Adicionar etapa</button>';
+  }
+
   function secaoEtapas() {
     return '<p class="text-sm text-muted" style="margin-bottom:12px">Os passos que o cliente vê na ' +
       'trilha da tela inicial. A ordem e a quantidade são fixas — cada passo leva a uma tela do ' +
@@ -1076,6 +1168,11 @@
         corpo: secaoEtapas
       }),
       secao({
+        id: "jornada", icone: "ic-clock", titulo: "Jornada de 30 dias",
+        resumo: ((C.jornada || {}).etapas || []).length + " etapas · procedimento interno, só a equipe vê",
+        corpo: secaoJornada
+      }),
+      secao({
         id: "lembretes", icone: "ic-clock", titulo: "Aviso automático",
         resumo: resumoLembretes(),
         corpo: secaoLembretes
@@ -1173,6 +1270,12 @@
     },
     credenciais: function () { return { id: "", rotulo: "", tipo: "texto", dica: "", placeholder: "" }; },
     faq: function () { return { q: "", a: "" }; },
+    /* "jornada.etapas" e "jornada.etapas.N.tarefas" — os únicos
+       lugares com botão de adicionar que terminam nestes nomes. */
+    etapas: function () {
+      return { id: "", dia: 0, marco: false, titulo: "", objetivo: "", quem: "", tarefas: [], erro: "" };
+    },
+    tarefas: function () { return { texto: "", auto: "" }; },
     bancos: function () { return { nome: "", orientacao: "", manual: "", manualNome: "" }; },
     maquinetas: function () { return { nome: "", orientacao: "", semCredencial: false }; }
   };
@@ -1248,6 +1351,9 @@
     }
 
     var blocos = montarBlocos();
+    /* A jornada nunca entra no documento público do portal. */
+    var jornada = blocos.jornada;
+    delete blocos.jornada;
     var tamanho = JSON.stringify(blocos).length;
     if (tamanho > LIMITE_DOC) {
       UI.toast("O conteúdo ficou grande demais para publicar de uma vez (" +
@@ -1284,6 +1390,24 @@
         blocos: base,
         atualizadoEm: Date.now(),
         atualizadoPor: (FB.equipe && (FB.equipe.nome || FB.equipe.email)) || "equipe"
+      }).then(function () {
+        if (!(souAdmin() && jornada)) return null;
+        /* Só o administrador, e só se a lista fizer sentido —
+           `aplicarJornada` recusa lista vazia. */
+        var etapas = (jornada.etapas || []).map(function (e) {
+          return {
+            id: e.id, dia: Number(e.dia) || 0, marco: e.marco === true, titulo: e.titulo,
+            objetivo: e.objetivo, quem: e.quem, erro: e.erro,
+            tarefas: (e.tarefas || []).map(function (t) {
+              return typeof t === "string" ? { texto: t } : { texto: t.texto || "", auto: t.auto || "" };
+            }).filter(function (t) { return t.texto; })
+          };
+        }).filter(function (e) { return e.titulo; });
+        var doc = { etapas: etapas, trilhas: String(jornada.trilhas || ""),
+                    atualizadoEm: Date.now(),
+                    atualizadoPor: (FB.equipe && (FB.equipe.nome || FB.equipe.email)) || "equipe" };
+        if (DATA.aplicarJornada) DATA.aplicarJornada(doc);
+        return FB.db.collection("configuracoes").doc("jornada").set(doc);
       }).then(function () {
         soltar();
         UI.toast("Publicado. Os clientes já veem na próxima vez que abrirem o portal.", "ok", 7000);
@@ -1438,6 +1562,7 @@
     if (!$("#pcLista") || !DATA) return;
     salvar = U.debounce(gravar, 400);
     var origem = carregar();
+    origemDaCarga = origem;
     $("#pcOrigem").textContent = {
       rascunho: "Você tem um rascunho salvo neste navegador. Continue de onde parou.",
       publicado: "Carregado o conteúdo publicado no portal.",
@@ -1455,7 +1580,7 @@
        seções dele e concluía que tinham sumido. Aconteceu no teste
        desta mudança. */
     if (global.FB && global.FB.observarSessao) {
-      global.FB.observarSessao(function () { desenhar(); });
+      global.FB.observarSessao(function (quem) { if (quem) sincronizarJornada(); desenhar(); });
     }
   }
 

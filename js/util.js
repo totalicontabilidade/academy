@@ -183,6 +183,10 @@
     xls:  ["application/vnd.ms-excel"],
     xlsx: ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
     zip:  ["application/zip", "application/x-zip-compressed", ""],
+    /* Certificado digital A1, que a contabilidade anterior manda
+       junto com a senha. A regra do Storage aceita o mesmo tipo. */
+    pfx:  ["application/x-pkcs12", ""],
+    p12:  ["application/x-pkcs12", ""],
     /* Áudio — usado nas mensagens (gravação de voz e anexo). */
     mp3:  ["audio/mpeg", "audio/mp3"],
     m4a:  ["audio/mp4", "audio/x-m4a", "audio/m4a", ""],
@@ -257,6 +261,7 @@
     xls: "application/vnd.ms-excel",
     xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     zip: "application/zip",
+    pfx: "application/x-pkcs12", p12: "application/x-pkcs12",
     mp3: "audio/mpeg", m4a: "audio/mp4", ogg: "audio/ogg", oga: "audio/ogg",
     opus: "audio/ogg", wav: "audio/wav", weba: "audio/webm", amr: "audio/amr"
   };

@@ -3718,3 +3718,22 @@ details.rec:not([open]) > .rec__body{display:none}
   .rc-linha{flex-wrap:wrap}
   .rc-linha__sel{flex-basis:100%;order:3}
 }
+
+/* ---------- Jornada: tarefas automáticas, trilhas, feedback (17/09/2026) ---------- */
+.jtarefa__auto{
+  display:inline-block;margin-left:8px;font-size:10.5px;font-weight:650;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--txt-4);vertical-align:middle
+}
+.jtarefa--feita .jtarefa__auto{color:#4c9a72}
+.jetapa__trilhas{
+  font-size:12.5px;line-height:1.6;color:var(--txt-2);margin:0 0 12px;padding:10px 12px;
+  border-left:2px solid var(--gold-2);background:var(--glass);border-radius:0 10px 10px 0
+}
+.jetapa__feedback{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.jetapa__feedback-cab{font-size:12px;font-weight:650;color:var(--txt-3);width:100%}
+.jetapa__feedback-txt{
+  width:100%;white-space:pre-wrap;font-size:13.5px;line-height:1.6;color:var(--txt);
+  padding:12px 14px;border:1px solid var(--stroke);border-radius:12px;background:var(--glass)
+}
+.rc-linha__senha{flex-basis:100%;order:4;display:flex;flex-direction:column;gap:4px;padding-left:43px}
+@media (max-width:560px){.rc-linha__senha{padding-left:0}}

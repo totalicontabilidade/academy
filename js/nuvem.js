@@ -100,6 +100,7 @@
         responsavelEmail: txt(st.empresa.responsavelEmail, 200),
         responsavelTelefone: txt(st.empresa.responsavelTelefone, 200),
         responsavelCargo: txt(st.empresa.responsavelCargo, 200),
+        canalPreferido: txt(st.empresa.canalPreferido, 40),
         etapa: txt(st.etapa, 40),
         aceiteLGPD: st.aceiteLGPD == null ? null : num(st.aceiteLGPD)
       };
@@ -274,9 +275,13 @@
         raiz.collection("socios").get(),
         raiz.collection("itens").get(),
         raiz.collection("mensagens").get(),
-        raiz.collection("financeiro").get()
+        raiz.collection("financeiro").get(),
+        /* O feedback dos 30 dias, se o cliente já respondeu. Falhar
+           aqui não pode derrubar a carga: é um cartão a menos. */
+        raiz.collection("jornada").doc("feedback").get()
+          .catch(function () { return { exists: false, data: function () { return {}; } }; })
       ]).then(function (r) {
-        var empDoc = r[0], socios = r[1], itens = r[2], msgs = r[3], fin = r[4];
+        var empDoc = r[0], socios = r[1], itens = r[2], msgs = r[3], fin = r[4], fb = r[5];
 
         /* Mesmo cuidado do firebase.js: documento ausente só quer
            dizer "não existe" quando a resposta veio do SERVIDOR.
@@ -303,6 +308,10 @@
           extratosCodigo: txt(e.extratosCodigo, 40),
           contabilidadeAnterior: (e.contabilidadeAnterior && typeof e.contabilidadeAnterior === "object")
             ? { nome: txt(e.contabilidadeAnterior.nome, 120) } : null,
+          /* A equipe pediu o feedback dos 30 dias (D30 da jornada). */
+          feedbackPedidoEm: num(e.feedbackPedidoEm),
+          feedback30: (fb && fb.exists)
+            ? { texto: txt((fb.data() || {}).texto, 4000), em: num((fb.data() || {}).em) } : null,
           empresa: {
             razaoSocial: txt(e.razaoSocial, 200),
             nomeFantasia: txt(e.nomeFantasia, 200),
@@ -311,7 +320,8 @@
             responsavelNome: txt(e.responsavelNome, 200),
             responsavelEmail: txt(e.responsavelEmail, 200),
             responsavelTelefone: txt(e.responsavelTelefone, 200),
-            responsavelCargo: txt(e.responsavelCargo, 200)
+            responsavelCargo: txt(e.responsavelCargo, 200),
+            canalPreferido: txt(e.canalPreferido, 40)
           },
           socios: [], itens: {}, credenciais: {}, recibosCredenciais: {},
           mensagens: [], eventos: [], gruposNA: {}, tutoriais: {}

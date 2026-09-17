@@ -56,6 +56,7 @@ service firebase.storage {
         + '|audio/(mpeg|mp4|ogg|wav|webm|amr)'
         + '|text/(plain|csv|xml)'
         + '|application/(xml|zip|x-zip-compressed)'
+        + '|application/x-pkcs12'
         + '|application/msword'
         + '|application/vnd\\.ms-excel'
         + '|application/vnd\\.openxmlformats-officedocument\\..*'

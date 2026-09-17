@@ -134,9 +134,13 @@
          regra nega ao dono da empresa. Falhando, a ficha abre com a
          jornada zerada em vez de não abrir. */
       raiz.collection("jornada").doc("andamento").get()
+        .catch(function () { return { exists: false, data: function () { return {}; } }; }),
+      /* A resposta do cliente à pergunta aberta dos 30 dias. */
+      raiz.collection("jornada").doc("feedback").get()
         .catch(function () { return { exists: false, data: function () { return {}; } }; })
     ]).then(function (r) {
       var jornada = (r[8] && r[8].exists) ? (r[8].data() || {}) : {};
+      var feedback30 = (r[9] && r[9].exists) ? (r[9].data() || {}) : null;
       var itens = {};
       r[1].forEach(function (d) { itens[global.Nuvem.decodificar(d.id)] = d.data() || {}; });
 
@@ -225,7 +229,8 @@
           mensagens: mensagens,
           financeiro: financeiro,
           notas: notas,
-          jornada: jornada
+          jornada: jornada,
+          feedback30: feedback30
         };
       });
     });
@@ -2321,6 +2326,8 @@
             linhaDado("Função", e.responsavelCargo) +
             linhaDado("E-mail", e.responsavelEmail) +
             linhaDado("Telefone", e.responsavelTelefone) +
+            linhaDado("Canal preferido", ({ whatsapp: "WhatsApp", telefone: "Ligação", email: "E-mail",
+                                            portal: "Conversa do portal" })[e.canalPreferido] || "") +
             '<hr class="hr">' +
             linhaDado("Aceite da LGPD", e.aceiteLGPD ? U.dataHora(e.aceiteLGPD) : "") +
             '<div class="row" style="margin-top:12px">' +
@@ -2477,6 +2484,62 @@
     return Math.round((b - a) / DIA_MS);
   }
 
+  /* O QUE O SISTEMA JÁ SABE, e marca sozinho.
+
+     Cada tarefa da jornada pode apontar um fato (`auto`) que o
+     painel consegue verificar nos dados do cliente. Quando o fato
+     é verdadeiro, a tarefa aparece marcada "pelo sistema" — e
+     quem confere a jornada não precisa lembrar de clicar no que
+     já aconteceu. O catálogo dos fatos está em DATA.AUTOMACOES_JORNADA. */
+  function automacaoCumprida(c, id) {
+    var S = global.Situacao;
+    var e = c.empresa || {};
+    switch (id) {
+      case "convite":
+        return !!((c.convites || []).length || (c.acessos || []).length);
+      case "entrou":
+        return (c.acessos || []).length > 0;
+      case "canal":
+        return !!e.canalPreferido;
+      case "certificado": {
+        var achou = false;
+        DATA.GRUPOS.forEach(function (g) {
+          g.itens.forEach(function (it) {
+            if (it.id !== "certificado-digital") return;
+            var sit = S.de(c.dados, g, it, null);
+            if (["enviado", "analise", "aprovado"].indexOf(sit) > -1) achou = true;
+          });
+        });
+        return achou;
+      }
+      case "aviso-automatico":
+        return !DATA.LEMBRETES || DATA.LEMBRETES.ligado !== false;
+      case "anterior":
+        return Object.keys(c.dados.itens || {}).some(function (k) {
+          return ((c.dados.itens[k] || {}).arquivos || []).some(function (a) { return a && a.origem === "anterior"; });
+        });
+      case "migracao-concluida":
+        return e.etapa === "ativo";
+      case "relatorios":
+        return !!(c.financeiro && c.financeiro.formaRelatorio);
+      case "feedback":
+        return !!(c.feedback30 && c.feedback30.texto);
+      default:
+        return false;
+    }
+  }
+
+  function textoDaTarefa(t) { return typeof t === "string" ? t : (t && t.texto) || ""; }
+  function autoDaTarefa(t) { return (t && typeof t === "object" && t.auto) || ""; }
+
+  /* Feita à mão OU pelo sistema. */
+  function tarefaFeita(c, e, a, i) {
+    var t = e.tarefas[i];
+    if (a.tarefas && a.tarefas[i]) return true;
+    var auto = autoDaTarefa(t);
+    return !!(auto && automacaoCumprida(c, auto));
+  }
+
   function estadoDaEtapa(c, e) {
     var a = andamentoDaEtapa(c, e);
     if (a.concluidaEm) return "feita";
@@ -2545,13 +2608,23 @@
                             : 'Nasceu com a data do cadastro. Ajuste se a proposta foi aceita antes.') +
         '</span>' +
       '</div>' +
+      '<div class="jornada__cabeca">' +
+        '<span class="field__label" style="margin:0">Trilha</span>' +
+        '<select class="select" id="jTrilha" style="max-width:220px">' +
+          [["", "Não classificada"], ["A", "Trilha A"], ["B", "Trilha B"], ["C", "Trilha C"]].map(function (o) {
+            return '<option value="' + o[0] + '"' + ((c.jornada || {}).trilha === o[0] ? ' selected' : '') + '>' +
+              o[1] + '</option>';
+          }).join("") +
+        '</select>' +
+        '<span class="text-xs text-muted">Definida no aceite. O que cada trilha significa está na etapa D0.</span>' +
+      '</div>' +
     '</div>';
 
     html += '<div class="jornada">' + etapas.map(function (e) {
       var est = estadoDaEtapa(c, e);
       var a = andamentoDaEtapa(c, e);
       var prazo = prazoDaEtapa(c, e);
-      var feitasTarefas = e.tarefas.filter(function (_, i) { return a.tarefas && a.tarefas[i]; }).length;
+      var feitasTarefas = e.tarefas.filter(function (_, i) { return tarefaFeita(c, e, a, i); }).length;
 
       var aberta = false;
       if (est === "atrasada") aberta = true;
@@ -2589,14 +2662,25 @@
         '<div class="jetapa__corpo"' + (aberta ? '' : ' hidden') + '>' +
           '<p class="jetapa__obj">' + U.esc(e.objetivo) + '</p>' +
           '<p class="jetapa__quem">Quem conduz: <b>' + U.esc(e.quem) + '</b></p>' +
+          (e.id === "d0" && DATA.JORNADA_CFG && DATA.JORNADA_CFG.trilhas
+            ? '<p class="jetapa__trilhas">' + U.esc(DATA.JORNADA_CFG.trilhas) + '</p>' : '') +
           e.tarefas.map(function (t, i) {
-            var feita = !!(a.tarefas && a.tarefas[i]);
+            var auto = autoDaTarefa(t);
+            var peloSistema = !!(auto && automacaoCumprida(c, auto));
+            var feita = peloSistema || !!(a.tarefas && a.tarefas[i]);
+            var rotuloAuto = "";
+            if (auto) {
+              var def = (DATA.AUTOMACOES_JORNADA || []).filter(function (x) { return x.id === auto; })[0];
+              rotuloAuto = '<span class="jtarefa__auto" title="' + U.escAttr(def ? def.como : "") + '">' +
+                (peloSistema ? 'marcada pelo sistema' : 'o sistema marca sozinho') + '</span>';
+            }
             return '<label class="jtarefa' + (feita ? ' jtarefa--feita' : '') + '">' +
               '<input type="checkbox" data-jtarefa="' + U.escAttr(e.id) + '" data-n="' + i + '"' +
-                (feita ? ' checked' : '') + (est === "feita" ? ' disabled' : '') + '>' +
-              '<span>' + U.esc(t) + '</span>' +
+                (feita ? ' checked' : '') + (est === "feita" || peloSistema ? ' disabled' : '') + '>' +
+              '<span>' + U.esc(textoDaTarefa(t)) + rotuloAuto + '</span>' +
             '</label>';
           }).join("") +
+          feedbackDaEtapaHTML(c, e, est) +
           (e.erro ? '<div class="jetapa__erro"><b>Erro comum:</b> ' + U.esc(e.erro) + '</div>' : '') +
           '<textarea class="input jetapa__notas" data-jnotas="' + U.escAttr(e.id) + '" ' +
             'placeholder="Anotações desta etapa — a dor que o cliente contou, o que foi combinado, datas."' +
@@ -2613,6 +2697,49 @@
     }).join("") + '</div>';
 
     return html;
+  }
+
+  /* O pedido de feedback e a resposta, dentro da etapa que os
+     tem como tarefa automática. O botão grava na EMPRESA (o
+     cliente lê o próprio cadastro) e o cartão aparece no Início
+     do portal até ele responder. */
+  function feedbackDaEtapaHTML(c, e, est) {
+    var pede = (e.tarefas || []).some(function (t) { return autoDaTarefa(t) === "feedback"; });
+    if (!pede) return "";
+    var fb = c.feedback30;
+    if (fb && fb.texto) {
+      return '<div class="jetapa__feedback">' +
+        '<div class="jetapa__feedback-cab">O cliente respondeu' +
+          (fb.em ? ' · ' + U.esc(U.dataHora(emMs(fb.em) || fb.em)) : '') +
+          (fb.porNome ? ' · ' + U.esc(fb.porNome) : '') + '</div>' +
+        '<div class="jetapa__feedback-txt">' + U.esc(fb.texto) + '</div>' +
+      '</div>';
+    }
+    var pedido = emMs((c.empresa || {}).feedbackPedidoEm);
+    return '<div class="jetapa__feedback">' +
+      (pedido
+        ? '<span class="text-sm text-muted">Pedido pelo portal em ' + U.esc(U.dataCurta(pedido)) +
+          '. O cliente vê a pergunta no Início até responder.</span> '
+        : '') +
+      (est === "feita" ? '' :
+        '<button type="button" class="btn btn--' + (pedido ? 'quiet' : 'ghost') + ' btn--sm" data-jfeedback="' +
+          U.escAttr(c.id) + '">' + (pedido ? 'Pedir de novo' : 'Pedir o feedback pelo portal') + '</button>') +
+    '</div>';
+  }
+
+  function pedirFeedbackPeloPortal(c) {
+    var agora = Date.now();
+    return FB.db.collection("empresas").doc(c.id).set({
+      feedbackPedidoEm: agora,
+      feedbackPedidoPor: (equipe && (equipe.nome || equipe.email)) || "equipe",
+      atualizadoEm: agora
+    }, { merge: true }).then(function () {
+      c.empresa.feedbackPedidoEm = agora;
+      desenharFicha();
+      UI.toast("Pedido. O cliente vê a pergunta na tela inicial do portal.", "ok", 6000);
+    }, function (e) {
+      UI.toast("Não foi possível pedir: " + FB.explicar(e), "erro", 9000);
+    });
   }
 
   /* Toda gravação da jornada passa por aqui: assinada, com merge,
@@ -2722,6 +2849,12 @@
     if (aceite) aceite.addEventListener("change", function () {
       definirAceiteDaJornada(c, aceite.value);
     });
+    var trilha = $("#jTrilha", raiz);
+    if (trilha) trilha.addEventListener("change", function () {
+      var v = ["A", "B", "C"].indexOf(trilha.value) > -1 ? trilha.value : "";
+      garantirJornada(c).trilha = v;
+      salvarJornada(c, { trilha: v });
+    });
 
     raiz.addEventListener("click", function (ev) {
       var t = ev.target.closest("[data-jtoggle]");
@@ -2736,7 +2869,7 @@
       if (fim) {
         var e = etapasDaJornada().filter(function (x) { return x.id === fim.getAttribute("data-jconcluir"); })[0];
         var a = andamentoDaEtapa(c, e);
-        var faltam = e ? e.tarefas.filter(function (_, i) { return !(a.tarefas && a.tarefas[i]); }).length : 0;
+        var faltam = e ? e.tarefas.filter(function (_, i) { return !tarefaFeita(c, e, a, i); }).length : 0;
         var ir = function () { concluirEtapaDaJornada(c, fim.getAttribute("data-jconcluir")); };
         /* Concluir com tarefa em aberto é permitido — a etapa pode
            ter terminado de outro jeito —, mas não sem perceber. */
@@ -2753,6 +2886,8 @@
       }
       var re = ev.target.closest("[data-jreabrir]");
       if (re) { reabrirEtapaDaJornada(c, re.getAttribute("data-jreabrir")); return; }
+      var fb = ev.target.closest("[data-jfeedback]");
+      if (fb) { fb.disabled = true; pedirFeedbackPeloPortal(c); return; }
     });
 
     raiz.addEventListener("change", function (ev) {
@@ -4354,7 +4489,9 @@
           '<div class="item__name">' + U.esc(nomeDaChave(chave)) + '</div>' +
           '<div class="item__row"><span class="text-xs text-muted">' +
             U.esc((r.campos || []).join(", ")) +
-            (r.em ? ' · enviado em ' + U.esc(U.dataCurta(r.em)) : '') + '</span></div>' +
+            (r.em ? (r.origem === "anterior" ? ' · recebida da contabilidade anterior em '
+                                              : ' · enviado em ') + U.esc(U.dataCurta(r.em)) : '') +
+            '</span></div>' +
           '<div class="item__actions">' +
             '<button type="button" class="btn btn--ghost btn--sm" data-abrir-cred="' +
               U.escAttr(chave) + '">Ver senha</button>' +
@@ -6517,10 +6654,16 @@
      e o portal diz o contrário. Falhando a leitura, vale o padrão,
      como no portal. */
   function aplicarConteudoPublicado() {
-    return FB.db.collection("conteudo").doc("portal").get().then(function (d) {
+    var portal = FB.db.collection("conteudo").doc("portal").get().then(function (d) {
       var dados = d.exists ? (d.data() || {}) : {};
       if (dados.blocos && DATA.aplicarConteudo) DATA.aplicarConteudo(dados.blocos);
     }, function () {});
+    /* A jornada de 30 dias mora à parte: é procedimento interno, e
+       o documento do portal é público. Só a equipe lê. */
+    var jornada = FB.db.collection("configuracoes").doc("jornada").get().then(function (d) {
+      if (d.exists && DATA.aplicarJornada) DATA.aplicarJornada(d.data() || {});
+    }, function () {});
+    return Promise.all([portal, jornada]);
   }
 
   function iniciar() {

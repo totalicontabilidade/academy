@@ -26,13 +26,23 @@
    equipe; a trilha de auditoria, escrita pelo servidor, anota a
    origem junto.
 
-   O QUE NÃO FAZ
-   -------------
-   Não descompacta .zip nem .rar no navegador. Um .zip pode ser
-   registrado inteiro num documento ("livros fiscais", por
-   exemplo), mas o certo é descompactar antes e registrar arquivo
-   por arquivo — é assim que a conferência e o dossiê ficam
-   legíveis. .rar não é aceito pelo servidor.
+   ZIP E RAR ABREM AQUI MESMO (pedido dele, 17/09/2026)
+   ----------------------------------------------------
+   O pacote é aberto no navegador, com a libarchive em WebAssembly
+   (lib/libarchive/), e cada arquivo de dentro entra na lista como
+   se tivesse sido solto sozinho. Nada do pacote sobe para o
+   servidor: sobem os arquivos, um a um, cada qual no seu
+   documento. Pacote com senha não abre — a tela diz isso.
+
+   A SENHA DO CERTIFICADO
+   ----------------------
+   O certificado digital (.pfx) vem com senha, e a senha vem da
+   contabilidade anterior também. Quando a lista reconhece um
+   certificado, pede a senha na mesma linha e a guarda no cofre
+   de credenciais da empresa — cifrada aqui, no painel, com a
+   chave pública da Totali, exatamente como o portal faz com a
+   senha que o cliente digita. Quem abre depois é a função
+   abrirCredencial, com registro em /auditoria.
 
    Não avisa o cliente por mensagem. Documento chegando não é
    assunto de conversa (pedido dele, 2026-09).
@@ -45,6 +55,56 @@
   var ic = UI.icone;
 
   var LIMITE = 40;   /* arquivos por rodada — o mesmo teto por documento */
+  var PACOTES = ["zip", "rar", "7z"];
+
+  /* A biblioteca de pacotes só carrega quando o primeiro .zip ou
+     .rar aparece: é um megabyte de WebAssembly que a maioria das
+     rodadas não precisa. */
+  var Archive = null;
+  function biblioteca() {
+    if (Archive) return Promise.resolve(Archive);
+    return import("/lib/libarchive/libarchive.js").then(function (m) {
+      m.Archive.init({ workerUrl: new URL("/lib/libarchive/worker-bundle.js", location.href).href });
+      Archive = m.Archive;
+      return Archive;
+    });
+  }
+
+  function achatar(obj, caminho, saida) {
+    Object.keys(obj || {}).forEach(function (nome) {
+      var v = obj[nome];
+      if (/^(\.|__MACOSX|Thumbs\.db$|desktop\.ini$)/i.test(nome)) return;
+      if (v instanceof File) saida.push({ arquivo: v, caminho: caminho + nome });
+      else if (v && typeof v === "object") achatar(v, caminho + nome + "/", saida);
+    });
+    return saida;
+  }
+
+  /* Abre um pacote e devolve os arquivos de dentro, já com o tipo
+     deduzido pela extensão — a libarchive entrega tudo como
+     octet-stream, e a validação (e a regra do Storage) olham o
+     tipo. */
+  function descompactar(pacote) {
+    return biblioteca().then(function (A) {
+      return A.open(pacote);
+    }).then(function (arc) {
+      return Promise.resolve(arc.hasEncryptedData()).then(function (protegido) {
+        if (protegido) throw new Error("pacote-com-senha");
+        return arc.extractFiles();
+      });
+    }).then(function (arvore) {
+      return achatar(arvore, "", []).map(function (x) {
+        var f = x.arquivo;
+        return new File([f], f.name, { type: U.mimeDoArquivo(f), lastModified: f.lastModified || Date.now() });
+      });
+    });
+  }
+
+  function ehPacote(nome) { return PACOTES.indexOf(U.extensao(nome)) > -1; }
+  function ehCertificado(f) {
+    var ext = U.extensao(f.arquivo.name);
+    return ext === "pfx" || ext === "p12" || /certificado-digital$/.test(f.chave || "");
+  }
 
   /* Para onde um arquivo pode ir: todo documento de arquivo que
      não foi dispensado, um por sócio quando é de sócio. */
@@ -125,11 +185,13 @@
   }
 
   function linhaHTML(f, i, lista) {
+    var cert = !f.erro && ehCertificado(f);
     return '<div class="rc-linha" data-rc="' + i + '">' +
       '<span class="file__icon">' + ic(U.iconePorExtensao(U.extensao(f.arquivo.name))) + '</span>' +
       '<span class="rc-linha__txt">' +
         '<span class="rc-linha__n" title="' + U.escAttr(f.arquivo.name) + '">' + U.esc(f.arquivo.name) + '</span>' +
         '<span class="rc-linha__t">' + U.esc(U.bytes(f.arquivo.size)) +
+          (f.pacote ? ' · de ' + U.esc(f.pacote) : '') +
           (f.erro ? ' · <span style="color:var(--danger)">' + U.esc(f.erro) + '</span>' : '') + '</span>' +
       '</span>' +
       (f.erro
@@ -138,6 +200,16 @@
             U.escAttr(f.arquivo.name) + '">' + opcoesHTML(lista, f.chave) + '</select>') +
       '<button type="button" class="arq-x" data-rc-tira="' + i + '" title="Tirar da lista" ' +
         'aria-label="Tirar ' + U.escAttr(f.arquivo.name) + ' da lista">' + ic("ic-x") + '</button>' +
+      /* Certificado reconhecido: a senha vem junto, e vai para o
+         cofre cifrada. Sem senha, sobe só o arquivo. */
+      (cert
+        ? '<div class="rc-linha__senha">' +
+            '<input type="password" class="input" data-rc-senha="' + i + '" maxlength="120" ' +
+              'autocomplete="new-password" placeholder="Senha do certificado (guardada no cofre)" ' +
+              'value="' + U.escAttr(f.senha || "") + '">' +
+            '<span class="field__hint">Cifrada aqui e aberta só pela equipe, com registro de quem abriu.</span>' +
+          '</div>'
+        : '') +
     '</div>';
   }
 
@@ -167,8 +239,9 @@
         '<p style="font-size:13.5px;line-height:1.65;color:var(--txt-2);margin-bottom:12px">' +
           'Os arquivos que a contabilidade anterior de <strong>' +
           U.esc(c.empresa.nomeFantasia || c.empresa.razaoSocial || "este cliente") +
-          '</strong> mandou por e-mail. Descompacte o .zip, solte os arquivos aqui e diga a qual ' +
-          'documento cada um pertence. O cliente passa a ver cada um como recebido.</p>' +
+          '</strong> mandou por e-mail. Solte os arquivos, ou o .zip/.rar inteiro — o sistema abre o ' +
+          'pacote aqui mesmo. Depois diga a qual documento cada um pertence. O cliente passa a ver ' +
+          'cada um como recebido.</p>' +
         '<div class="field">' +
           '<label class="field__label" for="rcNome">Contabilidade anterior</label>' +
           '<input type="text" class="input" id="rcNome" maxlength="120" placeholder="Nome do escritório" ' +
@@ -177,9 +250,9 @@
         '</div>' +
         '<div class="rc-zona" id="rcZona" role="button" tabindex="0">' +
           ic("ic-upload") +
-          '<span class="rc-zona__t">Solte os arquivos aqui ou clique para escolher</span>' +
-          '<span class="rc-zona__d">PDF, imagem, planilha, documento do Office, XML ou .zip · até ' +
-            U.esc(U.bytes(U.MAX_ARQUIVO)) + ' cada</span>' +
+          '<span class="rc-zona__t">Solte os arquivos ou o pacote aqui, ou clique para escolher</span>' +
+          '<span class="rc-zona__d">.zip e .rar abrem sozinhos · PDF, imagem, planilha, Office, XML, ' +
+            'certificado .pfx · até ' + U.esc(U.bytes(U.MAX_ARQUIVO)) + ' cada</span>' +
         '</div>' +
         '<div class="rc-lista" id="rcLista"></div>',
       acoes: [
@@ -194,7 +267,7 @@
     var entrada = document.createElement("input");
     entrada.type = "file";
     entrada.multiple = true;
-    entrada.accept = U.ACCEPT_ATTR;
+    entrada.accept = U.ACCEPT_ATTR + ",.rar,.7z";
     entrada.style.display = "none";
     m.caixa.appendChild(entrada);
     entrada.addEventListener("change", function () {
@@ -217,19 +290,43 @@
       if (!gravando) receber(ev.dataTransfer && ev.dataTransfer.files);
     });
 
+    function entrarNaFila(f, pacote) {
+      if (fila.length >= LIMITE) return false;
+      var erro = U.validaArquivo(f, 0);
+      fila.push({
+        arquivo: f,
+        pacote: pacote || "",
+        chave: erro ? "" : (o.chave || palpite(f.name, lista)),
+        erro: erro
+      });
+      return true;
+    }
+
     function receber(arquivos) {
       if (!arquivos || !arquivos.length) return;
-      var restam = LIMITE - fila.length;
-      if (restam <= 0) { UI.toast(LIMITE + " arquivos por rodada é o limite.", "erro"); return; }
-      Array.prototype.slice.call(arquivos, 0, restam).forEach(function (f) {
-        var erro = U.validaArquivo(f, 0);
-        if (!erro && /\.rar$/i.test(f.name)) erro = "Descompacte o .rar antes: o servidor não aceita esse formato.";
-        fila.push({
-          arquivo: f,
-          chave: erro ? "" : (o.chave || palpite(f.name, lista)),
-          erro: erro
+      if (fila.length >= LIMITE) { UI.toast(LIMITE + " arquivos por rodada é o limite.", "erro"); return; }
+      var lista2 = Array.prototype.slice.call(arquivos);
+      var passo = Promise.resolve();
+      lista2.forEach(function (f) {
+        if (!ehPacote(f.name)) { entrarNaFila(f, ""); return; }
+        /* Pacote: abre aqui e entra arquivo por arquivo. */
+        passo = passo.then(function () {
+          UI.toast("Abrindo " + f.name + "…", "", 4000);
+          return descompactar(f).then(function (dentro) {
+            if (!dentro.length) { fila.push({ arquivo: f, chave: "", erro: "O pacote está vazio." }); return; }
+            var coube = dentro.every(function (x) { return entrarNaFila(x, f.name); });
+            if (!coube) UI.toast("Só os primeiros " + LIMITE + " arquivos entraram nesta rodada.", "erro", 7000);
+            desenhar();
+          }, function (e) {
+            var motivo = (e && e.message === "pacote-com-senha")
+              ? "O pacote tem senha. Abra no computador e solte os arquivos."
+              : "Não consegui abrir este pacote. Abra no computador e solte os arquivos.";
+            fila.push({ arquivo: f, chave: "", erro: motivo });
+            desenhar();
+          });
         });
       });
+      passo.then(desenhar);
       desenhar();
     }
 
@@ -250,9 +347,22 @@
 
     m.caixa.addEventListener("change", function (ev) {
       var sel = ev.target.closest("[data-rc-dest]");
-      if (!sel) return;
-      var f = fila[Number(sel.getAttribute("data-rc-dest"))];
-      if (f) f.chave = sel.value;
+      if (sel) {
+        var f = fila[Number(sel.getAttribute("data-rc-dest"))];
+        if (!f) return;
+        var eraCert = ehCertificado(f);
+        f.chave = sel.value;
+        /* Virou (ou deixou de ser) certificado: a linha ganha ou
+           perde o campo de senha. */
+        if (eraCert !== ehCertificado(f)) desenhar();
+        return;
+      }
+    });
+    m.caixa.addEventListener("input", function (ev) {
+      var sen = ev.target.closest("[data-rc-senha]");
+      if (!sen) return;
+      var f = fila[Number(sen.getAttribute("data-rc-senha"))];
+      if (f) f.senha = sen.value;
     });
     m.caixa.addEventListener("click", function (ev) {
       var tira = ev.target.closest("[data-rc-tira]");
@@ -260,6 +370,48 @@
       fila.splice(Number(tira.getAttribute("data-rc-tira")), 1);
       desenhar();
     });
+
+    /* A senha do certificado vai para o cofre, cifrada com a chave
+       pública — o mesmo envelope que o portal monta no aparelho do
+       cliente. E o recibo em financeiro/geral, para a lista "Acessos
+       e senhas" da ficha e para o botão Ver senha. */
+    function guardarSenhas(enviados) {
+      var C = global.Cripto;
+      var comSenha = enviados.filter(function (x) { return x.f.senha && ehCertificado(x.f); });
+      if (!comSenha.length) return Promise.resolve();
+      if (!C || !C.configurada) {
+        UI.toast("A senha não foi guardada: o cofre de senhas não está configurado neste painel.", "erro", 9000);
+        return Promise.resolve();
+      }
+      var raiz = FB.db.collection("empresas").doc(c.id);
+      var quem = (o.equipe && (o.equipe.nome || o.equipe.email)) || "equipe";
+      var vistas = {};
+      return comSenha.reduce(function (p, x) {
+        return p.then(function () {
+          if (vistas[x.f.chave]) return;
+          vistas[x.f.chave] = true;
+          var id = global.Nuvem.codificar(x.f.chave);
+          return C.cifrar({ senha: String(x.f.senha).slice(0, 300) }).then(function (pacote) {
+            var agora = Date.now();
+            var lote = FB.db.batch();
+            lote.set(raiz.collection("credenciais").doc(id), {
+              pacote: pacote, campos: ["senha"], atualizadoEm: agora,
+              origem: "anterior", recebidoPor: String(quem).slice(0, 120),
+              porUid: (o.equipe && o.equipe.uid) || "", porNome: String(quem).slice(0, 120)
+            });
+            var recibo = {};
+            recibo[id] = { campos: ["senha"], em: agora, origem: "anterior" };
+            lote.set(raiz.collection("financeiro").doc("geral"), { credenciaisEnviadas: recibo }, { merge: true });
+            return lote.commit().then(function () {
+              c.recibos = c.recibos || {};
+              c.recibos[x.f.chave] = recibo[id];
+            });
+          });
+        });
+      }, Promise.resolve()).catch(function (e) {
+        UI.toast("O arquivo subiu, mas a senha do certificado não foi guardada: " + FB.explicar(e), "erro", 10000);
+      });
+    }
 
     function gravar() {
       if (gravando) return;
@@ -345,7 +497,7 @@
             c.empresa.contabilidadeAnterior = c.empresa.contabilidadeAnterior || {};
             c.empresa.contabilidadeAnterior.nome = nome;
           }
-          return enviados.length;
+          return guardarSenhas(enviados).then(function () { return enviados.length; });
         }, function (e) {
           /* A gravação falhou depois de os arquivos subirem: tira
              do bucket o que ficaria órfão. Melhor esforço. */

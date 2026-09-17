@@ -157,8 +157,15 @@
       contabilidadeAnterior: null,
       empresa: {
         razaoSocial: "", nomeFantasia: "", cnpj: "", regime: "",
-        responsavelNome: "", responsavelEmail: "", responsavelTelefone: "", responsavelCargo: ""
+        responsavelNome: "", responsavelEmail: "", responsavelTelefone: "", responsavelCargo: "",
+        /* Por onde o cliente prefere ser procurado. Vai para a
+           equipe e marca sozinha uma tarefa da jornada. */
+        canalPreferido: ""
       },
+      /* Feedback dos 30 dias: a equipe pede (data) e o cliente
+         responde uma vez. Só leitura aqui; a resposta vai direto. */
+      feedbackPedidoEm: 0,
+      feedback30: null,
       socios: [],
       /* Etapa financeira — bancos e maquininhas. Veio do sistema
          "checklist financeiro", que passa a viver aqui dentro.
@@ -252,6 +259,12 @@
     s.cadastroPelaEquipe = bruto.cadastroPelaEquipe === true;
     if (typeof bruto.extratosCodigo === "string") {
       s.extratosCodigo = bruto.extratosCodigo.slice(0, 40);
+    }
+    if (typeof bruto.feedbackPedidoEm === "number") s.feedbackPedidoEm = bruto.feedbackPedidoEm;
+    if (bruto.feedback30 && typeof bruto.feedback30 === "object" &&
+        typeof bruto.feedback30.texto === "string" && bruto.feedback30.texto) {
+      s.feedback30 = { texto: bruto.feedback30.texto.slice(0, 4000),
+                       em: typeof bruto.feedback30.em === "number" ? bruto.feedback30.em : 0 };
     }
     if (bruto.contabilidadeAnterior && typeof bruto.contabilidadeAnterior === "object" &&
         typeof bruto.contabilidadeAnterior.nome === "string" && bruto.contabilidadeAnterior.nome) {

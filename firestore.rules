@@ -284,7 +284,10 @@ service cloud.firestore {
                     || (ehDonoDaEmpresa(empresaId) && soEstesCampos([
                          'responsavelNome', 'responsavelEmail',
                          'responsavelTelefone', 'responsavelCargo',
-                         'etapa', 'aceiteLGPD', 'atualizadoEm'
+                         'etapa', 'aceiteLGPD', 'atualizadoEm',
+                         // Canal de contato preferido, escolhido no cadastro
+                         // do portal. Uma palavra, e a jornada marca sozinha.
+                         'canalPreferido'
                        ]));
 
       allow delete: if ehAdmin();
@@ -443,7 +446,14 @@ service cloud.firestore {
         // puxaria o envelope. Conferido em 2026-08-24 com uma sonda
         // no endereço publicado, e nada quebrou ao fechar.
         allow read: if ehEquipe();
-        allow create, update: if ehDonoDaEmpresa(empresaId)
+        // A senha do certificado digital chega pela CONTABILIDADE
+        // ANTERIOR e quem a guarda é a equipe, pelo painel, cifrada
+        // com a mesma chave pública. Só com `origem: 'anterior'`,
+        // assinada pelo uid de quem gravou; o resto da checagem é a
+        // mesma do cliente.
+        allow create, update: if (ehDonoDaEmpresa(empresaId)
+                                  || (ehEquipe() && assinaturaConfere()
+                                      && request.resource.data.origem == 'anterior'))
                               && request.resource.data.pacote is map
                               && request.resource.data.pacote.alg is string
                               && request.resource.data.pacote.dados is string
@@ -606,6 +616,19 @@ service cloud.firestore {
         allow read: if ehEquipe();
         allow create, update: if ehEquipe() && assinaturaConfere();
         allow delete: if ehAdmin();
+      }
+
+      // O FEEDBACK DOS 30 DIAS é a única peça da jornada em que o
+      // cliente escreve: uma resposta livre, pedida pela equipe no
+      // D30. Só estes quatro campos, assinados com o próprio uid, e
+      // nada do resto da jornada fica visível para ele.
+      match /jornada/feedback {
+        allow read: if equipeOuDono(empresaId);
+        allow create, update: if ehDonoDaEmpresa(empresaId)
+                              && soEstesCamposAoCriar(['texto', 'em', 'porUid', 'porNome'])
+                              && request.resource.data.texto is string
+                              && request.resource.data.texto.size() <= 4000
+                              && request.resource.data.porUid == request.auth.uid;
       }
 
       // ---------- Acompanhamento da empresa ----------

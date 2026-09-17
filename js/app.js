@@ -797,6 +797,55 @@
       U.plural(deles, "vem", "vêm") + " da " + anterior + ".";
   }
 
+  /* ---- Feedback dos 30 dias ----
+
+     A última etapa da jornada de onboarding é ouvir o cliente,
+     com uma pergunta aberta. A equipe pede pelo painel (D30) e o
+     cartão aparece aqui até ele responder. Uma resposta só, sem
+     nota de 0 a 10: o que vale é o que ele escrever. */
+  function feedback30HTML() {
+    var st = Store.estado;
+    if (!st.feedbackPedidoEm || st.feedback30) return "";
+    return '<section class="section" id="blocoFeedback30">' +
+      '<div class="card card--pad">' +
+        '<div class="eyebrow">Seus primeiros 30 dias</div>' +
+        '<div class="item__name" style="margin-top:6px">Como está sendo para você?</div>' +
+        '<p class="text-sm text-muted" style="margin:6px 0 12px">Conte com as suas palavras: o que ' +
+          'funcionou, o que faltou, o que você mudaria. Vai direto para quem cuida da sua empresa.</p>' +
+        '<textarea class="input" id="fb30Texto" rows="4" maxlength="4000" ' +
+          'placeholder="Escreva aqui, do seu jeito."></textarea>' +
+        '<div class="item__actions">' +
+          '<button type="button" class="btn btn--primary btn--sm" data-fb30="1">' +
+            ic("ic-send") + 'Enviar</button>' +
+        '</div>' +
+      '</div>' +
+    '</section>';
+  }
+
+  function enviarFeedback30(botao) {
+    var campo = $("#fb30Texto");
+    var texto = campo ? String(campo.value || "").trim().slice(0, 4000) : "";
+    if (texto.length < 3) { if (campo) campo.focus(); return; }
+    var FB = global.FB;
+    var st = Store.estado;
+    if (!FB || !FB.db || !st.empresaId) { UI.toast("Sem conexão. Tente de novo em instantes.", "erro"); return; }
+    botao.disabled = true; botao.textContent = "Enviando…";
+    var dados = {
+      texto: texto, em: Date.now(),
+      porUid: (st.usuario && st.usuario.uid) || "",
+      porNome: (st.usuario && st.usuario.nome) || st.empresa.responsavelNome || ""
+    };
+    FB.db.collection("empresas").doc(st.empresaId).collection("jornada").doc("feedback")
+      .set(dados).then(function () {
+        st.feedback30 = { texto: texto, em: dados.em };
+        UI.toast("Obrigado. Sua resposta chegou à equipe.", "ok", 6000);
+        render();
+      }, function (e) {
+        botao.disabled = false; botao.innerHTML = ic("ic-send") + "Enviar";
+        UI.toast("Não foi possível enviar: " + (FB.explicar ? FB.explicar(e) : (e && e.message)), "erro", 9000);
+      });
+  }
+
   function viewInicio() {
     var st = Store.estado;
     var resumo = Store.resumoGeral();
@@ -864,6 +913,8 @@
        precisa agir de novo. Antes ficava só no meio da lista de
        "próximos passos", sem o motivo, e o cliente descobria que
        algo tinha voltado só se abrisse o documento certo. */
+    html += feedback30HTML();
+
     var correcoes = correcoesPedidas();
     if (correcoes.length) {
       html +=
@@ -1744,9 +1795,9 @@
     '<section class="section">' +
       '<div class="notice notice--info">' +
         '<span class="notice__icon">' + ic("ic-info") + '</span>' +
-        '<span>Não encontrou algum documento com o contador anterior? ' +
-        '<a href="#/ajuda" data-rota="ajuda">Fale com a gente</a> — a maioria pode ser obtida ' +
-        'direto nos portais oficiais e nós ajudamos nesse caminho.</span>' +
+        '<span>A sua contabilidade anterior está demorando, ou algum documento não existe? ' +
+        '<a href="#/ajuda" data-rota="ajuda">Fale com a gente</a> — nós cobramos por você, e a ' +
+        'maioria pode ser obtida direto nos portais oficiais.</span>' +
       '</div>' +
     '</section>';
 
@@ -3532,6 +3583,18 @@
             'value="' + U.escAttr(e.responsavelTelefone) + '" placeholder="(00) 00000-0000"></div>' +
         '</div>' +
 
+        /* Por onde a pessoa prefere ser procurada. Vai para a equipe
+           e evita o grupo de WhatsApp que ninguém pediu. */
+        '<div class="field"><label class="field__label" for="fCanal">Como você prefere que a gente ' +
+          'fale com você?</label>' +
+          '<select class="select" id="fCanal" data-emp="canalPreferido">' +
+            [["", "Escolha…"], ["whatsapp", "WhatsApp"], ["telefone", "Ligação"],
+             ["email", "E-mail"], ["portal", "Pela conversa deste portal"]].map(function (o) {
+              return '<option value="' + o[0] + '"' + (e.canalPreferido === o[0] ? ' selected' : '') + '>' +
+                U.esc(o[1]) + '</option>';
+            }).join("") +
+          '</select></div>' +
+
         '<div class="notice" style="margin-top:4px">' +
           '<span class="notice__icon">' + ic("ic-check-circle") + '</span>' +
           '<span>As alterações são salvas sozinhas assim que você sai do campo.</span>' +
@@ -4833,6 +4896,9 @@
         if (cxf) iniciarFotoInput(cxf.chave);
         return;
       }
+
+      var fb30 = ev.target.closest("[data-fb30]");
+      if (fb30) { enviarFeedback30(fb30); return; }
 
       var enviar = ev.target.closest("[data-enviar]");
       if (enviar) {
