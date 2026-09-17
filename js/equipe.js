@@ -186,8 +186,9 @@
   function mensagemPronta(nomeEmpresa, link) {
     return "Olá! Seja bem-vindo à Totali Soluções Contábeis.\n\n" +
       "Preparamos o Portal do Cliente para " + nomeEmpresa + ", para organizarmos a entrada " +
-      "da sua empresa aqui no escritório. Nele você vê a lista de documentos que precisamos, " +
-      "envia tudo pelo próprio celular e acompanha cada etapa.\n\n" +
+      "da sua empresa aqui no escritório. Nele você acompanha os documentos que a sua " +
+      "contabilidade anterior nos envia, manda pelo próprio celular o pouco que só você tem " +
+      "(documentos dos sócios e acessos) e acompanha cada etapa.\n\n" +
       link + "\n\n" +
       "Dá para deixar como aplicativo no celular: abra o link e toque no ícone de download, " +
       "no alto da tela.\n" +

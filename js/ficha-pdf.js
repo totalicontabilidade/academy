@@ -210,7 +210,8 @@
          quando. O conteúdo cifrado nunca chega aqui. */
       recibos: Object.keys(c.recibos || {}).map(function (chave) {
         var r = (c.recibos || {})[chave] || {};
-        return { nome: nomeDaChave(chave), campos: (r.campos || []).join(", "), em: r.em || 0 };
+        return { nome: nomeDaChave(chave), campos: (r.campos || []).join(", "), em: r.em || 0,
+                 daAnterior: r.origem === "anterior" };
       })
     };
   }
@@ -536,14 +537,17 @@
       /* ---- credenciais: só o inventário ---- */
       titulo("Acessos e senhas guardados");
       if (!d.recibos.length) {
-        paragrafo("Nenhum acesso enviado por este cliente.");
+        paragrafo("Nenhum acesso guardado para este cliente.");
       } else {
-        paragrafo("O cliente enviou " + d.recibos.length + " " +
-                  (d.recibos.length === 1 ? "acesso" : "acessos") +
+        paragrafo(d.recibos.length + " " +
+                  (d.recibos.length === 1 ? "acesso guardado" : "acessos guardados") +
+                  ", enviados pelo cliente ou recebidos da contabilidade anterior" +
                   ". Os dados ficam cifrados e só são abertos na tela do painel, com a chave " +
                   "privada — por segurança, nenhum deles é impresso aqui.");
         d.recibos.forEach(function (r) {
-          dado(r.nome, r.campos + (r.em ? "  ·  enviado em " + dataCurta(r.em) : ""));
+          dado(r.nome, r.campos + (r.em
+            ? (r.daAnterior ? "  ·  recebido da contabilidade anterior em " : "  ·  enviado em ") + dataCurta(r.em)
+            : ""));
         });
       }
 

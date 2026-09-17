@@ -544,8 +544,9 @@
     '<section class="hero">' +
       '<div class="eyebrow">Seja bem-vindo</div>' +
       '<h1 class="hero__title">Sua contabilidade começa aqui</h1>' +
-      '<p class="hero__desc">Este é o portal onde você envia a documentação da sua empresa, ' +
-        'acompanha cada etapa da migração e aprende a usar os serviços da ' + U.esc(DATA.ORG.curto) + '. ' +
+      '<p class="hero__desc">Este é o portal onde você acompanha a entrada da sua empresa na ' +
+        U.esc(DATA.ORG.curto) + ': a documentação que a sua contabilidade anterior nos manda, o pouco ' +
+        'que só você pode enviar, cada etapa da migração e, depois, como usar os nossos serviços. ' +
         'Leva poucos minutos para começar.</p>' +
     '</section>' +
 
@@ -760,8 +761,10 @@
       ? '<button type="button" class="btn btn--gold" data-rota="documentos" data-grupo="' +
           U.escAttr(passo.grupo.id) + '" data-alvo="' + U.escAttr(passo.chave) + '">' +
           ic("ic-chevron-right") + 'Continuar de onde parei</button>'
+      /* Sem nada seu para enviar, o botão leva a acompanhar — e não
+         promete um envio que não existe. */
       : '<button type="button" class="btn btn--gold" data-rota="documentos">' +
-          ic("ic-upload") + 'Enviar documentos</button>';
+          ic("ic-folder") + 'Ver documentos</button>';
 
     return '<div class="hero__actions">' + principal +
         '<button type="button" class="btn btn--ghost" data-rota="ajuda">' +
@@ -1769,9 +1772,9 @@
     '<section class="section">' +
       '<div class="section__head"><div>' +
         '<div class="eyebrow">Etapa 3</div>' +
-        '<h1 class="section__title" style="font-size:20px;margin-top:4px">Envio de documentos</h1>' +
-        '<p class="section__desc">Toque em um grupo para abrir a lista. Cada item explica o que é, ' +
-          'onde conseguir e como enviar.</p>' +
+        '<h1 class="section__title" style="font-size:20px;margin-top:4px">Documentos</h1>' +
+        '<p class="section__desc">Toque em um grupo para abrir a lista. Cada item diz o que é, de ' +
+          'quem se espera e como enviar, quando for seu.</p>' +
       '</div>' +
       /* O tempo real do portal cobre só a conversa. Quando a equipe
          aprova um documento ou pede correção, esta tela continua
@@ -3733,8 +3736,8 @@
       '<span class="feito__txt">' +
         '<span class="feito__t">Etapa concluída: dados da empresa</span>' +
         '<span class="feito__d">Recebemos o cadastro, o contato do responsável e os sócios. ' +
-          'O próximo passo é enviar os documentos — a tela de início mostra quais são ' +
-          'e por onde começar.</span>' +
+          'O próximo passo são os documentos: a maior parte vem da sua contabilidade anterior, ' +
+          'e a tela de início mostra o que só você pode enviar.</span>' +
         '<span class="feito__acoes">' +
           '<button type="button" class="btn btn--gold" data-rota="inicio">' +
             ic("ic-home") + 'Voltar ao início</button>' +
@@ -5176,8 +5179,9 @@
           'Os dados da sua empresa, o contato do responsável e os sócios já estão com a Totali. ' +
           'Não precisa salvar nada — já está guardado.</p>' +
         '<p style="font-size:14px;line-height:1.7;color:var(--txt-2);margin-top:10px">' +
-          '<strong style="color:var(--txt)">O próximo passo é enviar os documentos.</strong> ' +
-          'Na tela de início você vê a lista do que falta e a ordem sugerida.</p>',
+          '<strong style="color:var(--txt)">O próximo passo são os documentos.</strong> ' +
+          'A maior parte vem da sua contabilidade anterior direto para nós; na tela de início ' +
+          'você vê o que só você pode enviar.</p>',
       acoes: [
         { rotulo: "Continuar aqui", classe: "btn--ghost" },
         {

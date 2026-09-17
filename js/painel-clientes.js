@@ -4017,7 +4017,8 @@
 
     var corpo;
     if (!chaves.length) {
-      corpo = '<p class="text-sm text-muted">Nenhum acesso enviado por este cliente.</p>';
+      corpo = '<p class="text-sm text-muted">Nenhum acesso guardado: nem enviado pelo cliente, nem ' +
+        'recebido da contabilidade anterior.</p>';
     } else {
       corpo = chaves.map(function (chave) {
         var r = c.recibos[chave] || {};
@@ -4041,7 +4042,7 @@
       id: "credenciais", icone: "ic-lock", titulo: "Acessos e senhas",
       resumo: chaves.length
         ? "Toda a equipe pode abrir · cada abertura fica registrada"
-        : "Nenhum acesso enviado",
+        : "Nenhum acesso guardado",
       selo: chaves.length ? chaves.length + " " +
         U.plural(chaves.length, "guardado", "guardados") : "",
       seloCls: "badge--aprovado",
