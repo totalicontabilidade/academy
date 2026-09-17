@@ -830,10 +830,13 @@
     var st = Store.estado;
     if (!FB || !FB.db || !st.empresaId) { UI.toast("Sem conexão. Tente de novo em instantes.", "erro"); return; }
     botao.disabled = true; botao.textContent = "Enviando…";
+    /* A assinatura é o uid da sessão, que é o que a regra do
+       servidor confere. `Store.estado.usuario` não o carrega. */
+    var u = FB.auth && FB.auth.currentUser;
     var dados = {
       texto: texto, em: Date.now(),
-      porUid: (st.usuario && st.usuario.uid) || "",
-      porNome: (st.usuario && st.usuario.nome) || st.empresa.responsavelNome || ""
+      porUid: (u && u.uid) || "",
+      porNome: String(nomeDeQuemUsa() || st.empresa.responsavelNome || "").slice(0, 120)
     };
     FB.db.collection("empresas").doc(st.empresaId).collection("jornada").doc("feedback")
       .set(dados).then(function () {
