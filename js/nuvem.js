@@ -393,6 +393,7 @@
             responsavelEmail: emp.responsavelEmail,
             responsavelTelefone: emp.responsavelTelefone,
             responsavelCargo: emp.responsavelCargo,
+            canalPreferido: emp.canalPreferido,
             etapa: emp.etapa,
             aceiteLGPD: emp.aceiteLGPD,
             atualizadoEm: Date.now()
