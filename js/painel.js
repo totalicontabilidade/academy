@@ -398,10 +398,11 @@
      tela vira o único lugar com identidade — aí entra a logo
      completa da contabilidade.
 
-     Aqui é a marca da TOTALI, não a do Portal do Cliente: este
-     painel é ferramenta interna do escritório, não daquele produto. */
+     A marca é a do PORTAL DO CLIENTE, a mesma que o cliente vê
+     (pedido do Raoni, 17/09/2026): o painel é a outra face do mesmo
+     produto, e a marca do escritório ficava destoando. */
   var MARCA_SIMBOLO = { src: "assets/totali-simbolo.png", w: 220, h: 230 };
-  var MARCA_CHEIA   = { src: "assets/totali-contabil-branca.png", w: 730, h: 277 };
+  var MARCA_CHEIA   = { src: "assets/totali-portal-branca.png", w: 660, h: 235 };
 
   function trocarMarca(cheia) {
     var img = $("#pnLogo");
