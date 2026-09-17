@@ -54,10 +54,10 @@
     },
     {
       id: "documentos",
-      titulo: "Envio de documentos",
-      desc: "Você envia a documentação da lista. Pode fazer aos poucos — nada se perde.",
+      titulo: "Documentos",
+      desc: "A maior parte vem da sua contabilidade anterior, direto para nós. Você acompanha por aqui e envia só o que é seu: documentos dos sócios e acessos.",
       rota: "documentos",
-      acao: "Enviar documentos"
+      acao: "Ver documentos"
     },
     {
       id: "financeiro",
@@ -883,6 +883,10 @@
   ];
   /* ---------- Perguntas frequentes ---------- */
   var FAQ_PADRAO = [
+    {
+      q: "Quem envia os documentos?",
+      a: "A sua contabilidade anterior manda a maior parte (contrato social, balanços, livros, folha e certificado digital) por e-mail para a Totali. Nós registramos no portal e você acompanha cada um como recebido. Só você pode enviar os documentos dos sócios e informar os acessos com senha. Se tiver algum outro arquivo em mãos, pode enviar também — adianta."
+    },
     {
       q: "Preciso enviar tudo de uma vez?",
       a: "Não. Envie no seu ritmo — cada arquivo fica salvo assim que você anexa e a barra de progresso vai acompanhando. Você pode fechar o portal e voltar depois de onde parou."
