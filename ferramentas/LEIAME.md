@@ -186,7 +186,7 @@ uma vez:
 
     cd ~/totali
     for f in limpar-contas limpar-firestore anonimizar-auditoria zerar-trilhas; do
-      curl -fsSL -O "https://raw.githubusercontent.com/totalicontabilidade/portaldocliente/main/ferramentas/$f.js"
+      curl -fsSL -O "https://raw.githubusercontent.com/totalicontabilidade/academy/main/ferramentas/$f.js"
     done
     ls -l *.js
 

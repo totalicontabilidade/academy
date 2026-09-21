@@ -544,7 +544,7 @@ E acesse `http://localhost:8099`.
 ### 1. Subir o código
 
 ```bash
-git remote add origin https://github.com/totalicontabilidade/portaldocliente.git
+git remote add origin https://github.com/totalicontabilidade/academy.git
 git push -u origin main
 ```
 
@@ -553,7 +553,7 @@ O `.nojekyll` já está no repositório, para o Pages servir os arquivos sem
 processar. Em um ou dois minutos o endereço responde:
 
 ```
-https://totalicontabilidade.github.io/portaldocliente/
+https://totalicontabilidade.github.io/academy/
 ```
 
 Todos os caminhos do sistema são relativos, e `start_url` e `scope` do manifesto
@@ -587,7 +587,7 @@ para domínio próprio.
 
 ### 4. Conferir, nesta ordem
 
-1. Abrir `https://totalicontabilidade.github.io/portaldocliente/equipe.html` e
+1. Abrir `https://totalicontabilidade.github.io/academy/equipe.html` e
    entrar no painel.
 2. Conferir que o campo **Endereço do portal** já veio com o endereço
    publicado. Ele ignora endereço salvo de outro servidor justamente para não

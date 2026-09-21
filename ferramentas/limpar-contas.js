@@ -28,7 +28,7 @@
 
      mkdir -p ~/totali && cd ~/totali
      npm init -y && npm install firebase-admin
-     curl -sO https://raw.githubusercontent.com/totalicontabilidade/portaldocliente/main/ferramentas/limpar-contas.js
+     curl -sO https://raw.githubusercontent.com/totalicontabilidade/academy/main/ferramentas/limpar-contas.js
      node limpar-contas.js
 
    Assim ele SÓ MOSTRA o relatório. Não apaga nada.

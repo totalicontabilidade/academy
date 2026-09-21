@@ -36,7 +36,7 @@
      serve `equipe.html` TAMBÉM em `/equipe`, sem extensão. Quem
      abrisse o painel por esse endereço — e é o que acontece quando
      se digita à mão ou se salva o atalho — gerava convite para
-     `.../portaldocliente/equipe/?k=...`, uma pasta que não existe.
+     `.../academy/equipe/?k=...`, uma pasta que não existe.
      O cliente recebia um link morto, e ninguém do lado de cá tinha
      como perceber.
 
