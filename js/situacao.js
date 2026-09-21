@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    situacao.js — em que pé está cada documento
 
    POR QUE ISTO É UM ARQUIVO SÓ

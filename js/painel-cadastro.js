@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-cadastro.js — editar o cadastro do cliente pela ficha
 
    Saiu de painel-clientes.js em 17/09/2026 (ver painel-jornada.js

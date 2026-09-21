@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ui.js — componentes de interface reutilizáveis
    (ícones, avisos, janelas modais, confirmação)
    ============================================================ */

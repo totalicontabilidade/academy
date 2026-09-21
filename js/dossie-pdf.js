@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    dossie-pdf.js — o dossiê de entrada do cliente
 
    QUAL A DIFERENÇA PARA A FICHA EM PDF
@@ -489,7 +489,7 @@
         /* ---- fecho ---- */
         titulo("Sobre este documento");
         paragrafo("Este dossiê registra a documentação recebida pela " + ORG.nome +
-          " no início do contrato com " + d.nome + ", conforme consta no Portal do Cliente " +
+          " no início do contrato com " + d.nome + ", conforme consta na Academy da Totali " +
           "na data de emissão." +
           (d.temCarimbo
             ? " As datas de recebimento e aprovação são carimbadas pelo servidor no momento " +
@@ -555,9 +555,12 @@
   }
 
   /* Branca, não colorida: o cabeçalho é faixa NAVY e a versão
-     colorida tem as letras escuras. Mesmo motivo da ficha. */
+     colorida tem as letras escuras. Mesmo motivo da ficha.
+
+     A marca do ESCRITÓRIO, e não a da Academy: este é um documento
+     formal da Totali Soluções Contábeis. */
   function carregarLogo() {
-    return fetch("assets/totali-portal-branca.png")
+    return fetch("assets/totali-contabil-branca.png")
       .then(function (r) { return r.ok ? r.blob() : null; })
       .then(function (b) {
         if (!b) return null;

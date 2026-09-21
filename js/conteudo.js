@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    conteudo.js — TODO o conteúdo editável do portal
 
    ESTE ARQUIVO É GERADO PELO PAINEL DA EQUIPE.

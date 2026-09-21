@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // ============================================================
-// Totali · Portal de Onboarding — regras do Firestore
+// Totali · Academy — regras do Firestore
 //
 // Princípio: a tela esconde, a regra impede. Nada aqui confia no
 // que o navegador manda. O que não estiver escrito não existe —

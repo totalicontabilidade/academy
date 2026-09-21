@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    extratos.js — a página de liberação do extrato bancário
 
    O QUE ESTA PÁGINA É, e por que ela não é uma tela do portal.

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ferramentas/limpar-contas.js — faxina no Authentication
 
    PARA QUE SERVE

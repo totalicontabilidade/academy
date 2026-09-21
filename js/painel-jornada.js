@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-jornada.js — a jornada de 30 dias, na ficha do cliente
 
    Saiu de painel-clientes.js em 17/09/2026, quando aquele arquivo

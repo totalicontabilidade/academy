@@ -1,7 +1,7 @@
 {
-  "name": "Portal do Cliente · Totali Soluções Contábeis",
-  "short_name": "Totali",
-  "description": "Envio de documentos, acompanhamento da migração contábil e trilhas de aprendizado para clientes da Totali.",
+  "name": "Academy · Totali Soluções Contábeis",
+  "short_name": "Academy",
+  "description": "Acompanhamento da entrada da sua empresa na Totali, envio dos seus documentos e trilhas de aprendizado.",
   "lang": "pt-BR",
   "dir": "ltr",
   "start_url": "./",
@@ -34,8 +34,8 @@
       "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Totali Academy",
-      "short_name": "Academy",
+      "name": "Trilhas de aprendizado",
+      "short_name": "Trilhas",
       "url": "./#/academy",
       "icons": [{ "src": "assets/icon-192.png", "sizes": "192x192" }]
     }

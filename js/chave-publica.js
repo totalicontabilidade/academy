@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    chave-publica.js — chave pública da Totali
 
    É com esta chave que o portal TRANCA as senhas enviadas pelo

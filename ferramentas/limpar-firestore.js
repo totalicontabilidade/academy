@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ferramentas/limpar-firestore.js — faxina nos documentos soltos
 
    O QUE É UM DOCUMENTO SOLTO

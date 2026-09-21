@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    motion.js — animações de entrada e de valores
 
    Princípio: a animação nunca pode esconder conteúdo.

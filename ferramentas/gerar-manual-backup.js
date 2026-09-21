@@ -32,7 +32,7 @@ if (!jsPDF) { console.error("nao achei o jsPDF; chaves: " + Object.keys(mod || {
 
 const doc = new jsPDF({ unit: "pt", format: "a4" });
 doc.setProperties({
-  title: "Backup do Portal do Cliente",
+  title: "Backup da Academy",
   subject: "Como os dados estao protegidos e como recuperar",
   author: "Totali Solucoes Contabeis",
   creator: "Totali Solucoes Contabeis"
@@ -347,7 +347,7 @@ for (let i = 1; i <= total; i++) {
   doc.setPage(i);
   doc.setFont("helvetica", "normal").setFontSize(8).setTextColor(...CINZA);
   if (i > 1) {
-    doc.text("Backup do Portal do Cliente | Totali Soluções Contábeis", L, 812);
+    doc.text("Backup da Academy | Totali Soluções Contábeis", L, 812);
     doc.text(String(i) + " de " + String(total), DIR, 812, { align: "right" });
   }
 }
@@ -363,7 +363,7 @@ if (foraDaFaixa.length) {
   process.exit(1);
 }
 
-const saida = path.join(RAIZ, "Backup do Portal do Cliente.pdf");
+const saida = path.join(RAIZ, "Backup da Academy.pdf");
 fs.writeFileSync(saida, Buffer.from(doc.output("arraybuffer")));
 console.log("gerado: " + saida);
 console.log("paginas: " + total);

@@ -255,7 +255,7 @@ não encosta em dado nenhum. Roda na máquina e escreve um arquivo:
 node ferramentas/gerar-manual-backup.js
 ```
 
-Gera `Backup do Portal do Cliente.pdf` na raiz do projeto — o
+Gera `Backup da Academy.pdf` na raiz do projeto — o
 passo a passo de como recuperar o que foi apagado por engano. O
 `.gitignore` já barra `*.pdf`, então ele não sobe para o site.
 

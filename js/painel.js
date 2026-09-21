@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel.js — esqueleto do painel da equipe
 
    POR QUE EXISTE
@@ -38,7 +38,7 @@
     pendencias: "Pendências",
     mensagens: "Mensagens",
     novo: "Novo cliente",
-    conteudo: "Conteúdo do portal",
+    conteudo: "Conteúdo da Academy",
     usuarios: "Usuários",
     seguranca: "Segurança"
   };
@@ -150,7 +150,7 @@
      não ter que reaprender. */
   var ABAS_DO_MAIS = [
     { id: "novo", rotulo: "Novo cliente", icone: "ic-plus" },
-    { id: "conteudo", rotulo: "Conteúdo do portal", icone: "ic-folder" },
+    { id: "conteudo", rotulo: "Conteúdo da Academy", icone: "ic-folder" },
     { id: "usuarios", rotulo: "Usuários", icone: "ic-badge" },
     { id: "seguranca", rotulo: "Segurança", icone: "ic-shield" }
   ];
@@ -328,7 +328,7 @@
        verdade quando quatro seções passaram a ser só de admin. */
     { alvo: '.sidenav__item[data-aba="conteudo"]',
       titulo: "6. As quatro seções que só você edita",
-      texto: "Em Conteúdo do portal, a equipe cuida do vídeo, do Academy, do checklist e dos " +
+      texto: "Em Conteúdo da Academy, a equipe cuida do vídeo, das trilhas, do checklist e dos " +
              "catálogos. Só você vê e altera as Etapas da migração, as Perguntas frequentes, o " +
              "Compromisso e termo e os Contatos e endereço — são os textos que falam pela " +
              "empresa inteira ou que o cliente assina." }
@@ -398,25 +398,30 @@
      tela vira o único lugar com identidade — aí entra a logo
      completa da contabilidade.
 
-     A marca é a do PORTAL DO CLIENTE, a mesma que o cliente vê
-     (pedido do Raoni, 17/09/2026): o painel é a outra face do mesmo
-     produto, e a marca do escritório ficava destoando. */
+     A marca é a mesma que o cliente vê (pedido do Raoni,
+     17/09/2026): o painel é a outra face do mesmo produto, e a
+     marca do escritório ficava destoando.
+
+     Só que a arte com o nome por extenso ainda diz "Portal do
+     Cliente", e o sistema virou Academy em 21/09/2026 — então, por
+     ora, fica o símbolo e o nome vem escrito ao lado. Ver a mesma
+     nota em js/app.js. */
   var MARCA_SIMBOLO = { src: "assets/totali-simbolo.png", w: 220, h: 230 };
-  var MARCA_CHEIA   = { src: "assets/totali-portal-branca.png", w: 660, h: 235 };
+  var MARCA_CHEIA   = null;
 
   function trocarMarca(cheia) {
     var img = $("#pnLogo");
     if (!img) return;
-    var qual = cheia ? "cheia" : "simbolo";
+    var qual = (cheia && MARCA_CHEIA) ? "cheia" : "simbolo";
     /* Só mexe se mudou: reatribuir o mesmo `src` faz o navegador
        repintar e a marca pisca a cada chamada. */
     if (img.getAttribute("data-marca") === qual) return;
-    var m = cheia ? MARCA_CHEIA : MARCA_SIMBOLO;
+    var m = (qual === "cheia") ? MARCA_CHEIA : MARCA_SIMBOLO;
     img.setAttribute("data-marca", qual);
     img.width = m.w;
     img.height = m.h;
     img.src = m.src;
-    img.classList.toggle("brand__logo--cheia", !!cheia);
+    img.classList.toggle("brand__logo--cheia", qual === "cheia");
   }
 
   function mostrarPainel(dentro) {

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-clientes.js — a mesa de trabalho da equipe
 
    O QUE ESTA TELA RESOLVE

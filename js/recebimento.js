@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    recebimento.js — o que a contabilidade anterior mandou
 
    POR QUE EXISTE

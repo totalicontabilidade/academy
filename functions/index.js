@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    functions/index.js — a única coisa que o navegador não pode fazer
 
    POR QUE ISTO EXISTE

@@ -1,6 +1,6 @@
 {
   "name": "totali-portal-funcoes",
-  "description": "Funções do Portal do Cliente da Totali",
+  "description": "Funções da Academy da Totali",
   "main": "index.js",
   "private": true,
   "engines": {

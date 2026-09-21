@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-trilha.js — o registro do servidor, na tela
 
    O QUE ISTO RESOLVE

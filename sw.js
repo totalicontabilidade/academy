@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    sw.js — service worker (funcionamento offline)
 
    Estratégia:
@@ -16,7 +16,7 @@
    Ao alterar qualquer arquivo do app, suba o número da versão —
    é o que faz o navegador do cliente buscar o conteúdo novo.
    ============================================================ */
-var VERSAO = "v192";
+var VERSAO = "v193";
 var CACHE = "totali-onboarding-" + VERSAO;
 
 var SHELL = [
@@ -63,7 +63,6 @@ var SHELL = [
   "./js/pwa.js",
   "./manifest.webmanifest",
   "./assets/totali-simbolo.png",
-  "./assets/totali-portal-branca.png",
   "./assets/totali-contabil-branca.png",
   /* A versão colorida saiu daqui: desde que os três PDFs passaram a
      usar a branca, nenhum código a pede mais. Eram 120 KB baixados

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ferramentas/zerar-tudo.js — recomeçar do zero absoluto
 
    LEIA ISTO INTEIRO ANTES DE RODAR.

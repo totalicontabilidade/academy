@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    firebase.js — conexão com o servidor
 
    Duas portas de entrada, bem diferentes:

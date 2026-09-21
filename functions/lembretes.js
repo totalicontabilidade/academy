@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    functions/lembretes.js — item 9: o aviso que a equipe não
    precisa lembrar de dar
 
@@ -43,7 +43,7 @@
 
    COMO MUDAR A HORA E O TEXTO
    ---------------------------
-   No painel: Conteúdo do portal › Aviso automático. Hora, dias,
+   No painel: Conteúdo da Academy › Aviso automático. Hora, dias,
    ligado/desligado e o texto saem de lá. O que está aqui embaixo,
    em PADRAO, é só a reserva para quando não houver nada gravado.
 
@@ -208,7 +208,7 @@ exports.avisarPendencias = onSchedule(
        exigia publicar as funções, e hora de aviso é decisão de
        atendimento. Agora a função acorda toda hora cheia e só
        trabalha quando o relógio de Brasília bate com a hora
-       escolhida em Conteúdo do portal.
+       escolhida em Conteúdo da Academy.
 
        ERRO QUE JÁ ESTEVE AQUI, e que a `timeZone` abaixo ainda
        resolve: o cron dizia "0 13" com esta mesma timeZone. O 13

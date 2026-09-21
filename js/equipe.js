@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    equipe.js — gerador do link de convite (uso interno)
 
    Esta página não lê nem grava dado de cliente. Ela apenas monta
@@ -175,9 +175,9 @@
     });
   }
 
-  /* "o portal de FULANO" dava a entender que o portal era da
-     empresa. Ele é o Portal do Cliente da Totali, PREPARADO para
-     ela — e a diferença importa na primeira impressão.
+  /* "a Academy de FULANO" dava a entender que ela era da empresa.
+     Ela é a Academy da Totali, PREPARADA para a empresa — e a
+     diferença importa na primeira impressão.
 
      O aviso de instalação também mudou: o botão perdeu o rótulo
      "Instalar" e virou só o ícone, então mandar procurar por uma
@@ -185,7 +185,7 @@
      nada. */
   function mensagemPronta(nomeEmpresa, link) {
     return "Olá! Seja bem-vindo à Totali Soluções Contábeis.\n\n" +
-      "Preparamos o Portal do Cliente para " + nomeEmpresa + ", para organizarmos a entrada " +
+      "Preparamos a Academy da Totali para " + nomeEmpresa + ", para organizarmos a entrada " +
       "da sua empresa aqui no escritório. Nele você acompanha os documentos que a sua " +
       "contabilidade anterior nos envia, manda pelo próprio celular o pouco que só você tem " +
       "(documentos dos sócios e acessos) e acompanha cada etapa.\n\n" +
@@ -197,7 +197,7 @@
 
   function mensagemNovoAcesso(nomeEmpresa, link) {
     return "Olá! Aqui é a Totali Soluções Contábeis.\n\n" +
-      "Segue um link novo para o acesso de " + nomeEmpresa + " ao Portal do Cliente. " +
+      "Segue um link novo para o acesso de " + nomeEmpresa + " à Academy da Totali. " +
       "Ele serve uma vez só: ao abrir, você define a senha e o acesso fica valendo daí em " +
       "diante, de qualquer aparelho.\n\n" +
       link + "\n\n" +

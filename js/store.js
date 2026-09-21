@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    store.js — estado da aplicação e persistência
 
    ARQUITETURA

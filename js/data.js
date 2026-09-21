@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    data.js — conteúdo do sistema (catálogo de documentos, etapas,
    trilhas da Academy e perguntas frequentes).
 
@@ -1452,7 +1452,7 @@
     { id: "certificado", rotulo: "Certificado digital recebido",
       como: "Marca quando o certificado digital está enviado ou aprovado." },
     { id: "aviso-automatico", rotulo: "Aviso automático de pendências ligado",
-      como: "Marca enquanto o aviso automático estiver ligado em Conteúdo do portal." },
+      como: "Marca enquanto o aviso automático estiver ligado em Conteúdo da Academy." },
     { id: "anterior", rotulo: "Arquivos da contabilidade anterior registrados",
       como: "Marca no primeiro arquivo registrado pela tela Receber da contabilidade anterior." },
     { id: "migracao-concluida", rotulo: "Migração concluída no painel",
@@ -1465,7 +1465,7 @@
 
   /* As trilhas A, B e C que o procedimento cita. O texto é uma
      sugestão para começar; a definição de verdade é da Totali e se
-     edita em Conteúdo do portal › Jornada de 30 dias. */
+     edita em Conteúdo da Academy › Jornada de 30 dias. */
   var JORNADA_CFG = {
     trilhas: "A trilha só orienta o acompanhamento; nenhuma etapa muda por causa dela. " +
              "Trilha A: empresa simples — MEI ou Simples Nacional, sem funcionários, um sócio; " +

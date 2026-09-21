@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    nuvem.js — gravação no servidor (Firestore + Storage)
 
    O QUE ESTE ARQUIVO RESOLVE

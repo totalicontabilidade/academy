@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    firebase-config.js — endereço do projeto no Firebase
 
    Estas chaves são PÚBLICAS por natureza. Elas só dizem "qual

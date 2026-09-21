@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    aplicacao.js — quais documentos se aplicam a esta empresa
 
    POR QUE EXISTE

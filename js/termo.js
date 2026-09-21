@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    termo.js — termo de compromisso em PDF
 
    Gerado no próprio aparelho do cliente, com a biblioteca
@@ -34,8 +34,11 @@
   function carregarLogo() {
     /* Branca: o cabeçalho é faixa NAVY. A colorida tem as letras
        escuras e some no fundo — e este é o documento que fica com
-       o cliente. */
-    return fetch("assets/totali-portal-branca.png")
+       o cliente.
+
+       A marca do ESCRITÓRIO: o termo é assinado com a Totali
+       Soluções Contábeis, não com a Academy. */
+    return fetch("assets/totali-contabil-branca.png")
       .then(function (r) { return r.ok ? r.blob() : null; })
       .then(function (blob) {
         if (!blob) return null;

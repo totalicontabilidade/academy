@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ferramentas/zerar-trilhas.js — limpar o banco antes de valer
 
    O QUE ISTO APAGA, E POR QUE PRECISA DE FERRAMENTA

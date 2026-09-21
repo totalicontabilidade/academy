@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    app.js — rotas, telas e comportamento
 
    Regra de ouro deste arquivo: nenhuma string vinda do cliente
@@ -17,7 +17,7 @@
        manda de verdade — esta lista só resolve título e validação.
        Mantidas iguais para não mentir para quem vier depois. */
     { id: "inicio",      titulo: "Início",     icone: "ic-home",     nav: true },
-    { id: "academy",     titulo: "Academy",    icone: "ic-play",     nav: true },
+    { id: "academy",     titulo: "Trilhas",    icone: "ic-play",     nav: true },
     { id: "documentos",  titulo: "Documentos", icone: "ic-folder",   nav: true },
     { id: "financeiro",  titulo: "Bancos e maquininhas", icone: "ic-card", nav: true },
     { id: "mensagens",   titulo: "Mensagens",  icone: "ic-chat",     nav: true },
@@ -258,11 +258,12 @@
     var cadastro = porta.modo === "cadastro";
     return '<section class="section">' +
       '<div class="card card--pad" style="max-width:440px;margin:24px auto">' +
-        /* Porta de entrada: aqui cabe a marca inteira, e é onde
-           ela mais faz falta — é a primeira tela do sistema. */
-        '<img src="assets/totali-portal-branca.png" alt="Totali · Portal do Cliente" ' +
-          'width="660" height="235" class="marca-porta">' +
-        '<div class="eyebrow">' + (cadastro ? "Bem-vindo" : "Portal do Cliente") + '</div>' +
+        /* Porta de entrada: é a primeira tela do sistema, e o nome
+           precisa aparecer. Vem o símbolo, e o nome escrito abaixo —
+           a arte com o nome por extenso ainda é a antiga. */
+        '<img src="assets/totali-simbolo.png" alt="totali · Academy" ' +
+          'width="220" height="230" class="marca-porta marca-porta--simbolo">' +
+        '<div class="eyebrow">' + (cadastro ? "Bem-vindo" : "Academy") + '</div>' +
         '<h1 class="section__title" style="font-size:21px;margin:8px 0 6px">' +
           (cadastro ? "Crie o seu acesso" : "Entrar") + '</h1>' +
         '<p class="section__desc" style="margin-bottom:20px">' +
@@ -1086,7 +1087,7 @@
     html +=
     '<section class="section">' +
       '<div class="section__head"><div>' +
-        '<h2 class="section__title">Totali Academy</h2>' +
+        '<h2 class="section__title">Trilhas de aprendizado</h2>' +
         '<p class="section__desc">Vídeos curtos que ensinam a rotina da sua empresa com a gente.</p>' +
       '</div>' +
       '<button type="button" class="btn btn--ghost btn--sm" data-rota="academy">Ver trilhas</button></div>' +
@@ -1101,7 +1102,7 @@
   function academyDestaqueHTML() {
     return '<section class="section">' +
       '<div class="hero" style="padding-bottom:22px">' +
-        '<div class="eyebrow">Totali Academy</div>' +
+        '<div class="eyebrow">Trilhas</div>' +
         '<h2 class="hero__title" style="font-size:22px">Agora é a sua vez de dominar a rotina</h2>' +
         '<p class="hero__desc">Documentação entregue. Daqui em diante o portal vira o seu ponto de ' +
           'apoio: trilhas curtas sobre notas fiscais, impostos, folha e o que enviar todo mês.</p>' +
@@ -3381,7 +3382,7 @@
     /* --- Grade de trilhas --- */
     return '' +
     '<section class="hero">' +
-      '<div class="eyebrow">Totali Academy</div>' +
+      '<div class="eyebrow">Trilhas</div>' +
       '<h1 class="hero__title">Aprenda a rotina da sua empresa</h1>' +
       '<p class="hero__desc">Trilhas curtas e diretas sobre notas fiscais, impostos, folha de pagamento ' +
         'e o que enviar todo mês. Sem juridiquês.</p>' +
@@ -4020,9 +4021,9 @@
   }
 
   /* ---------- Rodapé ---------- */
-  /* A LOGOMARCA DA TOTALI SOLUÇÕES CONTÁBEIS — não a "totali ·
-     Portal do Cliente", que é a submarca desta ferramenta e já
-     está no cabeçalho.
+  /* A LOGOMARCA DA TOTALI SOLUÇÕES CONTÁBEIS — não a marca da
+     Academy, que é a submarca desta ferramenta e já está no
+     cabeçalho.
 
      Saem os dois juntos, logo e nome escrito, mas o CSS mostra
      um de cada vez: dentro do portal aparece a logo; na tela de
@@ -4277,7 +4278,7 @@
       document.title = (livreNaPorta
         ? (rota === "privacidade" ? "Privacidade e segurança" : "Ajuda")
         : (porta.modo === "cadastro" ? "Criar acesso" : "Entrar")) +
-        " · Portal do Cliente · " + DATA.ORG.curto;
+        " · Academy · " + DATA.ORG.curto;
 
       atualizarCabecalho();
       atualizarNav("");
@@ -4312,7 +4313,7 @@
     if (global.Motion) global.Motion.aplicar(alvo);
 
     var meta = ROTAS.filter(function (r) { return r.id === rota; })[0];
-    document.title = (meta ? meta.titulo + " · " : "") + "Portal do Cliente · " + DATA.ORG.curto;
+    document.title = (meta ? meta.titulo + " · " : "") + "Academy · " + DATA.ORG.curto;
 
     atualizarCabecalho();
     atualizarNav(rota);
@@ -4362,22 +4363,22 @@
   /* O cabeçalho mostra a empresa do cliente assim que ela é
      conhecida. Antes disso, mantém o nome do portal.
 
-     A MARCA TAMBÉM TROCA, e por um motivo (decisão dele, 2026-08-24):
+     A MARCA TROCAVA ENTRE SÍMBOLO E LOGO POR EXTENSO (decisão
+     dele, 2026-08-24), e a troca está suspensa desde 21/09/2026:
+     o sistema passou a se chamar Academy e a arte com o nome por
+     extenso ainda diz "Portal do Cliente". É imagem, não texto —
+     não dá para reescrever daqui, e mostrar o nome errado é pior
+     que mostrar só o símbolo.
 
-     - Na tela de entrada fica só o SÍMBOLO. A logo completa
-       "totali · Portal do Cliente" já está grande no cartão de
-       login, um palmo abaixo; repetida no alto ela não reforça
-       nada, só se repete.
-     - Com o cliente dentro, o cartão de login não existe mais e o
-       alto da tela fica sendo o único lugar com identidade. Aí
-       entra a logo COMPLETA, e o nome da empresa continua ao lado
-       dela — é o que faz o portal parecer do cliente, e é por ele
-       que a equipe sabe de qual cliente é a tela que abriu.
+     Enquanto a arte nova não existir, fica sempre o símbolo, e
+     quem diz o nome é o texto ao lado. Chegando o arquivo, basta
+     apontar MARCA_CHEIA para ele e a troca volta sozinha.
 
-     O subtítulo vira "Cliente" e não "Portal do Cliente" porque a
-     logo ao lado já diz "Portal do Cliente" por extenso. */
+     O subtítulo vira "Cliente" quando a empresa é conhecida: é o
+     que faz a tela parecer do cliente, e é por ele que a equipe
+     sabe de qual cliente é a tela que abriu. */
   var MARCA_SIMBOLO = { src: "assets/totali-simbolo.png", w: 220, h: 230 };
-  var MARCA_CHEIA   = { src: "assets/totali-portal-branca.png", w: 660, h: 235 };
+  var MARCA_CHEIA   = null;
 
   /* A LOGO POR EXTENSO SÓ ONDE ELA CABE.
 
@@ -4399,7 +4400,7 @@
     marcaPedida = !!cheia;
     var img = $("#brandLogo");
     if (!img) return;
-    var usarCheia = marcaPedida &&
+    var usarCheia = !!MARCA_CHEIA && marcaPedida &&
                     (global.innerWidth || 0) >= LARGURA_PARA_LOGO_CHEIA;
     var m = usarCheia ? MARCA_CHEIA : MARCA_SIMBOLO;
     /* Só mexe se mudou: reatribuir o `src` igual faz o navegador
@@ -4430,9 +4431,9 @@
       sub.textContent = "Cliente";
       trocarMarca(true);
     } else {
-      titulo.textContent = "Portal do Cliente";
+      titulo.textContent = "Academy";
       titulo.removeAttribute("title");
-      sub.textContent = "Onboarding";
+      sub.textContent = "Totali";
       trocarMarca(false);
     }
   }

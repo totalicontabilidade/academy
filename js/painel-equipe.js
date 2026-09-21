@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-equipe.js — quem tem acesso ao painel
 
    O QUE ISTO RESOLVE

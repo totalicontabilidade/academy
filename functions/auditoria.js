@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    functions/auditoria.js — item 4: a trilha que vale como prova
 
    O PROBLEMA QUE ISTO RESOLVE

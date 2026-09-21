@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    util.js — funções auxiliares puras (sem estado, sem DOM global)
    ============================================================ */
 (function (global) {

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    tour.js — tutorial guiado, passo a passo
 
    PARA QUEM ISTO FOI FEITO

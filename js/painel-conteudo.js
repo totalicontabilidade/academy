@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-conteudo.js — edita TODO o conteúdo do portal
 
    Princípio do sistema: nada muda por código. Contatos, vídeos,
@@ -1139,7 +1139,7 @@
         selo: temVideo ? "Publicado" : "Sem vídeo", seloOk: temVideo, corpo: secaoVideo
       }),
       secao({
-        id: "academy", icone: "ic-play", titulo: "Academy",
+        id: "academy", icone: "ic-play", titulo: "Trilhas",
         resumo: (C.academy || []).length + " trilhas · " + aulas + " aulas",
         selo: aulasPub + " no ar", seloOk: aulasPub > 0, corpo: secaoAcademy
       }),
@@ -1319,7 +1319,7 @@
     var saida = montarBlocos();
 
     return "/* ============================================================\n" +
-      "   Totali · Portal de Onboarding\n" +
+      "   Totali · Academy\n" +
       "   conteudo.js — conteúdo do portal\n\n" +
       "   ARQUIVO GERADO PELO PAINEL DA EQUIPE. Não edite à mão:\n" +
       "   abra equipe.html, altere na tela e baixe de novo.\n\n" +

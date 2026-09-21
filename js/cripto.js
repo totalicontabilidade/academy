@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    cripto.js — proteção das credenciais enviadas pelo cliente
 
    COMO FUNCIONA

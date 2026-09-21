@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ficha-pdf.js — a ficha do cliente em PDF (painel da equipe)
 
    PARA QUE SERVE
@@ -95,9 +95,12 @@
   function plural(n, um, varios) { return n === 1 ? um : varios; }
 
   /* A LOGO BRANCA, e não a colorida: o cabeçalho é uma faixa NAVY,
-     e a versão colorida tem as letras escuras — some no fundo. */
+     e a versão colorida tem as letras escuras — some no fundo.
+
+     A marca do ESCRITÓRIO, e não a da Academy: a ficha é documento
+     interno da Totali Soluções Contábeis. */
   function carregarLogo() {
-    return fetch("assets/totali-portal-branca.png")
+    return fetch("assets/totali-contabil-branca.png")
       .then(function (r) { return r.ok ? r.blob() : null; })
       .then(function (blob) {
         if (!blob) return null;

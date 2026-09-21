@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // ============================================================
-// Totali · Portal de Onboarding — regras do Storage
+// Totali · Academy — regras do Storage
 //
 // Aqui ficam os arquivos: documentos do checklist, anexos de
 // mensagem e o termo em PDF. A validação do navegador é

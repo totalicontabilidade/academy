@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    functions/envelope.js — abrir e fechar o envelope das senhas
 
    Vive separado de senhas.js por um motivo prático: aqui não há

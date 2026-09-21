@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    notificacoes.js — avisos ao cliente
 
    DOIS TIPOS, NÃO CONFUNDIR

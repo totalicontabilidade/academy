@@ -1,8 +1,11 @@
-# Portal do Cliente · Totali Soluções Contábeis
+# Academy · Totali Soluções Contábeis
 
-Sistema de onboarding para novos clientes da contabilidade. O cliente envia a
-documentação da migração, acompanha as etapas do processo e, futuramente,
-assiste às trilhas da Totali Academy.
+Sistema de entrada e formação dos clientes da contabilidade. O cliente acompanha
+a documentação que a contabilidade anterior envia, manda o que só ele tem,
+acompanha as etapas da migração e assiste às trilhas de aprendizado.
+
+Chamava-se "Portal do Cliente" até 21/09/2026. Os identificadores internos
+guardaram o nome antigo de propósito — ver "Nomes que não mudam", no fim.
 
 Aplicação estática (HTML, CSS e JavaScript sem framework), pensada primeiro para
 o celular, instalável como aplicativo (PWA) e publicável no GitHub Pages.
@@ -32,8 +35,8 @@ o celular, instalável como aplicativo (PWA) e publicável no GitHub Pages.
 | Etapas clicáveis com liberação progressiva | pronto |
 | Checklist financeiro trazido para dentro | pronto, com termo em PDF |
 | Liberação de extrato pelo Ottimizza (Open Finance) | pronta (`extratos.html`) |
-| Academy em destaque após o envio | pronto |
-| Trilhas da Academy | telas prontas, vídeos pendentes |
+| Trilhas em destaque após o envio | pronto |
+| Trilhas de aprendizado | telas prontas, vídeos pendentes |
 | Avisos no aparelho (portal aberto ou em 2º plano) | pronto |
 | Push com o aplicativo fechado | pendente (Firebase Cloud Messaging) |
 | Trilha de auditoria | pronta, gravada pelo servidor (`/auditoria`) |
@@ -53,7 +56,7 @@ anterior.
 ## Estrutura
 
 ```
-index.html                 Portal do cliente
+index.html                 Academy: o que o cliente vê
 equipe.html                Painel da equipe (uso interno, com login)
 extratos.html              Liberação de extrato — página aberta por link, SEM login
 manifest.webmanifest       Metadados do aplicativo instalável
@@ -78,7 +81,7 @@ js/motion.js               Animações de entrada, contadores e anel de progress
 js/notificacoes.js         Avisos no aparelho e ganchos para o push do Firebase
 js/termo.js                Termo de compromisso em PDF
 js/extratos.js             Página de liberação de extrato (Ottimizza / Open Finance)
-js/app.js                  Portal do cliente: rotas, telas e eventos
+js/app.js                  Academy do cliente: rotas, telas e eventos
 js/pwa.js                  Instalação, service worker e proteções de contexto
 
 js/painel.js               Painel: abas, sessão e identidade de quem está usando
@@ -339,9 +342,9 @@ anterior está concluída, e cada etapa liberada é um botão que leva direto à
 tela. As bloqueadas mostram o motivo, para o cliente nunca ficar sem saber o que
 falta.
 
-Quando documentos e financeiro terminam, a **Academy sobe para o topo da tela
-inicial** e deixa de ser rodapé: é o que faz o cliente voltar ao portal depois
-da migração.
+Quando documentos e financeiro terminam, as **trilhas sobem para o topo da tela
+inicial** e deixam de ser rodapé: é o que faz o cliente voltar depois da
+migração.
 
 ### Notificações
 
@@ -599,3 +602,25 @@ para domínio próprio.
 Suba o número em `VERSAO` no `sw.js`. É o que faz o navegador do cliente buscar
 a versão nova em vez de servir a antiga do cache — sem isso, a correção não
 chega a quem já usou o portal.
+
+---
+
+## Nomes que não mudam
+
+O sistema passou a se chamar Academy em 21/09/2026, mas alguns nomes internos
+seguem com `onboarding` ou `portal`. Não é descuido: trocá-los apaga dados ou
+quebra instalação.
+
+| Nome | Onde | Por que fica |
+|---|---|---|
+| `totali.onboarding.v1` | localStorage (store.js) | é o estado do cliente no aparelho |
+| `totali-onboarding` | IndexedDB (store.js) | cache dos arquivos já enviados |
+| `totali.onboarding.credpend` | localStorage | envelopes de senha ainda não enviados |
+| `totali.onboarding.conteudo.rascunho` | localStorage | rascunho não publicado da equipe |
+| `totali.onboarding.equipe.base` | localStorage | preferência de quem usa o painel |
+| `totali-onboarding` (`id`) | manifest | trocar faz o navegador tratar como outro app |
+| `totali-onboarding-` | prefixo do cache (sw.js) | a limpeza de cache velho procura este prefixo |
+| `totali-portal-auditoria-v1` | ferramentas/anonimizar-auditoria.js | sal de hash: mudar muda os hashes |
+| `portaldocliente-8cc7d` | Firebase | id de projeto é imutável |
+| `conteudo/portal` | Firestore | é o documento publicado, em uso |
+| `cliente.totalicontabilidade.com.br` | CNAME | domínio publicado; mudar exige DNS |

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    functions/senhas.js — a equipe abre a senha sem ter a chave
 
    O QUE MUDOU, E POR QUÊ

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    ferramentas/anonimizar-auditoria.js — pedido de exclusão (LGPD)
 
    O PROBLEMA

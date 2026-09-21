@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    pwa.js — instalação, service worker e proteções de contexto
    ============================================================ */
 (function (global) {
@@ -17,7 +17,7 @@
         '<body style="margin:0;font-family:system-ui,sans-serif;background:#0e1f30;color:#fff;' +
         'display:grid;place-items:center;height:100vh;text-align:center;padding:24px">' +
         '<div><p style="font-size:16px;font-weight:600;margin:0 0 8px">Página bloqueada</p>' +
-        '<p style="font-size:14px;opacity:.8;margin:0">Por segurança, o Portal do Cliente da Totali ' +
+        '<p style="font-size:14px;opacity:.8;margin:0">Por segurança, a Academy da Totali ' +
         'não pode ser exibido dentro de outro site.</p></div></body>';
       try { global.top.location = global.self.location.href; } catch (e) { /* origem cruzada */ }
       return;

@@ -202,7 +202,7 @@
          se vê; `mostrarPainel()` (js/painel.js) troca para a logo
          completa quando alguém entra. -->
     <img class="brand__logo" id="pnLogo" data-marca="simbolo"
-         src="assets/totali-simbolo.png" alt="totali · Portal do Cliente"
+         src="assets/totali-simbolo.png" alt="totali · Academy"
          width="220" height="230">
     <span class="brand__divider" aria-hidden="true"></span>
     <span class="brand__text">
@@ -250,8 +250,8 @@
   <main class="main">
     <section class="section" id="secLogin" hidden>
       <div class="card card--pad" style="max-width:420px;margin:40px auto">
-        <img src="assets/totali-portal-branca.png" alt="Totali · Portal do Cliente"
-             width="660" height="235" class="marca-porta">
+        <img src="assets/totali-simbolo.png" alt="totali · Academy"
+             width="220" height="230" class="marca-porta marca-porta--simbolo">
         <div class="eyebrow">Uso interno</div>
         <h1 class="section__title" style="font-size:20px;margin:6px 0 6px">Entrar no painel</h1>
         <p class="section__desc" style="margin-bottom:18px">Acesso restrito à equipe da Totali.</p>
@@ -312,7 +312,7 @@
       <svg class="ic" aria-hidden="true"><use href="#ic-plus"></use></svg>Novo cliente
     </button>
     <button type="button" class="sidenav__item" data-aba="conteudo">
-      <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>Conteúdo do portal
+      <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>Conteúdo da Academy
     </button>
     <button type="button" class="sidenav__item" data-aba="usuarios">
       <svg class="ic" aria-hidden="true"><use href="#ic-badge"></use></svg>Usuários
@@ -322,10 +322,10 @@
     </button>
 
     <div class="sidenav__card">
-      <div class="t">Portal do cliente</div>
+      <div class="t">Academy do cliente</div>
       <div class="d">Abra numa aba nova para ver exatamente o que o cliente vê.</div>
       <a class="btn btn--ghost btn--sm" style="margin-top:12px;width:100%"
-         href="index.html" target="_blank" rel="noopener">Abrir o portal</a>
+         href="index.html" target="_blank" rel="noopener">Abrir a Academy</a>
     </div>
   </nav>
 
@@ -451,7 +451,7 @@
       <div class="section__head"><div>
         <div class="eyebrow">Cadastro</div>
         <h1 class="section__title" style="font-size:20px;margin-top:4px">Novo cliente</h1>
-        <p class="section__desc">Preencha o que já sabemos. O cliente recebe o portal com esses
+        <p class="section__desc">Preencha o que já sabemos. O cliente recebe a Academy com esses
           campos prontos e só completa o contato dele.</p>
       </div></div>
 
@@ -484,7 +484,7 @@
         <div class="field">
           <label class="field__label" for="cFantasia">Nome fantasia</label>
           <input type="text" class="input" id="cFantasia" maxlength="120" autocomplete="off"
-                 placeholder="Aparece no cabeçalho do portal do cliente">
+                 placeholder="Aparece no cabeçalho da Academy do cliente">
           <div class="field__hint">É este nome que o cliente vê no topo da tela. Se ficar vazio,
             mostramos a razão social.</div>
         </div>
@@ -505,7 +505,7 @@
         </div>
 
         <div class="field">
-          <label class="field__label" for="cBase">Endereço do portal</label>
+          <label class="field__label" for="cBase">Endereço da Academy</label>
           <input type="text" class="input" id="cBase" autocomplete="off">
           <div class="field__hint">Precisa começar com <code>http://</code> ou <code>https://</code>.
             Em teste, use <code>http://localhost:8099/</code> — o link só abre na sua máquina.
@@ -526,7 +526,7 @@
         <div class="field" style="margin-top:18px;margin-bottom:0">
           <span class="field__label">Este link também dá acesso a</span>
           <div id="cOutras"></div>
-          <div class="field__hint">O cliente entra uma vez e vê todas elas no portal, com um
+          <div class="field__hint">O cliente entra uma vez e vê todas elas na Academy, com um
             login só, trocando pelo seletor no topo. Deixe vazio se este link for de uma
             empresa só.</div>
         </div>
@@ -555,7 +555,7 @@
       <section class="section" id="cResultado" hidden>
         <div class="section__head"><div>
           <h2 class="section__title" style="font-size:18px">Link pronto</h2>
-          <p class="section__desc">Envie ao cliente. Ao abrir, o portal já mostra o nome da empresa
+          <p class="section__desc">Envie ao cliente. Ao abrir, a Academy já mostra o nome da empresa
             no cabeçalho, o que a contabilidade anterior manda e o que só ele pode enviar.</p>
         </div></div>
 
@@ -591,7 +591,7 @@
     <section data-painel="conteudo" hidden>
       <div class="section__head"><div>
         <div class="eyebrow">Conteúdo</div>
-        <h1 class="section__title" style="font-size:20px;margin-top:4px">Conteúdo do portal</h1>
+        <h1 class="section__title" style="font-size:20px;margin-top:4px">Conteúdo da Academy</h1>
         <p class="section__desc">Tudo que o cliente vê se altera aqui: vídeos, trilhas, documentos,
           perguntas, textos do termo e os contatos. Nada por código.</p>
       </div></div>

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    painel-inicio.js — a primeira tela do painel da equipe
 
    POR QUE EXISTE

@@ -1,5 +1,5 @@
 /* ============================================================
-   Totali · Portal de Onboarding
+   Totali · Academy
    departamentos.js — de que setor cada pessoa cuida
 
    POR QUE EXISTE
