@@ -264,7 +264,11 @@
            Prática..." fica com 6px de altura e não se lê. */
         '<img src="assets/academy-branca.png" alt="Academy · Totali" ' +
           'width="1989" height="618" class="marca-porta">' +
-        '<div class="eyebrow">' + (cadastro ? "Bem-vindo" : "Academy") + '</div>' +
+        /* No login não vai rótulo: a marca logo acima já diz
+           "academy", e repetir a palavra três linhas abaixo parece
+           engano. No cadastro vai, porque "Bem-vindo" diz outra
+           coisa — é a primeira vez da pessoa aqui. */
+        (cadastro ? '<div class="eyebrow">Bem-vindo</div>' : '') +
         '<h1 class="section__title" style="font-size:21px;margin:8px 0 6px">' +
           (cadastro ? "Crie o seu acesso" : "Entrar") + '</h1>' +
         '<p class="section__desc" style="margin-bottom:20px">' +
