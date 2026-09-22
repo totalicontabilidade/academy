@@ -247,7 +247,7 @@
   function aberturaHTML() {
     return '<section class="section"><div class="card card--pad abertura">' +
         '<span class="abertura__anel" aria-hidden="true">' +
-          '<img src="assets/totali-simbolo.png" alt="">' +
+          '<img src="assets/academy-simbolo.png" alt="">' +
         '</span>' +
         '<p class="abertura__t">Abrindo o seu portal</p>' +
         '<p class="abertura__d">Só um instante — estamos conferindo o seu acesso.</p>' +
@@ -258,11 +258,12 @@
     var cadastro = porta.modo === "cadastro";
     return '<section class="section">' +
       '<div class="card card--pad" style="max-width:440px;margin:24px auto">' +
-        /* Porta de entrada: é a primeira tela do sistema, e o nome
-           precisa aparecer. Vem o símbolo, e o nome escrito abaixo —
-           a arte com o nome por extenso ainda é a antiga. */
-        '<img src="assets/totali-simbolo.png" alt="totali · Academy" ' +
-          'width="220" height="230" class="marca-porta marca-porta--simbolo">' +
+        /* Porta de entrada: aqui cabe a marca inteira, e é onde ela
+           mais faz falta — é a primeira tela do sistema. Vai a versão
+           SEM a assinatura: em 210px de largura a linha "Educação
+           Prática..." fica com 6px de altura e não se lê. */
+        '<img src="assets/academy-branca.png" alt="Academy · Totali" ' +
+          'width="1989" height="618" class="marca-porta">' +
         '<div class="eyebrow">' + (cadastro ? "Bem-vindo" : "Academy") + '</div>' +
         '<h1 class="section__title" style="font-size:21px;margin:8px 0 6px">' +
           (cadastro ? "Crie o seu acesso" : "Entrar") + '</h1>' +
@@ -4363,22 +4364,24 @@
   /* O cabeçalho mostra a empresa do cliente assim que ela é
      conhecida. Antes disso, mantém o nome do portal.
 
-     A MARCA TROCAVA ENTRE SÍMBOLO E LOGO POR EXTENSO (decisão
-     dele, 2026-08-24), e a troca está suspensa desde 21/09/2026:
-     o sistema passou a se chamar Academy e a arte com o nome por
-     extenso ainda diz "Portal do Cliente". É imagem, não texto —
-     não dá para reescrever daqui, e mostrar o nome errado é pior
-     que mostrar só o símbolo.
+     A MARCA TAMBÉM TROCA, e por um motivo (decisão dele,
+     2026-08-24; a arte da Academy chegou em 22/09/2026):
 
-     Enquanto a arte nova não existir, fica sempre o símbolo, e
-     quem diz o nome é o texto ao lado. Chegando o arquivo, basta
-     apontar MARCA_CHEIA para ele e a troca volta sozinha.
+     - Na tela de entrada fica só o SÍMBOLO. A marca por extenso já
+       está grande no cartão de login, um palmo abaixo; repetida no
+       alto ela não reforça nada, só se repete.
+     - Com o cliente dentro, o cartão de login não existe mais e o
+       alto da tela fica sendo o único lugar com identidade. Aí
+       entra a marca POR EXTENSO, e o nome da empresa continua ao
+       lado dela — é o que faz a tela parecer do cliente, e é por
+       ele que a equipe sabe de qual cliente é a tela que abriu.
 
-     O subtítulo vira "Cliente" quando a empresa é conhecida: é o
-     que faz a tela parecer do cliente, e é por ele que a equipe
-     sabe de qual cliente é a tela que abriu. */
-  var MARCA_SIMBOLO = { src: "assets/totali-simbolo.png", w: 220, h: 230 };
-  var MARCA_CHEIA   = null;
+     A versão usada aqui não traz a assinatura "Educação Prática
+     para o Sucesso do seu Negócio": num cabeçalho de 24px de altura
+     ela viraria um risco cinza. A arte completa está em
+     assets/academy-completa-branca.png, para uso em tamanho grande. */
+  var MARCA_SIMBOLO = { src: "assets/academy-simbolo.png", w: 544, h: 618 };
+  var MARCA_CHEIA   = { src: "assets/academy-branca.png", w: 1989, h: 618 };
 
   /* A LOGO POR EXTENSO SÓ ONDE ELA CABE.
 

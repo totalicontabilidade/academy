@@ -402,12 +402,11 @@
      17/09/2026): o painel é a outra face do mesmo produto, e a
      marca do escritório ficava destoando.
 
-     Só que a arte com o nome por extenso ainda diz "Portal do
-     Cliente", e o sistema virou Academy em 21/09/2026 — então, por
-     ora, fica o símbolo e o nome vem escrito ao lado. Ver a mesma
-     nota em js/app.js. */
-  var MARCA_SIMBOLO = { src: "assets/totali-simbolo.png", w: 220, h: 230 };
-  var MARCA_CHEIA   = null;
+     A arte da Academy chegou em 22/09/2026 e a troca entre símbolo
+     e marca por extenso voltou a funcionar. Sem a assinatura, pelo
+     mesmo motivo do portal — ver a nota em js/app.js. */
+  var MARCA_SIMBOLO = { src: "assets/academy-simbolo.png", w: 544, h: 618 };
+  var MARCA_CHEIA   = { src: "assets/academy-branca.png", w: 1989, h: 618 };
 
   function trocarMarca(cheia) {
     var img = $("#pnLogo");

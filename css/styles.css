@@ -2883,15 +2883,9 @@ details.rec:not([open]) > .rec__body{display:none}
   margin:0 auto 20px;
   filter:drop-shadow(0 4px 16px rgba(0,0,0,.45));
 }
-/* O SÍMBOLO NO LUGAR DA LOGO POR EXTENSO (21/09/2026).
-
-   O sistema passou a se chamar Academy, e a arte com o nome por
-   extenso ainda diz "Portal do Cliente" — é imagem, não texto. Até
-   existir uma versão com o nome novo, a porta de entrada mostra o
-   símbolo, que é a mesma marca sem dizer nome nenhum, e o nome vem
-   escrito ao lado, em texto. Quadrado na largura de uma logo
-   deitada fica alto demais: daí a largura própria. */
-.marca-porta--simbolo{width:84px}
+/* A marca da Academy é mais deitada que a antiga (3,2:1 contra
+   2,8:1), então em 210px de largura ela fica com 65px de altura —
+   praticamente a mesma presença de antes. */
 
 /* ============================================================
    Caixa de entrada e lista de pendências
