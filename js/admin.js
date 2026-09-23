@@ -364,19 +364,40 @@
   /* ------------------------------------------------------------
      ARQUIVOS
 
-     Só capa de trilha e de aula, e só em `publico/`. É a única
-     coisa que a Academy guarda no Storage: conteúdo nosso, que
-     qualquer cliente pode ver. Documento de cliente não existe
-     mais aqui — saiu com o onboarding.
+     Capa, áudio e apostila das aulas, e só em `publico/`. É a
+     única coisa que a Academy guarda no Storage: conteúdo nosso,
+     que qualquer cliente pode ver. Documento de cliente não
+     existe mais aqui — saiu com o onboarding.
+
+     OS LIMITES SÃO OS MESMOS DO `storage.rules`, DE PROPÓSITO.
+     Não é validação repetida por desconfiança: a regra do
+     servidor é quem decide, e ela recusa com uma mensagem que
+     ninguém entende. Conferir antes é o que permite dizer "a
+     imagem passa de 5 MB" em vez de "storage/unauthorized".
+
+     Se um dia os limites divergirem, é aqui que se percebe: um
+     arquivo que passa nesta peneira e é recusado lá quer dizer
+     que as duas listas deixaram de combinar.
      ------------------------------------------------------------ */
-  function subir(arquivo, prefixo) {
+  var MB = 1024 * 1024;
+  var TIPOS = {
+    imagem: { re: /^image\/(jpeg|png|webp)$/, max: 5 * MB,  erro: "arquivo-imagem", ext: "jpg" },
+    audio:  { re: /^audio\/(mpeg|mp3|mp4|x-m4a|aac|ogg|opus|wav|x-wav)$/, max: 60 * MB, erro: "arquivo-audio", ext: "mp3" },
+    pdf:    { re: /^application\/pdf$/, max: 60 * MB, erro: "arquivo-pdf", ext: "pdf" }
+  };
+
+  function subir(arquivo, prefixo, qual) {
     if (!storage) return Promise.reject(new Error("sem-storage"));
     if (!arquivo) return Promise.reject(new Error("sem-arquivo"));
-    if (!/^image\//.test(arquivo.type || "")) return Promise.reject(new Error("arquivo-tipo"));
-    if (arquivo.size > 5 * 1024 * 1024) return Promise.reject(new Error("arquivo-grande"));
 
-    var ext = (String(arquivo.name || "").match(/\.([a-zA-Z0-9]{1,5})$/) || ["", "jpg"])[1].toLowerCase();
-    var nome = String(prefixo || "capa") + "-" + Date.now() + "-" +
+    var t = TIPOS[qual || "imagem"];
+    if (!t.re.test(arquivo.type || "")) return Promise.reject(new Error(t.erro));
+    if (arquivo.size > t.max) {
+      return Promise.reject(new Error(t.max <= 5 * MB ? "arquivo-grande" : "arquivo-grande-60"));
+    }
+
+    var ext = (String(arquivo.name || "").match(/\.([a-zA-Z0-9]{1,5})$/) || ["", t.ext])[1].toLowerCase();
+    var nome = String(prefixo || "arquivo") + "-" + Date.now() + "-" +
                Math.random().toString(36).slice(2, 8) + "." + ext;
     var ref = storage.ref("publico/" + nome);
     return ref.put(arquivo, { contentType: arquivo.type })
@@ -399,7 +420,10 @@
     "sem-storage": "O envio de imagens não está disponível agora.",
     "sem-arquivo": "Escolha um arquivo.",
     "arquivo-grande": "A imagem passa de 5 MB. Reduza e tente de novo.",
-    "arquivo-tipo": "A capa precisa ser uma imagem (JPG, PNG ou WebP).",
+    "arquivo-grande-60": "O arquivo passa de 60 MB. Comprima e tente de novo.",
+    "arquivo-imagem": "A capa precisa ser JPG, PNG ou WebP.",
+    "arquivo-audio": "O áudio precisa ser MP3, M4A, AAC, OGG ou WAV.",
+    "arquivo-pdf": "A apostila precisa ser um PDF.",
     "auth/invalid-email": "Esse e-mail não parece válido.",
     "auth/user-not-found": "E-mail ou senha não conferem.",
     "auth/wrong-password": "E-mail ou senha não conferem.",

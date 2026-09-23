@@ -67,7 +67,8 @@
   }
 
   function aulaVazia() {
-    return { titulo: "", duracao: "", youtube: "", desc: "", capa: "" };
+    return { titulo: "", duracao: "", youtube: "", desc: "", capa: "",
+             audio: "", audioNome: "", pdf: "", pdfNome: "" };
   }
 
   /* Identificador estável, usado no endereço da aula
@@ -108,7 +109,11 @@
             duracao: String(a.duracao || ""),
             youtube: String(a.youtube || ""),
             desc: String(a.desc || ""),
-            capa: String(a.capa || "")
+            capa: String(a.capa || ""),
+            audio: String(a.audio || ""),
+            audioNome: String(a.audioNome || ""),
+            pdf: String(a.pdf || ""),
+            pdfNome: String(a.pdfNome || "")
           };
         })
       };
@@ -279,6 +284,10 @@
             ? "Vídeo reconhecido: " + U.esc(a.youtube)
             : "Sem vídeo — a aula aparece como “em breve” para o cliente.") +
         '</div>' +
+        '<div>' +
+          '<button type="button" class="btn btn--quiet btn--sm" data-material="' + i + '.' + n + '">' +
+            (extras(a) || "Capa, áudio e apostila") + '</button>' +
+        '</div>' +
       '</div>' +
       '<div class="ac-ordem">' +
         '<button type="button" class="ac-mini" data-aula-subir="' + i + '.' + n + '" title="Subir"' +
@@ -289,6 +298,17 @@
           'title="Remover aula" aria-label="Remover aula">&times;</button>' +
       '</div>' +
     '</div>';
+  }
+
+  /* O botão diz o que a aula JÁ tem, em vez de um rótulo fixo.
+     Sem isso não haveria como saber, olhando a lista, quais aulas
+     têm apostila — e a pessoa abriria as dezoito para descobrir. */
+  function extras(a) {
+    var tem = [];
+    if (a.capa) tem.push("capa");
+    if (a.audio) tem.push("áudio");
+    if (a.pdf) tem.push("apostila");
+    return tem.length ? "Com " + tem.join(", ") : "";
   }
 
   function campo(rotulo, attrs, valor, exemplo, dica) {
@@ -402,6 +422,7 @@
       if ((par = b.getAttribute("data-aula-remover")) !== null) { removerAula(par); return; }
       if ((par = b.getAttribute("data-capa")) !== null) { escolherCapa(par); return; }
       if ((par = b.getAttribute("data-capa-tirar")) !== null) { tirarCapa(par); return; }
+      if ((par = b.getAttribute("data-material")) !== null) { abrirMaterial(par); return; }
     });
 
     area.addEventListener("input", function (ev) {
@@ -609,7 +630,7 @@
     var p = pares(par);
     var entrada = document.createElement("input");
     entrada.type = "file";
-    entrada.accept = "image/*";
+    entrada.accept = "image/jpeg,image/png,image/webp";
     entrada.addEventListener("change", function () {
       var arquivo = entrada.files && entrada.files[0];
       if (!arquivo) return;
@@ -630,6 +651,130 @@
     trilhas[p.i].capa = "";
     marcar();
     desenhar();
+  }
+
+  /* ------------------------------------------------------------
+     O MATERIAL DA AULA
+
+     Capa própria, aula em áudio e apostila em PDF. A tela do
+     cliente já sabia mostrar os três; o que faltava era onde
+     preenchê-los, e campo que ninguém alcança é pior que função
+     ausente — fica parecendo defeito.
+
+     ENVIAR É IMEDIATO, e o botão só fecha. Não existe "cancelar":
+     assim que o arquivo sobe ele está no Storage, e oferecer um
+     cancelamento que não desfaz isso seria mentira. O que
+     continua valendo é a regra da aba inteira — o cliente só vê
+     depois de Publicar.
+     ------------------------------------------------------------ */
+  function abrirMaterial(par) {
+    var p = pares(par);
+    var aula = trilhas[p.i] && trilhas[p.i].aulas[p.n];
+    if (!aula) return;
+
+    var m = UI.modal({
+      titulo: aula.titulo || "Aula " + (p.n + 1),
+      corpoHTML: '<div id="mtCorpo"></div>',
+      acoes: [{ rotulo: "Fechar", classe: "btn--ghost" }]
+    });
+    desenharMaterial(m, p);
+  }
+
+  function desenharMaterial(m, p) {
+    var aula = trilhas[p.i].aulas[p.n];
+    var caixa = $("#mtCorpo", m.caixa);
+    if (!caixa) return;
+
+    caixa.innerHTML =
+      linhaDeMaterial("Capa da aula", "imagem", aula.capa,
+        aula.capa ? "" : "Sem capa própria, usamos a miniatura do vídeo no YouTube.") +
+      linhaDeMaterial("Aula em áudio", "audio", aula.audio,
+        "Para o cliente ouvir no carro. MP3, M4A, AAC, OGG ou WAV, até 60 MB.",
+        "audioNome", aula.audioNome, "Nome que aparece para o cliente") +
+      linhaDeMaterial("Apostila", "pdf", aula.pdf,
+        "Abre numa aba nova para o cliente. PDF, até 60 MB.",
+        "pdfNome", aula.pdfNome, "Nome que aparece para o cliente");
+
+    UI.$$("[data-enviar]", caixa).forEach(function (b) {
+      b.addEventListener("click", function () { enviarMaterial(m, p, b.getAttribute("data-enviar")); });
+    });
+    UI.$$("[data-tirar]", caixa).forEach(function (b) {
+      b.addEventListener("click", function () {
+        var qual = b.getAttribute("data-tirar");
+        var campo = campoDoTipo(qual);
+        aula[campo] = "";
+        if (qual !== "imagem") aula[campo + "Nome"] = "";
+        marcar(p.i);
+        desenharMaterial(m, p);
+        desenhar();
+      });
+    });
+    UI.$$("[data-nome]", caixa).forEach(function (el) {
+      el.addEventListener("input", function () {
+        aula[el.getAttribute("data-nome")] = el.value;
+        marcar(p.i);
+      });
+    });
+  }
+
+  function campoDoTipo(qual) {
+    return qual === "imagem" ? "capa" : (qual === "audio" ? "audio" : "pdf");
+  }
+
+  function linhaDeMaterial(rotulo, qual, valor, dica, campoNome, valorNome, rotuloNome) {
+    return '<div class="field">' +
+      '<span class="field__label">' + U.esc(rotulo) + '</span>' +
+      (valor
+        ? '<p class="text-sm" style="margin:0 0 8px">' +
+            '<span class="text-muted">Enviado.</span> ' +
+            '<a href="' + U.escAttr(valor) + '" target="_blank" rel="noopener">Abrir para conferir</a></p>'
+        : "") +
+      (dica ? '<span class="field__hint" style="margin-bottom:8px;display:block">' + U.esc(dica) + '</span>' : "") +
+      (valor && campoNome
+        ? '<input class="input" type="text" data-nome="' + campoNome + '" maxlength="160" ' +
+            'value="' + U.escAttr(valorNome || "") + '" placeholder="' + U.escAttr(rotuloNome || "") + '" ' +
+            'style="margin-bottom:8px">'
+        : "") +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        '<button type="button" class="btn btn--quiet btn--sm" data-enviar="' + qual + '">' +
+          (valor ? "Trocar" : "Enviar") + '</button>' +
+        (valor ? '<button type="button" class="btn btn--quiet btn--sm" data-tirar="' + qual + '">Tirar</button>' : "") +
+      '</div>' +
+    '</div>';
+  }
+
+  var ACEITA = {
+    imagem: "image/jpeg,image/png,image/webp",
+    audio: "audio/*",
+    pdf: "application/pdf"
+  };
+
+  function enviarMaterial(m, p, qual) {
+    var entrada = document.createElement("input");
+    entrada.type = "file";
+    entrada.accept = ACEITA[qual] || "";
+    entrada.addEventListener("change", function () {
+      var arquivo = entrada.files && entrada.files[0];
+      if (!arquivo) return;
+      UI.toast("Enviando…", "", 5000);
+      A.subir(arquivo, "aula-" + qual, qual).then(function (url) {
+        var aula = trilhas[p.i].aulas[p.n];
+        var campo = campoDoTipo(qual);
+        aula[campo] = url;
+        /* O nome que aparece para o cliente começa sendo o do
+           arquivo, sem a extensão: quase sempre é o que a pessoa
+           escreveria, e um campo já preenchido se corrige mais
+           rápido do que um vazio se inventa. */
+        if (qual !== "imagem" && !aula[campo + "Nome"]) {
+          aula[campo + "Nome"] = String(arquivo.name || "").replace(/\.[^.]+$/, "").slice(0, 160);
+        }
+        marcar(p.i);
+        desenharMaterial(m, p);
+        desenhar();
+        UI.toast("Enviado. Publique para o cliente ver.", "ok");
+      }, function (e) { UI.toast(A.explicar(e), "erro", 9000); });
+    });
+    entrada.click();
   }
 
   /* ------------------------------------------------------------
