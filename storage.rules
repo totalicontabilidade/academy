@@ -3,175 +3,54 @@ rules_version = '2';
 // ============================================================
 // Totali · Academy — regras do Storage
 //
-// Aqui ficam os arquivos: documentos do checklist, anexos de
-// mensagem e o termo em PDF. A validação do navegador é
-// conveniência; a barreira de verdade é esta.
+// Aqui vive UMA coisa só: o material das aulas que a equipe
+// publica — a capa da trilha, o áudio para o cliente ouvir no
+// carro e o PDF de acompanhamento. O vídeo em si está no YouTube
+// e não passa por aqui.
 //
-// Caminhos:
-//   empresas/{empresaId}/documentos/{chave}/{arquivoId}
-//   empresas/{empresaId}/mensagens/{msgId}/{arquivoId}
-//   empresas/{empresaId}/termo/{arquivo}
+// NÃO EXISTE MAIS ARQUIVO DE CLIENTE. Toda a pasta
+// `empresas/{id}/...`, com documento, anexo de conversa e termo
+// assinado, saiu em 23/09/2026 junto com o onboarding (ver a tag
+// `portal-completo` no git). O que sobrou é conteúdo nosso, igual
+// para todo mundo, e por isso a leitura é pública.
 // ============================================================
 
 service firebase.storage {
   match /b/{bucket}/o {
 
-    function logado() {
-      return request.auth != null;
-    }
-
     function ehEquipe() {
-      return logado() &&
+      return request.auth != null &&
              firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid));
     }
 
-    function ehAdmin() {
-      return ehEquipe() &&
-             firestore.get(/databases/(default)/documents/usuarios/$(request.auth.uid)).data.papel == 'admin';
-    }
-
-    // Mesmo mecanismo do Firestore: o cliente registrou o proprio
-    // uid ao abrir o convite, e e a existencia desse documento que
-    // vale como prova de vinculo. Sem Cloud Functions.
-    function ehDonoDaEmpresa(empresaId) {
-      return logado() &&
-             firestore.exists(/databases/(default)/documents/empresas/$(empresaId)/acessos/$(request.auth.uid));
-    }
-
-    function equipeOuDono(empresaId) {
-      return ehEquipe() || ehDonoDaEmpresa(empresaId);
-    }
-
-    // 20 MB por arquivo para o cliente — o mesmo limite que o portal
-    // mostra. A EQUIPE sobe até 60 MB: o que chega da contabilidade
-    // anterior são pacotes com PDF pesado, e 20 MB barrava livro
-    // fiscal inteiro (pedido dele, 17/09/2026).
-    function tamanhoOk() {
-      return request.resource.size <= 20 * 1024 * 1024
-             || (ehEquipe() && request.resource.size <= 60 * 1024 * 1024);
-    }
-
-    // Lista fechada de tipos. Nada de executável, nada de HTML
-    // (que viraria página ativa servida do nosso domínio).
-    function tipoOk() {
-      return request.resource.contentType.matches(
-        'application/pdf'
-        + '|image/(jpeg|png|webp|heic|heif)'
-        + '|audio/(mpeg|mp4|ogg|wav|webm|amr)'
-        + '|text/(plain|csv|xml)'
-        + '|application/(xml|zip|x-zip-compressed)'
-        + '|application/x-pkcs12'
-        + '|application/msword'
-        + '|application/vnd\\.ms-excel'
-        + '|application/vnd\\.openxmlformats-officedocument\\..*'
-      );
-    }
-
-    // PERMISSÃO DE LISTAR, e por que ela precisa existir.
-    //
-    // As regras abaixo casam com ARQUIVO, não com pasta — então
-    // `listAll()` era negado, e o painel só sabia apagar os
-    // arquivos que conhecia pelos metadados do Firestore. Arquivo
-    // cujo registro se perdeu (upload que subiu e cuja gravação
-    // falhou) ficava no bucket para sempre, invisível.
-    //
-    // Achamos um assim em 21/08/2026, de uma empresa apagada dias
-    // antes. Num sistema que promete apagar tudo a pedido do
-    // cliente, isso não é sujeira: é promessa não cumprida.
-    //
-    // Não amplia quem lê o quê — é a mesma dupla que já podia ler
-    // cada arquivo. Só passa a poder enxergar a pasta.
-    match /empresas/{empresaId}/{tudo=**} {
-      allow read: if equipeOuDono(empresaId);
-    }
-
-    // ARQUIVO ENVIADO NÃO SE SOBRESCREVE, e `update: if false` NÃO
-    // bastava para garantir isso.
-    //
-    // O Storage é armazenamento de OBJETO, não sistema de arquivos:
-    // gravar por cima de um caminho existente é avaliado como
-    // CREATE, não como update. A regra de update parecia proteger e
-    // não protegia. Sonda no endereço publicado em 2026-08-24:
-    // gravei, confirmei pelos metadados que o objeto existia, gravei
-    // de novo — e passou.
-    //
-    // Isso importa porque o cliente podia trocar o conteúdo de um
-    // documento DEPOIS de a equipe aprovar: o painel continuaria
-    // dizendo "aprovado" e o arquivo seria outro.
-    //
-    // `resource == null` é a trava de verdade — só grava onde não há
-    // nada. Nada legítimo quebra: cada envio gera um id novo
-    // (`U.uid()`), então o portal nunca escreve duas vezes no mesmo
-    // caminho. Para trocar um documento, apaga e envia outro, que
-    // é o fluxo que a tela já oferece.
-    match /empresas/{empresaId}/documentos/{chave}/{arquivoId} {
-      allow read: if equipeOuDono(empresaId);
-      allow create: if equipeOuDono(empresaId) && tamanhoOk() && tipoOk()
-                    && resource == null;
-      allow update: if false;
-      allow delete: if ehEquipe() || ehDonoDaEmpresa(empresaId);
-    }
-
-    match /empresas/{empresaId}/mensagens/{msgId}/{arquivoId} {
-      allow read: if equipeOuDono(empresaId);
-      // Anexo de conversa, pela mesma razão: o que foi mandado não
-      // muda de conteúdo depois.
-      allow create: if equipeOuDono(empresaId) && tamanhoOk() && tipoOk()
-                    && resource == null;
-      allow update: if false;
-      // Anexo de mensagem só some por decisão de admin: faz parte
-      // do histórico da conversa.
-      allow delete: if ehAdmin();
-    }
-
-    match /empresas/{empresaId}/termo/{arquivo} {
-      allow read: if equipeOuDono(empresaId);
-      allow create: if equipeOuDono(empresaId)
-                    && tamanhoOk()
-                    && request.resource.contentType == 'application/pdf';
-      allow update: if false;
-      allow delete: if ehAdmin();
-    }
-
-    // Capas da Academy e imagens do portal: todo mundo lê,
-    // só a equipe publica.
-    //
-    // CREATE E DELETE SEPARADOS, e o motivo é uma armadilha:
-    // `allow write` cobre também a EXCLUSÃO, e numa exclusão não
-    // existe `request.resource` — então `request.resource.size`
-    // reprovava e a equipe nunca conseguia apagar nada. Capa
-    // enviada por engano ficava no bucket para sempre, sem jeito
-    // de tirar a não ser pelo console.
-    // MATERIAL DA ACADEMY entrou aqui em 2026-08-25: o áudio da aula,
-    // para o cliente ouvir no carro, e o PDF de acompanhamento.
-    //
-    // O que NÃO mudou, e não pode mudar: continua sendo só a equipe
-    // que publica, e a lista de tipos continua fechada. `read: true`
-    // é o que já valia — esta pasta é o conteúdo público do portal,
-    // e o endereço de cada arquivo é sorteado, não adivinhável.
-    //
-    // Limites separados por tipo, de propósito. Imagem continua em
-    // 5 MB porque capa maior que isso é capa mal exportada. Áudio e
-    // PDF vão a 25 MB, que cobre uma aula longa — mas note que o
-    // limite alto vale SÓ para os tipos que precisam dele, e não
-    // para tudo. Um teto único de 25 MB deixaria passar imagem de
-    // 25 MB sem motivo nenhum.
-    //
-    // HTML, SVG e executável continuam fora: esta pasta é servida
-    // com leitura pública, e arquivo que o navegador EXECUTA
-    // servido do nosso domínio é XSS com o nosso endereço.
     match /publico/{arquivo=**} {
+      // O endereço de cada arquivo é sorteado, não adivinhável, e
+      // o conteúdo é o material do curso. Ler é de todos.
       allow read: if true;
+
+      // CREATE E DELETE SEPARADOS, e o motivo é uma armadilha que
+      // já custou tempo neste projeto: `allow write` cobre também
+      // a EXCLUSÃO, e numa exclusão não existe `request.resource`
+      // — então qualquer condição de tamanho reprovava, e a equipe
+      // nunca conseguia apagar nada.
+      //
+      // Limites por tipo, e não um teto único: imagem acima de
+      // 5 MB é capa mal exportada, mas uma aula em áudio passa
+      // fácil de 20 MB.
+      //
+      // HTML, SVG e executável ficam fora. Esta pasta é servida
+      // com leitura pública, e arquivo que o navegador EXECUTA
+      // servido do nosso endereço é XSS com a nossa assinatura.
       allow create, update: if ehEquipe()
                             && (
                               (request.resource.size <= 5 * 1024 * 1024
                                && request.resource.contentType.matches('image/(jpeg|png|webp)'))
                               ||
-                              (request.resource.size <= 25 * 1024 * 1024
+                              (request.resource.size <= 60 * 1024 * 1024
                                && request.resource.contentType.matches(
                                     'audio/(mpeg|mp3|mp4|x-m4a|aac|ogg|opus|wav|x-wav)'))
                               ||
-                              (request.resource.size <= 25 * 1024 * 1024
+                              (request.resource.size <= 60 * 1024 * 1024
                                && request.resource.contentType == 'application/pdf')
                             );
       allow delete: if ehEquipe();

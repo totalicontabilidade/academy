@@ -2,452 +2,96 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 
 <!-- ============================================================
-     Política de Segurança de Conteúdo
-     Tudo vem da própria origem. Nenhum script externo, nenhuma
-     CDN, nenhuma fonte remota. Scripts inline são proibidos —
-     é a defesa central contra XSS.
+     POLÍTICA DE SEGURANÇA DE CONTEÚDO
+
+     Voltou a ser "só a própria origem" para script em 23/09/2026,
+     quando o App Check saiu: era o reCAPTCHA que obrigava a abrir
+     o `script-src` para dois domínios do Google. Agora nenhum
+     script de terceiro roda nesta página.
+
+     O que continua vindo de fora, e por quê:
+       i.ytimg.com        a miniatura de cada aula, de graça
+       youtube-nocookie   o player, no modo que não deixa cookie
+       firebasestorage    a capa, o áudio e o PDF que a equipe sobe
      ============================================================ -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' https://www.google.com https://www.gstatic.com;
+  script-src 'self';
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob: https://i.ytimg.com https://firebasestorage.googleapis.com;
+  img-src 'self' data: blob: https://i.ytimg.com https://firebasestorage.googleapis.com https://totali-academy.firebasestorage.app;
+  media-src 'self' blob: https://firebasestorage.googleapis.com https://totali-academy.firebasestorage.app;
+  frame-src https://www.youtube-nocookie.com https://www.youtube.com;
   font-src 'self';
   connect-src 'self'
     https://firestore.googleapis.com
     https://identitytoolkit.googleapis.com
     https://securetoken.googleapis.com
     https://firebasestorage.googleapis.com
-    https://portaldocliente-8cc7d.firebasestorage.app
-    https://firebaseappcheck.googleapis.com
-    https://content-firebaseappcheck.googleapis.com
-    https://www.google.com;
-  media-src 'self' blob: https://firebasestorage.googleapis.com;
-  worker-src 'self';
-  manifest-src 'self';
+    https://totali-academy.firebasestorage.app;
   object-src 'none';
-  base-uri 'none';
+  base-uri 'self';
   form-action 'none';
-  frame-src https://maps.google.com https://www.google.com https://www.youtube-nocookie.com;
-  upgrade-insecure-requests">
-<meta name="referrer" content="no-referrer">
+  frame-ancestors 'self';
+">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 
 <title>Academy · Totali</title>
-<meta name="description" content="Academy da Totali Soluções Contábeis: acompanhamento da entrada da sua empresa, envio dos seus documentos e trilhas de aprendizado.">
-<meta name="robots" content="noindex, nofollow">
-
-<meta name="theme-color" content="#0d1926">
+<meta name="description" content="A Academy da Totali Soluções Contábeis: trilhas curtas em vídeo sobre notas fiscais, impostos, folha de pagamento e a rotina da sua empresa.">
+<meta name="theme-color" content="#0a1522">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Academy">
-<meta name="mobile-web-app-capable" content="yes">
+<meta name="robots" content="noindex,nofollow">
 
-<link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32">
 <link rel="icon" href="assets/icon-192.png" sizes="192x192">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-<link rel="stylesheet" href="css/styles.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="css/academy.css">
 </head>
-<!-- NASCE COM A PORTA FECHADA, e isso conserta um piscar.
+<body>
 
-     O menu lateral, a barra de abas e o cabeçalho são HTML estático:
-     pintavam assim que a página chegava, antes de o JavaScript saber
-     quem está entrando. Quem abria o link do convite via o portal
-     inteiro por um instante e só depois a tela de criar acesso — e o
-     `defer` nos scripts, que deixou a página aparecer mais cedo,
-     alongou justamente esse instante.
-
-     Começando fechada, o JS só ABRE quando confirma que há sessão.
-     Errar para este lado é invisível; para o outro, mostra a casa
-     de dentro para quem ainda está na porta. -->
-<body class="porta-aberta">
-
-<a class="skip-link" href="#view">Ir para o conteúdo</a>
-
-<!-- Fundo: azul-noite em camadas, com movimento lento -->
-<div class="bg" aria-hidden="true">
-  <div class="bg__aurora"></div>
-  <div class="bg__glow"></div>
-  <div class="bg__grid"></div>
-  <div class="bg__noise"></div>
-</div>
-
-<!-- ============================================================
-     Sprite de ícones — traço 1.6, sem emoji.
-     ============================================================ -->
+<!-- Os ícones ficam aqui, num só lugar: um <use> em vez de um
+     arquivo por ícone, e nenhuma requisição a mais. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
-    <g id="_base" fill="none" stroke="currentColor" stroke-width="1.7"
-       stroke-linecap="round" stroke-linejoin="round"></g>
+    <linearGradient id="grad-ouro" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ecdcb2"/><stop offset="1" stop-color="#c2a250"/>
+    </linearGradient>
   </defs>
-
-  <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/>
-  </symbol>
-  <symbol id="ic-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.2l1.8 2.2h9A1.5 1.5 0 0 1 21 9.7v8.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/>
-  </symbol>
-  <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 5.5v13l11-6.5z"/>
-  </symbol>
-  <symbol id="ic-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 20V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V20"/>
-    <path d="M14 10h4.5A1.5 1.5 0 0 1 20 11.5V20"/><path d="M2.5 20h19"/>
-    <path d="M7 8h4M7 12h4M7 16h4M17 14h1M17 17h1"/>
-  </symbol>
-  <symbol id="ic-mais" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-    <circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>
-  </symbol>
-  <symbol id="ic-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .9-1 1.6v.4"/>
-    <path d="M12 17h.01"/>
-  </symbol>
-  <symbol id="ic-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/>
-    <path d="M14 3v4.5H18"/><path d="M9 13h6M9 16.5h4"/>
-  </symbol>
-  <symbol id="ic-sheet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4" y="4" width="16" height="16" rx="1.6"/><path d="M4 9.5h16M4 14.5h16M9.5 4v16"/>
-  </symbol>
-  <symbol id="ic-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="3.5" y="4.5" width="17" height="15" rx="1.8"/><circle cx="9" cy="9.8" r="1.6"/>
-    <path d="m4 17 4.5-4.5 3.5 3 3-2.5L20 17"/>
-  </symbol>
-  <symbol id="ic-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="9.5" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3 2.7-5 6-5s6 2 6 5"/>
-    <path d="M16 5.6a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.9c1.9.6 3.2 2.2 3.2 4.6"/>
-  </symbol>
-  <symbol id="ic-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="11" r="2.3"/>
-    <path d="M5.5 16.6c.5-1.6 1.9-2.4 3.5-2.4s3 .8 3.5 2.4"/><path d="M15 9.5h3.5M15 13h2.5"/>
-  </symbol>
-  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m5 12.5 4.5 4.5L19 7.5"/>
-  </symbol>
-  <symbol id="ic-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.6"/>
-  </symbol>
-  <symbol id="ic-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5"/>
-  </symbol>
-  <symbol id="ic-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m6 9.5 6 6 6-6"/>
-  </symbol>
-  <symbol id="ic-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m9.5 6 6 6-6 6"/>
-  </symbol>
-  <symbol id="ic-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4.5 12h15M13.5 6l6 6-6 6"/>
-  </symbol>
-  <symbol id="ic-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 15.5V4.5"/><path d="m7.5 9 4.5-4.5L16.5 9"/>
-    <path d="M4.5 15v3.2A1.8 1.8 0 0 0 6.3 20h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/>
-  </symbol>
-  <symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 4.5v11"/><path d="m7.5 11 4.5 4.5L16.5 11"/>
-    <path d="M4.5 15v3.2A1.8 1.8 0 0 0 6.3 20h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/>
-  </symbol>
-  <symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4.5 6.5h15"/><path d="M9.5 6.5V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7"/>
-    <path d="M6.5 6.5 7.4 19a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12.5"/>
-    <path d="M10.5 10v6.5M13.5 10v6.5"/>
-  </symbol>
-  <symbol id="ic-lapis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0 0-3l-1-1a2.1 2.1 0 0 0-3 0L4 16z"/>
-    <path d="M13.5 5.5 18.5 10.5"/>
-  </symbol>
-  <symbol id="ic-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.8h.01"/>
-  </symbol>
-  <symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10.6 4.2 2.9 17.4A1.6 1.6 0 0 0 4.3 20h15.4a1.6 1.6 0 0 0 1.4-2.6L13.4 4.2a1.6 1.6 0 0 0-2.8 0z"/>
-    <path d="M12 9.5v4"/><path d="M12 16.8h.01"/>
-  </symbol>
-  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3 5 5.8v5.4c0 4.3 2.9 7.6 7 9.3 4.1-1.7 7-5 7-9.3V5.8z"/>
-    <path d="m9.2 12.2 2 2 3.6-3.8"/>
-  </symbol>
-  <symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4.8" y="10.5" width="14.4" height="9.5" rx="1.8"/>
-    <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><path d="M12 14.3v2.4"/>
-  </symbol>
-  <symbol id="ic-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="3" y="5.2" width="18" height="13.6" rx="1.8"/><path d="m3.6 6.6 8.4 6 8.4-6"/>
-  </symbol>
-  <symbol id="ic-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M7.2 3.5H9l1.5 3.8-1.9 1.4a11.5 11.5 0 0 0 5.7 5.7l1.4-1.9 3.8 1.5v1.8a2.2 2.2 0 0 1-2.4 2.2C10.4 17.4 6.1 13.1 5 5.9a2.2 2.2 0 0 1 2.2-2.4z"/>
-  </symbol>
-  <symbol id="ic-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M13.5 4.5H19.5V10.5"/><path d="M19.5 4.5 11 13"/>
-    <path d="M18 14v4.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 4 18.5v-11A1.5 1.5 0 0 1 5.5 6H10"/>
-  </symbol>
-  <symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 5.5v13M5.5 12h13"/>
-  </symbol>
-  <symbol id="ic-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6.5 3.5h11A1.5 1.5 0 0 1 19 5v13.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a1.5 1.5 0 0 1 1.5-1.5z"/>
-    <path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4"/>
-    <circle cx="16" cy="16.5" r="2.2"/>
-  </symbol>
-  <symbol id="ic-calculator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4.5" y="3" width="15" height="18" rx="2"/>
-    <rect x="7.5" y="6" width="9" height="3.2" rx="1"/>
-    <path d="M8.2 12.6h.01M12 12.6h.01M15.8 12.6h.01M8.2 16.2h.01M12 16.2h.01M15.8 16.2h.01"/>
-  </symbol>
-  <symbol id="ic-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M5.5 3.5h13v17l-2.2-1.5-2.2 1.5-2.1-1.5L9.9 20.5 7.7 19l-2.2 1.5z"/>
-    <path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/>
-  </symbol>
-  <symbol id="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20.5 12c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.42L4 20.5l1.5-3.4A6.9 6.9 0 0 1 3.5 12c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2z"/>
-    <path d="M8.7 11.9h.01M12 11.9h.01M15.3 11.9h.01"/>
-  </symbol>
-  <symbol id="ic-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20.5 3.5 10.8 13.2"/><path d="M20.5 3.5 14.3 20.8l-3.5-7.6-7.6-3.5z"/>
-  </symbol>
-  <symbol id="ic-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M18 16.2V11a6 6 0 0 0-12 0v5.2L4.5 18.3h15z"/>
-    <path d="M10 21h4"/>
-  </symbol>
-  <symbol id="ic-olho" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/>
-    <circle cx="12" cy="12" r="3.1"/>
-  </symbol>
-  <symbol id="ic-pino" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 21s7-6.1 7-11a7 7 0 1 0-14 0c0 4.9 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>
-  </symbol>
-  <symbol id="ic-clipe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 11.5 12.3 19.2a4.6 4.6 0 0 1-6.5-6.5l7.9-7.9a3.1 3.1 0 0 1 4.4 4.4l-7.9 7.9a1.6 1.6 0 0 1-2.2-2.2l7.2-7.2"/>
-  </symbol>
-  <symbol id="ic-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3.5 8.5A1.5 1.5 0 0 1 5 7h2.4l1.2-2h6.8l1.2 2H19a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5z"/>
-    <circle cx="12" cy="12.8" r="3.3"/>
-  </symbol>
-  <symbol id="ic-som" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 9.5h3l4-3.5v12l-4-3.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.6a7.5 7.5 0 0 1 0 10.8"/>
-  </symbol>
-  <symbol id="ic-sair" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14.5 4.5H18A1.5 1.5 0 0 1 19.5 6v12a1.5 1.5 0 0 1-1.5 1.5h-3.5"/>
-    <path d="M11 8.5 14.5 12 11 15.5"/><path d="M14 12H4.5"/>
-  </symbol>
-  <symbol id="ic-bussola" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="m15.2 8.8-1.9 4.5-4.5 1.9 1.9-4.5z"/>
-  </symbol>
-  <symbol id="ic-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M2.5 9.8h19"/>
-    <path d="M6 14.5h3.5M13 14.5h5"/>
-  </symbol>
-  <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="M12 7v5.3l3.4 2"/>
-  </symbol>
-  <symbol id="ic-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4.5h-4.5"/>
-  </symbol>
+  <symbol id="ic-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5-12-7.5z"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4 12.5l5.2 5.2L20 7"/></symbol>
+  <symbol id="ic-seta-d" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="ic-seta-e" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="ic-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="ic-baixar" viewBox="0 0 24 24"><path d="M12 3.5v11m0 0l-4-4m4 4l4-4M4.5 19.5h15"/></symbol>
+  <symbol id="ic-fone" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0116 0v2"/><rect x="2.5" y="13.5" width="4" height="7" rx="1.6"/><rect x="17.5" y="13.5" width="4" height="7" rx="1.6"/></symbol>
+  <symbol id="ic-pdf" viewBox="0 0 24 24"><path d="M14 3.5H7a1.5 1.5 0 00-1.5 1.5v14A1.5 1.5 0 007 20.5h10a1.5 1.5 0 001.5-1.5V8z"/><path d="M14 3.5V8h4.5"/></symbol>
+  <symbol id="ic-casa" viewBox="0 0 24 24"><path d="M4 10.5L12 4l8 6.5V19a1 1 0 01-1 1h-4.5v-6h-5v6H5a1 1 0 01-1-1z"/></symbol>
+  <symbol id="ic-trilhas" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="6" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6" rx="1.8"/></symbol>
+  <symbol id="ic-ajuda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 114 2.1c-.9.6-1.6 1-1.6 2M12 16.8h.01"/></symbol>
+  <symbol id="ic-sair" viewBox="0 0 24 24"><path d="M15 8V5.5A1.5 1.5 0 0013.5 4h-7A1.5 1.5 0 005 5.5v13A1.5 1.5 0 006.5 20h7a1.5 1.5 0 001.5-1.5V16"/><path d="M19.5 12H9m10.5 0l-3-3m3 3l-3 3"/></symbol>
+  <symbol id="ic-alerta" viewBox="0 0 24 24"><path d="M12 4.2l8.4 14.6H3.6z"/><path d="M12 9.6v4M12 16.4h.01"/></symbol>
+  <symbol id="ic-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.2M12 7.9h.01"/></symbol>
+  <symbol id="ic-olho" viewBox="0 0 24 24"><path d="M2.5 12S6 5.8 12 5.8 21.5 12 21.5 12 18 18.2 12 18.2 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></symbol>
+  <symbol id="ic-livro" viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 015.5 4H11v16H5.5A1.5 1.5 0 014 18.5z"/><path d="M20 5.5A1.5 1.5 0 0018.5 4H13v16h5.5A1.5 1.5 0 0020 18.5z"/></symbol>
 </svg>
-<!-- ============================================================
-     Cabeçalho
-     ============================================================ -->
-<header class="app-header dark-surface">
-  <button type="button" class="brand" data-nav="inicio" aria-label="Totali · voltar para o início">
-    <!-- Começa no símbolo porque a tela de entrada é o primeiro que
-         se vê; `atualizarCabecalho()` (js/app.js) troca para a logo
-         completa quando o cliente entra. -->
-    <img class="brand__logo" id="brandLogo" data-marca="simbolo"
-         src="assets/academy-simbolo.png" alt="Academy · Totali"
-         width="544" height="618">
-    <span class="brand__divider" aria-hidden="true"></span>
-    <span class="brand__text">
-      <span class="brand__title" id="brandTitulo">Academy</span>
-      <span class="brand__sub" id="brandSub">Totali</span>
-    </span>
-  </button>
 
-  <div class="header-actions">
-    <!-- Só aparece para quem cuida de mais de uma empresa. -->
-    <button type="button" class="hbtn" id="btnEmpresas" hidden aria-label="Trocar de empresa">
-      <svg class="ic" aria-hidden="true"><use href="#ic-building"></use></svg>
-      <span class="hbtn__label">Trocar empresa</span>
-    </button>
-    <!-- Quem está usando. Some quando não há sessão. -->
-    <button type="button" class="usuario" id="ctQuem" hidden
-            aria-label="Sua conta — tocar para mudar seu nome">
-      <span class="usuario__avatar" id="ctIniciais" aria-hidden="true">—</span>
-      <span class="usuario__txt">
-        <span class="usuario__nome" id="ctNome">—</span>
-        <span class="usuario__papel">Sua conta</span>
-      </span>
-    </button>
-    <!-- Só o ícone. O rótulo virou aria-label: quem enxerga entende
-         pelo desenho, e quem usa leitor de tela continua ouvindo o
-         que o botão faz. -->
-    <button type="button" class="hbtn hbtn--gold" id="btnInstalar" hidden
-            aria-label="Instalar o portal no aparelho" title="Instalar o portal no aparelho">
-      <svg class="ic" aria-hidden="true"><use href="#ic-download"></use></svg>
-    </button>
-    <button type="button" class="hbtn" data-nav="ajuda" aria-label="Ajuda">
-      <svg class="ic" aria-hidden="true"><use href="#ic-help"></use></svg>
-      <span class="hbtn__label">Ajuda</span>
-    </button>
-    <!-- AQUI NÃO ENTRA ATALHO PARA O PAINEL.
-
-         Existiu um: um botão discreto "Administração" apontando
-         para equipe.html, para que quem é da Totali não caísse no
-         portal sem saber para onde ir. Saiu em 04/09/2026, a
-         pedido do Raoni: o cliente não pode ver esse endereço de
-         forma nenhuma, e um botão no cabeçalho o mostrava a todos.
-
-         Quem é da equipe chega ao painel pelo próprio caminho —
-         atalho salvo, ou o endereço que já sabe de cor. O rodapé
-         do painel diz "não divulgue este endereço", e o portal
-         não pode ser quem divulga. -->
-    <!-- Só aparece com sessão aberta: sem login não há de onde sair. -->
-    <button type="button" class="hbtn" id="btnSair" hidden aria-label="Sair da conta">
-      <svg class="ic" aria-hidden="true"><use href="#ic-sair"></use></svg>
-      <span class="hbtn__label">Sair</span>
-    </button>
-  </div>
-</header>
-
-<!-- ============================================================
-     Corpo
-     ============================================================ -->
-<div class="shell">
-
-  <nav class="sidenav" aria-label="Navegação principal">
-    <div class="sidenav__label">Menu</div>
-
-    <button type="button" class="sidenav__item" data-nav="inicio">
-      <svg class="ic" aria-hidden="true"><use href="#ic-home"></use></svg>Início
-    </button>
-    <!-- A Academy vem logo abaixo do Início de propósito.
-
-         Ela é o único lugar do portal que serve ao cliente todo dia,
-         e não só durante a migração: os documentos acabam, a Academy
-         fica. Havia ainda o cliente cuja documentação veio por
-         e-mail da contabilidade anterior — para esse, ela é o único
-         motivo de abrir o portal, e estava no fim da fila. -->
-    <button type="button" class="sidenav__item" data-nav="academy">
-      <svg class="ic" aria-hidden="true"><use href="#ic-play"></use></svg>Trilhas
-      <span class="sidenav__marca" data-marca-academy hidden>Comece por aqui</span>
-    </button>
-    <button type="button" class="sidenav__item" data-nav="documentos">
-      <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>Documentos
-      <span class="sidenav__badge" data-badge-pendentes hidden></span>
-    </button>
-    <button type="button" class="sidenav__item" data-nav="financeiro">
-      <svg class="ic" aria-hidden="true"><use href="#ic-card"></use></svg>Bancos e maquininhas
-    </button>
-    <button type="button" class="sidenav__item" data-nav="mensagens">
-      <svg class="ic" aria-hidden="true"><use href="#ic-chat"></use></svg>Mensagens
-      <span class="sidenav__badge" data-badge-mensagens hidden></span>
-    </button>
-    <button type="button" class="sidenav__item" data-nav="empresa">
-      <svg class="ic" aria-hidden="true"><use href="#ic-building"></use></svg>Empresa
-    </button>
-    <button type="button" class="sidenav__item" data-nav="ajuda">
-      <svg class="ic" aria-hidden="true"><use href="#ic-help"></use></svg>Ajuda
-    </button>
-
-    <button type="button" class="sidenav__item" id="btnSairMenu" hidden>
-      <svg class="ic" aria-hidden="true"><use href="#ic-sair"></use></svg>Sair da conta
-    </button>
-
-    <div class="sidenav__card">
-      <div class="t">Alguma dúvida?</div>
-      <div class="d">Nossa equipe acompanha sua migração do começo ao fim.</div>
-      <a class="btn btn--gold btn--sm" style="margin-top:12px;width:100%"
-         href="https://wa.me/5579998412107" target="_blank" rel="noopener noreferrer">
-        <svg class="ic" aria-hidden="true"><use href="#ic-phone"></use></svg>Falar no WhatsApp
-      </a>
-    </div>
-
-    <!-- Aqui houve, por um tempo, a logomarca da contabilidade. Saiu:
-         logo abaixo do botão dourado do WhatsApp ela disputava
-         atenção com a única ação da barra, e a mesma assinatura já
-         fecha o rodapé — que aparece no celular também, onde esta
-         barra nem existe. Uma vez por tela basta. -->
-  </nav>
-
-  <main class="main">
-    <div id="view" class="view" tabindex="-1">
-      <div class="card card--pad">
-        <p class="text-sm text-muted">Carregando o portal…</p>
-      </div>
-    </div>
-
-    <noscript>
-      <div class="card card--pad" style="margin-top:16px">
-        <p style="font-size:14px;line-height:1.6">
-          Este portal precisa de JavaScript ativado para funcionar. Ative o JavaScript nas
-          configurações do seu navegador ou fale com a Totali pelo WhatsApp (79) 99841-2107.
-        </p>
-      </div>
-    </noscript>
-  </main>
-</div>
-
-<!-- ============================================================
-     Barra inferior (celular)
-     ============================================================ -->
-<nav class="tabbar" aria-label="Navegação principal">
-  <button type="button" class="tabbar__item" data-nav="inicio">
-    <svg class="ic" aria-hidden="true"><use href="#ic-home"></use></svg>Início
-  </button>
-  <!-- Mesma ordem do menu lateral: ver o comentário lá em cima. -->
-  <button type="button" class="tabbar__item" data-nav="academy">
-    <svg class="ic" aria-hidden="true"><use href="#ic-play"></use></svg>Trilhas
-    <span class="tabbar__marca" data-marca-academy hidden aria-hidden="true"></span>
-  </button>
-  <button type="button" class="tabbar__item" data-nav="documentos">
-    <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>Documentos
-    <span class="tabbar__badge" data-badge-pendentes hidden></span>
-  </button>
-  <button type="button" class="tabbar__item" data-nav="mensagens">
-    <svg class="ic" aria-hidden="true"><use href="#ic-chat"></use></svg>Mensagens
-    <span class="tabbar__badge" data-badge-mensagens hidden></span>
-  </button>
-  <!-- BANCOS E EMPRESA NÃO CABIAM, E SUMIRAM DO CELULAR.
-
-       A barra tinha cinco itens fixos e o menu lateral tem sete:
-       "Bancos e maquininhas" e "Empresa" simplesmente não existiam
-       para quem usa o portal no telefone — e Bancos é a ETAPA 4 da
-       migração, não uma tela secundária.
-
-       Ajuda saiu da barra para abrir a vaga: ela continua no botão
-       de interrogação do cabeçalho, que está sempre à vista. -->
-  <button type="button" class="tabbar__item" id="btnMaisTelas"
-          aria-haspopup="menu" aria-label="Mais telas do portal">
-    <svg class="ic" aria-hidden="true"><use href="#ic-mais"></use></svg>Mais
-  </button>
-</nav>
-
-<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
+<div id="app"></div>
 
 <script defer src="lib/firebase-app-compat.js"></script>
 <script defer src="lib/firebase-auth-compat.js"></script>
 <script defer src="lib/firebase-firestore-compat.js"></script>
 <script defer src="lib/firebase-storage-compat.js"></script>
-<script defer src="lib/firebase-app-check-compat.js"></script>
 <script defer src="js/firebase-config.js"></script>
-<script defer src="js/firebase.js"></script>
-<script defer src="js/chave-publica.js"></script>
-<script defer src="js/cripto.js"></script>
 <script defer src="js/util.js"></script>
-<script defer src="js/conteudo.js"></script>
-<script defer src="js/data.js"></script>
-<script defer src="js/situacao.js"></script>
-<script defer src="js/nuvem.js"></script>
-<script defer src="js/store.js"></script>
-<script defer src="js/ui.js"></script>
-<script defer src="js/tour.js"></script>
-<script defer src="js/motion.js"></script>
-<script defer src="js/notificacoes.js"></script>
-<script defer src="js/termo.js"></script>
-<script defer src="js/app.js"></script>
+<script defer src="js/catalogo.js"></script>
+<script defer src="js/nucleo.js"></script>
+<script defer src="js/aluno.js"></script>
 <script defer src="js/pwa.js"></script>
 </body>
 </html>

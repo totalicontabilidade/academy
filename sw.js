@@ -16,64 +16,42 @@
    Ao alterar qualquer arquivo do app, suba o número da versão —
    é o que faz o navegador do cliente buscar o conteúdo novo.
    ============================================================ */
-var VERSAO = "v195";
-var CACHE = "totali-onboarding-" + VERSAO;
+var VERSAO = "v200";
+var CACHE = "totali-academy-" + VERSAO;
 
 var SHELL = [
   "./",
   "./index.html",
-  "./css/styles.css",
+  "./css/academy.css",
   "./lib/firebase-app-compat.js",
   "./lib/firebase-auth-compat.js",
   "./lib/firebase-firestore-compat.js",
   "./lib/firebase-storage-compat.js",
-  "./lib/firebase-app-check-compat.js",
   "./js/firebase-config.js",
-  "./js/firebase.js",
-  "./js/chave-publica.js",
-  "./js/cripto.js",
   "./js/util.js",
-  "./js/conteudo.js",
-  "./js/data.js",
-  "./js/situacao.js",
-  "./js/nuvem.js",
-  "./js/store.js",
-  "./js/ui.js",
-  "./js/tour.js",
-  "./js/motion.js",
-  "./js/notificacoes.js",
-  /* O jsPDF (357 KB) saiu daqui de propósito. Ele é a maior peça
-     do projeto e só serve quando alguém pede um PDF — guardá-lo na
-     primeira visita custava mais que todo o resto do portal junto,
-     em cima de quem está no celular na rua. Passa a ser buscado na
-     hora do uso, e a partir daí fica no cache como qualquer outro
-     arquivo de código. */
-  "./js/termo.js",
-  "./js/app.js",
-  /* A página de liberação de extratos e o script dela.
-
-     Ela entra no cache mesmo sendo aberta por link direto: o
-     cliente costuma abrir, ir ao banco, voltar — e voltar às vezes
-     é com a rede do celular oscilando. Sem isto, ele voltaria para
-     uma página que não carrega, com a autorização já feita e sem
-     conseguir marcar. Os manuais em PDF NÃO entram: são pesados e
-     só interessam a quem tem aquele banco. */
-  "./extratos.html",
-  "./js/extratos.js",
+  "./js/catalogo.js",
+  "./js/nucleo.js",
+  "./js/aluno.js",
   "./js/pwa.js",
   "./manifest.webmanifest",
   "./assets/academy-simbolo.png",
   "./assets/academy-branca.png",
-  "./assets/totali-contabil-branca.png",
-  /* A versão colorida saiu daqui: desde que os três PDFs passaram a
-     usar a branca, nenhum código a pede mais. Eram 120 KB baixados
-     na primeira visita de todo cliente para nada. O arquivo continua
-     no repositório — só deixou de ser adiantado. */
   "./assets/icon-192.png",
   "./assets/icon-512.png",
   "./assets/favicon-32.png",
   "./assets/apple-touch-icon.png"
 ];
+
+/* A LISTA ENCURTOU MUITO EM 23/09/2026, e não foi otimização: o
+   sistema deixou de ter documento, senha, cofre, PDF gerado no
+   navegador e página de extrato. Saíram daqui, junto com o código
+   que os servia, o jsPDF, o módulo de criptografia, o de
+   armazenamento local de arquivos e a folha de estilo antiga.
+
+   O que entra no cache é só o que a Academy precisa para abrir
+   offline: a casca, o catálogo já visto e a marca. O vídeo vem do
+   YouTube e nunca é adiantado — seria adiantar megabytes de algo
+   que a pessoa pode não assistir. */
 
 /* O QUE MUDOU AQUI, E POR QUÊ — leia antes de "otimizar".
 
@@ -112,7 +90,8 @@ self.addEventListener("activate", function (ev) {
   ev.waitUntil(
     caches.keys().then(function (nomes) {
       return Promise.all(nomes.map(function (n) {
-        if (n !== CACHE && n.indexOf("totali-onboarding-") === 0) return caches.delete(n);
+        if (n !== CACHE && (n.indexOf("totali-academy-") === 0 ||
+            n.indexOf("totali-onboarding-") === 0)) return caches.delete(n);
         return null;
       }));
     }).then(function () { return self.clients.claim(); })

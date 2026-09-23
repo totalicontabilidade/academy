@@ -3,51 +3,36 @@ rules_version = '2';
 // ============================================================
 // Totali · Academy — regras do Firestore
 //
-// Princípio: a tela esconde, a regra impede. Nada aqui confia no
-// que o navegador manda. O que não estiver escrito não existe —
-// a última regra nega tudo o que sobrou.
+// A Academy é um sistema de VÍDEOS. Não guarda documento, senha,
+// dado de empresa nem arquivo de cliente — tudo isso saiu em
+// 23/09/2026, quando o onboarding virou um sistema à parte (ver a
+// tag `portal-completo` no git). Sobrou o essencial:
 //
-// O VÍNCULO NÃO DEPENDE DE CLOUD FUNCTION
-// ---------------------------------------
-// O vínculo entre o cliente e a empresa dele nasce do CONVITE, e o
-// acesso do dia a dia é feito com e-mail e senha — nada disso passa
-// por servidor próprio, e é de propósito: se as funções caírem, o
-// cliente continua entrando e enviando documento.
+//   conteudo/{doc}     o catálogo de trilhas e aulas que a equipe publica
+//   usuarios/{uid}     quem é da equipe, e quem é administrador
+//   alunos/{uid}       quem assiste, e o que já assistiu
+//   convites/{codigo}  os links que dão acesso
 //
-// Cloud Functions EXISTEM, para o que o navegador não pode fazer:
-// apagar conta de login, abrir senha guardada, escrever a trilha
-// de /auditoria e avisar de pendência por e-mail. Elas rodam com
-// poder de administrador e passam por cima destas regras — por
-// isso /auditoria pode ser fechada para escrita de todo mundo.
+// O DADO MAIS SENSÍVEL AQUI É O NOME DE QUEM ASSISTE. Não há
+// documento fiscal, não há senha de terceiro, não há valor. Isso
+// muda o desenho das regras: elas ficam curtas porque há pouco a
+// proteger, e não porque alguém relaxou.
 //
-// Como funciona:
-//   1. A equipe cadastra a empresa e gera um convite. O link
-//      carrega só um código longo e aleatório.
-//   2. O cliente abre o link uma vez e cria a senha dele. Nesse
-//      momento o portal registra /empresas/{id}/acessos/{uid} e
-//      /clientes/{uid}, e QUEIMA o convite.
-//   3. Dali em diante ele entra com e-mail e senha, sem o link.
-//
-// Convite queimado não serve mais: se o link for encaminhado ou
-// vazar depois, não dá acesso a ninguém.
-//
-// Quem é quem:
-//   cliente  e-mail e senha; enxerga só a empresa do convite dele
-//   equipe   e-mail e senha, e existe em /usuarios/{uid}
-//   admin    membro da equipe com papel "admin"
+// O QUE NÃO MUDOU do sistema antigo, porque funcionou:
+// a existência de `usuarios/{uid}` é o que prova ser da equipe, e
+// toda gravação da equipe vem assinada com o próprio uid.
 // ============================================================
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---------- Quem está pedindo ----------
-
     function logado() {
       return request.auth != null;
     }
 
-    // Membro da equipe: precisa ter documento em /usuarios/{uid}.
-    // Apagar o documento corta o acesso na hora, sem mexer na conta.
+    // Ser da equipe é TER DOCUMENTO em /usuarios. Não é um campo
+    // no próprio perfil, que a pessoa poderia escrever: é um
+    // documento que só administrador cria.
     function ehEquipe() {
       return logado() && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid));
     }
@@ -57,852 +42,107 @@ service cloud.firestore {
              get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.papel == 'admin';
     }
 
-    // Um bloco do conteúdo do portal chegou igual ao que já está
-    // gravado? É o que separa "a equipe editou a parte dela" de
-    // "alguém devolveu uma versão velha por cima da atual".
-    //
-    // `get(k, null)` nos dois lados para o bloco que ainda não
-    // existe também bater — nulo com nulo é igual, e é a situação
-    // de todo bloco novo antes da primeira publicação.
-    function blocoIntacto(k) {
-      return request.resource.data.get('blocos', {}).get(k, null)
-             == resource.data.get('blocos', {}).get(k, null);
-    }
-
-    // O cliente provou o convite e registrou o próprio uid.
-    function ehDonoDaEmpresa(empresaId) {
-      return logado() &&
-             exists(/databases/$(database)/documents/empresas/$(empresaId)/acessos/$(request.auth.uid));
-    }
-
-    function equipeOuDono(empresaId) {
-      return ehEquipe() || ehDonoDaEmpresa(empresaId);
-    }
-
-    // ---------- Utilidades ----------
-
-    // ---------- O carimbo do servidor ----------
-    //
-    // Três campos do documento do checklist não pertencem a
-    // ninguém que use o sistema: `recebidoEm`, `aprovadoEm` e
-    // `aprovadoPor`. Quem os escreve é a Cloud Function que
-    // observa a gravação — funções rodam com poder de
-    // administrador e passam por cima destas regras.
-    //
-    // Por que fechar TAMBÉM para a equipe: eles existem para o
-    // dossiê poder afirmar quando um documento chegou e quando
-    // foi aprovado. Data que a equipe pode escrever não prova
-    // nada contra a equipe, e é justamente essa a pergunta que
-    // se faz num dossiê. Fechar só para o cliente seria teatro.
-    //
-    // Antes essas datas vinham de /auditoria, e por isso a
-    // leitura da trilha inteira precisava ficar aberta para a
-    // equipe. Com o carimbo no próprio item, a trilha pode ser
-    // só do administrador.
-    function semCarimbo() {
-      return !request.resource.data.keys()
-                .hasAny(['recebidoEm', 'aprovadoEm', 'aprovadoPor']);
-    }
-
-    function carimboIntacto() {
-      return !request.resource.data.diff(resource.data).affectedKeys()
-                .hasAny(['recebidoEm', 'aprovadoEm', 'aprovadoPor']);
-    }
-
-    // A assinatura de quem gravou, quando ela vier.
-    //
-    // Serve para a trilha de /auditoria saber QUEM fez: o gatilho
-    // que a escreve não recebe o usuário, então quem grava se
-    // identifica. Isto é o que impede a identificação de ser uma
-    // simples declaração — ninguém assina no nome de outro.
-    //
-    // O padrão é o próprio uid, e não a ausência do campo, para
-    // que gravação sem assinatura continue passando: assim a regra
-    // pode subir antes ou depois do JavaScript que assina, sem
-    // recusar gravação no meio do caminho.
-    function assinaturaConfere() {
+    // Assinatura, não declaração de boa fé: o `porUid` gravado tem
+    // de ser o uid de quem está gravando.
+    function assinado() {
       return request.resource.data.get('porUid', request.auth.uid) == request.auth.uid;
     }
 
-    // Para ALTERAR: nenhum campo fora da lista pode ser tocado.
-    function soEstesCampos(campos) {
+    function soEstes(campos) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
     }
 
-    // Para CRIAR: o documento não pode nascer com campo fora da lista.
-    //
-    // Por que esta função existe, e por que ela é diferente da de
-    // cima: `diff(resource.data)` só funciona quando JÁ EXISTE um
-    // documento para comparar. Na criação não existe, e por isso a
-    // trava de alteração simplesmente não vale ali.
-    //
-    // Foi exatamente essa brecha que apareceu no teste de
-    // 2026-08-18: `allow create` não tinha trava de campo nenhuma,
-    // então o cliente conseguia CRIAR um documento de item já com
-    // `revisao: {status:"aprovado"}` — carimbando de aprovado um
-    // documento que ele nunca enviou. Alterar era negado; criar,
-    // não. A regra de alteração dava uma falsa sensação de que o
-    // campo estava protegido.
-    function soEstesCamposAoCriar(campos) {
+    function soEstesAoCriar(campos) {
       return request.resource.data.keys().hasOnly(campos);
     }
 
-    function textoAte(valor, max) {
+    function texto(valor, max) {
       return valor is string && valor.size() <= max;
     }
 
-    // ---------- Convites ----------
+    // ------------------------------------------------------------
+    // O CATÁLOGO
     //
-    // O código é o segredo, e ele só existe dentro do link. Ler
-    // um convite exige saber o código inteiro (get por id);
-    // listar é proibido, então não dá para varrer a coleção.
+    // Leitura aberta de propósito: é o conteúdo do produto, e a
+    // tela de entrada precisa mostrar o nome e o contato da Totali
+    // antes de qualquer login. Nada aqui é de cliente.
+    // ------------------------------------------------------------
+    match /conteudo/{doc} {
+      allow get: if true;
+      allow list: if ehEquipe();
+      allow write: if ehEquipe();
+    }
 
+    // ------------------------------------------------------------
+    // A EQUIPE
+    //
+    // O PRIMEIRO ADMINISTRADOR NASCE NO CONSOLE, à mão. Não há
+    // como uma regra dizer "pode se promover se a coleção estiver
+    // vazia" sem abrir a porta para quem chegar primeiro, e num
+    // projeto novo quem chega primeiro pode ser qualquer um.
+    // ------------------------------------------------------------
+    match /usuarios/{uid} {
+      allow read: if ehEquipe();
+      allow create, update: if ehAdmin() && assinado();
+      allow delete: if ehAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // QUEM ASSISTE
+    //
+    // O aluno escreve o próprio documento e mais nada. O
+    // `progresso` é dele: marcar aula como vista é gravação de
+    // aluno, e por isso ele pode mexer nesse campo.
+    //
+    // `papel` NÃO existe aqui de propósito. Se existisse, o aluno
+    // poderia se escrever como equipe — e a prova de ser equipe
+    // seria um campo que o próprio interessado controla. A prova
+    // mora em /usuarios, que ele não alcança.
+    // ------------------------------------------------------------
+    match /alunos/{uid} {
+      allow get: if ehEquipe() || (logado() && request.auth.uid == uid);
+      allow list: if ehEquipe();
+
+      // No cadastro, o aluno prova que foi convidado: o código tem
+      // de existir e estar ativo. Sem isso, qualquer um com o
+      // endereço criaria conta e assistiria tudo.
+      allow create: if logado() && request.auth.uid == uid
+                    && soEstesAoCriar(['nome', 'email', 'empresa', 'convite',
+                                       'criadoEm', 'ultimoAcessoEm', 'progresso'])
+                    && texto(request.resource.data.nome, 120)
+                    && texto(request.resource.data.convite, 40)
+                    && exists(/databases/$(database)/documents/convites/$(request.resource.data.convite))
+                    && get(/databases/$(database)/documents/convites/$(request.resource.data.convite)).data.ativo == true;
+
+      allow update: if ehEquipe()
+                    || (logado() && request.auth.uid == uid
+                        && soEstes(['nome', 'empresa', 'ultimoAcessoEm', 'progresso']));
+
+      // Apagar a própria conta é direito dele (LGPD). A equipe
+      // também pode, a pedido.
+      allow delete: if ehEquipe() || (logado() && request.auth.uid == uid);
+    }
+
+    // ------------------------------------------------------------
+    // OS CONVITES
+    //
+    // `get` é aberto porque quem chega pelo link ainda não tem
+    // conta e precisa validar o código antes de criar a senha. Só
+    // que `get` exige SABER o código: sem ele não há o que ler.
+    // `list` fica fechado justamente para ninguém varrer a coleção
+    // e sair com todos os códigos.
+    // ------------------------------------------------------------
     match /convites/{codigo} {
       allow get: if true;
       allow list: if ehEquipe();
-      allow create, delete: if ehEquipe();
-
-      // A equipe altera à vontade. O cliente só pode QUEIMAR o
-      // convite que ele acabou de usar — e só isso, num caminho
-      // sem volta: de ativo para inativo, nunca o contrário.
-      allow update: if ehEquipe()
-                    || (logado()
-                        && resource.data.ativo == true
-                        && request.resource.data.ativo == false
-                        && request.resource.data.usadoPor == request.auth.uid
-                        && request.resource.data.diff(resource.data)
-                             .affectedKeys().hasOnly(['ativo', 'usadoPor', 'usadoEm']));
-    }
-
-    // ---------- Liberação de extratos (Open Finance) ----------
-    //
-    // A página `extratos.html` é aberta por link, SEM login: o
-    // cliente que só precisa autorizar o banco não vira usuário do
-    // portal por causa disso. O código do endereço é o segredo,
-    // com os mesmos 22 caracteres sorteados do convite, e vale a
-    // mesma regra de lá: `get` por id é livre, `list` é da equipe.
-    // Sem o código não se chega ao documento, e ninguém varre a
-    // carteira de clientes.
-    //
-    // O QUE ESTE DOCUMENTO PODE CONTER, e por quê.
-    // Nome da empresa e os links de conexão da Ottimizza — que são
-    // os mesmos que a equipe mandaria por WhatsApp. Nada de sócio,
-    // de credencial, de documento. O CNPJ entra só como hash: a
-    // página confere o que o cliente digita sem guardar o número.
-    // Essa conferência segura link encaminhado por engano, e é
-    // isso que ela é — quem protege de verdade é o código.
-    //
-    // A confirmação do cliente mora numa SUBCOLEÇÃO, e isso não é
-    // arrumação: aqui dentro estão os links, e quem escreve neles
-    // decide para onde o cliente é levado. Ele marca a dele lá,
-    // sem tocar aqui.
-    match /extratos/{codigo} {
-      allow get: if true;
-      allow list: if ehEquipe();
-      allow create, update: if ehEquipe();
-      allow delete: if ehAdmin();
-
-      // Quem tem o link marca que já autorizou. É um sinal para a
-      // equipe conferir no Ottimizza, nunca uma prova — por isso
-      // `por` fica gravado, e por isso a equipe pode corrigir.
-      match /confirmacoes/{banco} {
-        allow read: if true;
-        allow create, update: if request.resource.data.keys().hasOnly(
-                                   ['confirmado', 'em', 'por', 'banco'])
-                              && request.resource.data.confirmado is bool
-                              && request.resource.data.em is number
-                              && request.resource.data.por in ['cliente', 'equipe']
-                              && textoAte(request.resource.data.banco, 80)
-                              // Só a equipe assina como equipe.
-                              && (request.resource.data.por == 'cliente' || ehEquipe());
-        allow delete: if ehEquipe();
-      }
-    }
-
-    // ---------- De qual empresa é cada cliente ----------
-    //
-    // Criado junto com o acesso. Serve para o portal descobrir,
-    // no login seguinte, qual empresa carregar — sem o link.
-    match /clientes/{uid} {
-      allow read: if (logado() && request.auth.uid == uid) || ehEquipe();
-
-      allow create: if logado()
-                    && request.auth.uid == uid
-                    && request.resource.data.empresaId is string
-                    && exists(/databases/$(database)/documents/empresas/$(request.resource.data.empresaId)/acessos/$(uid));
-
-      allow update: if false;
+      allow create, update: if ehEquipe() && assinado();
       allow delete: if ehEquipe();
-
-      // ---------- Uma pessoa, várias empresas ----------
-      //
-      // É comum o mesmo dono ter dois ou três CNPJs. O campo
-      // `empresaId` acima guarda um só e não pode ser alterado —
-      // então esta lista é como o portal descobre TODAS as
-      // empresas daquele login.
-      //
-      // Não é ela que dá permissão: quem autoriza continua sendo
-      // /empresas/{id}/acessos/{uid}. Aqui é só um índice, e por
-      // isso o cliente só consegue escrever uma entrada se o
-      // acesso correspondente já existir. Listar empresa que não
-      // é dele não leva a lugar nenhum: a leitura da empresa
-      // continua exigindo o documento de acesso.
-      //
-      // A EQUIPE TAMBÉM ESCREVE AQUI, e por um motivo concreto:
-      // é ela que dá a uma pessoa já cadastrada o acesso a uma
-      // segunda empresa, pelo painel. Sem isto, aquele botão
-      // gravaria a autorização e não o índice — e o portal, que
-      // descobre a lista por este índice, mostraria só a primeira
-      // empresa. Metade do vínculo é pior que nenhum.
-      match /empresas/{empresaId} {
-        allow read: if (logado() && request.auth.uid == uid) || ehEquipe();
-
-        allow create: if ehEquipe()
-                      || (logado()
-                          && request.auth.uid == uid
-                          && exists(/databases/$(database)/documents/empresas/$(empresaId)/acessos/$(uid)));
-
-        allow update: if ehEquipe();
-        allow delete: if ehEquipe();
-      }
     }
 
-    // ---------- Empresas ----------
-
-    match /empresas/{empresaId} {
-      allow read: if equipeOuDono(empresaId);
-
-      // Quem cadastra a empresa é a equipe, pelo painel.
-      allow create: if ehEquipe()
-                    && textoAte(request.resource.data.razaoSocial, 150)
-                    && request.resource.data.razaoSocial.size() > 2
-                    && textoAte(request.resource.data.cnpj, 20);
-
-      // O cliente completa o contato dele; razão social, CNPJ e
-      // regime são da equipe e ele não altera.
-      allow update: if ehEquipe()
-                    || (ehDonoDaEmpresa(empresaId) && soEstesCampos([
-                         'responsavelNome', 'responsavelEmail',
-                         'responsavelTelefone', 'responsavelCargo',
-                         'etapa', 'aceiteLGPD', 'atualizadoEm',
-                         // Canal de contato preferido, escolhido no cadastro
-                         // do portal. Uma palavra, e a jornada marca sozinha.
-                         'canalPreferido'
-                       ]));
-
-      allow delete: if ehAdmin();
-
-      // ---------- Acessos: o cliente prova o convite ----------
-      //
-      // Só dá para registrar o PRÓPRIO uid, e só apresentando um
-      // código de convite que aponte para esta empresa. Sem o
-      // código não há acesso; com o código, só para esta empresa.
-      //
-      // UM LINK, VÁRIAS EMPRESAS
-      // É comum o mesmo dono ter dois ou três CNPJs. O convite
-      // pode listar mais de uma empresa em `empresas`, e aí o
-      // acesso vale para qualquer uma DA LISTA — nunca para fora
-      // dela. `empresaId` continua sendo a principal, e é o que
-      // os convites antigos têm.
-      match /acessos/{uid} {
-        allow read: if ehEquipe() || request.auth.uid == uid;
-
-        allow create: if ehEquipe()
-                      || (logado()
-                          && request.auth.uid == uid
-                          && request.resource.data.codigo is string
-                          && exists(/databases/$(database)/documents/convites/$(request.resource.data.codigo))
-                          && get(/databases/$(database)/documents/convites/$(request.resource.data.codigo)).data.ativo == true
-                          && (
-                               get(/databases/$(database)/documents/convites/$(request.resource.data.codigo)).data.empresaId == empresaId
-                               || (get(/databases/$(database)/documents/convites/$(request.resource.data.codigo)).data.get('empresas', []) is list
-                                   && empresaId in get(/databases/$(database)/documents/convites/$(request.resource.data.codigo)).data.get('empresas', []))
-                             ));
-
-        // Registro de acesso não se reescreve. Para revogar,
-        // a equipe apaga — e o cliente perde o acesso na hora.
-        allow update: if false;
-        allow delete: if ehEquipe();
-      }
-
-      // ---------- Documentos do checklist ----------
-      //
-      // O cliente mexe no ENVIO; a revisão é da equipe. `revisao`
-      // fora desta lista é o que impede o cliente de aprovar o
-      // próprio documento — e a trava precisa valer na criação E na
-      // alteração, senão basta criar o documento já aprovado.
-      //
-      // `lembrete` é do cliente: é a data em que ele mesmo se
-      // comprometeu a voltar neste documento ("enviar depois").
-      // Não muda a situação do item — continua faltando — e por
-      // isso pode ficar na mão dele sem risco nenhum.
-      //
-      // `naEquipe` é o contrário: é a Totali dizendo se aquele
-      // documento se aplica àquela empresa. Não está na lista do
-      // cliente, então ele nunca grava esse campo. E enquanto ele
-      // existir, o cliente também não mexe no `na` dele — é o que
-      // faz "a definição da equipe prevalece" ser verdade no
-      // servidor, e não só na tela.
-      match /itens/{chave} {
-        allow read: if equipeOuDono(empresaId);
-
-        allow create: if (ehEquipe() && semCarimbo())
-                      || (ehDonoDaEmpresa(empresaId) && soEstesCamposAoCriar([
-                           'arquivos', 'valor', 'na', 'forma',
-                           /* `obsEm` é quando o cliente respondeu a
-                              uma correção. Sem ele a linha do tempo
-                              do documento mostrava o pedido com
-                              data e a resposta sem nenhuma — e uma
-                              troca sem ordem no tempo deixa de ser
-                              troca. */
-                           'obs', 'obsEm', 'atualizadoEm', 'lembrete',
-                           /* `porUid` é quem mexeu, e a condição
-                              abaixo exige que seja ele mesmo — o
-                              campo não serviria de nada se o
-                              cliente pudesse escrever o uid de
-                              outra pessoa. É o que faz a trilha de
-                              auditoria poder dizer quem tirou um
-                              documento. `porNome` é só para ela
-                              ficar legível; esse ele escreve à
-                              vontade, porque quem identifica é o
-                              uid. */
-                           'porUid', 'porNome'
-                         ])
-                          && request.resource.data.get('porUid', request.auth.uid)
-                             == request.auth.uid);
-        // A trava do `na` proibia QUALQUER toque no campo, e isso
-        // quebrou o envio de documento por inteiro.
-        //
-        // Quando a equipe decide, o painel cria o documento com um
-        // único campo: `naEquipe`. O `na` não existe ali. Aí o
-        // cliente envia um arquivo, o portal grava os sete campos
-        // dele, e o `na: false` NASCE — o que conta como alteração.
-        // Resultado: recusa. O arquivo subia para o Storage, o
-        // registro nunca era criado, e no refresh o documento sumia
-        // e voltava a pendente.
-        //
-        // O que precisa ser impedido não é tocar no campo: é o
-        // cliente se declarar "não se aplica" por cima da decisão
-        // da equipe. Então o que vale agora é o VALOR — ele pode
-        // escrever `na` à vontade, desde que não fique `true`. Se
-        // já era `true` de antes da equipe decidir, também segue
-        // valendo: `naEquipe` ganha do `na` de qualquer jeito.
-        allow update: if (ehEquipe() && carimboIntacto())
-                      || (ehDonoDaEmpresa(empresaId)
-                          && carimboIntacto()
-                          && soEstesCampos([
-                               'arquivos', 'valor', 'na', 'forma',
-                               'obs', 'obsEm', 'atualizadoEm', 'lembrete',
-                               'porUid', 'porNome'
-                             ])
-                          && request.resource.data.get('porUid', request.auth.uid)
-                             == request.auth.uid
-                          && (!('naEquipe' in resource.data)
-                              || request.resource.data.get('na', false) == false
-                              || request.resource.data.get('na', false)
-                                 == resource.data.get('na', false)));
-        allow delete: if ehAdmin();
-      }
-
-      // ---------- Sócios ----------
-      // Só nome e CPF. Nada de campo extra entrando de carona.
-      match /socios/{socioId} {
-        allow read: if equipeOuDono(empresaId);
-        allow create, update: if equipeOuDono(empresaId)
-                              && textoAte(request.resource.data.nome, 120)
-                              && request.resource.data.keys().hasOnly(['nome', 'cpf']);
-        allow delete: if equipeOuDono(empresaId);
-      }
-
-      // ---------- Credenciais (senhas cifradas) ----------
-      //
-      // O conteúdo já chega embaralhado pelo aparelho do cliente
-      // e só abre com a chave privada da Totali. Ainda assim,
-      // leitura é só de admin: menos gente vendo, menos risco.
-      //
-      // A LEITURA DEIXOU DE SER SÓ DE ADMIN, e é de propósito.
-      // Estas senhas são de LEITURA DE RELATÓRIO de maquininha,
-      // não de movimentar dinheiro, e a equipe inteira precisa
-      // delas no dia a dia. Exigir que uma pessoa só conseguisse
-      // abrir levava ao pior desfecho possível: print da senha
-      // indo para o WhatsApp.
-      //
-      // O que a equipe lê aqui continua sendo o ENVELOPE FECHADO.
-      // Quem abre é a Cloud Function `abrirCredencial`, e cada
-      // abertura vira registro em /auditoria com nome e hora.
-      match /credenciais/{chave} {
-        // LEITURA SÓ DA EQUIPE.
-        //
-        // O dono também podia ler, e isso contradizia o desenho: o
-        // portal NUNCA lê esta coleção — é justamente por não poder
-        // reler que existe o RECIBO em financeiro/geral, dizendo
-        // quais campos foram enviados e quando, sem nada do
-        // conteúdo. A permissão sobrava.
-        //
-        // O que ele obtinha era o envelope cifrado, ilegível sem a
-        // chave privada, então não era vazamento. Mas guardar
-        // permissão que ninguém usa é deixar munição para o dia em
-        // que a chave vazar: com ela, qualquer login de cliente
-        // puxaria o envelope. Conferido em 2026-08-24 com uma sonda
-        // no endereço publicado, e nada quebrou ao fechar.
-        allow read: if ehEquipe();
-        // A senha do certificado digital chega pela CONTABILIDADE
-        // ANTERIOR e quem a guarda é a equipe, pelo painel, cifrada
-        // com a mesma chave pública. Só com `origem: 'anterior'`,
-        // assinada pelo uid de quem gravou; o resto da checagem é a
-        // mesma do cliente.
-        allow create, update: if (ehDonoDaEmpresa(empresaId)
-                                  || (ehEquipe() && assinaturaConfere()
-                                      && request.resource.data.origem == 'anterior'))
-                              && request.resource.data.pacote is map
-                              && request.resource.data.pacote.alg is string
-                              && request.resource.data.pacote.dados is string
-                              && request.resource.data.pacote.dados.size() < 20000
-                              // Barreira contra gravar senha às claras por engano.
-                              && !('senha' in request.resource.data)
-                              && !('login' in request.resource.data);
-        allow delete: if ehAdmin() || ehDonoDaEmpresa(empresaId);
-      }
-
-      // ---------- Financeiro ----------
-      match /financeiro/{doc} {
-        allow read: if equipeOuDono(empresaId);
-        allow create, update: if equipeOuDono(empresaId);
-        allow delete: if ehAdmin();
-      }
-
-      // ---------- Mensagens ----------
-      //
-      // Cada um escreve como si mesmo. Mensagem enviada não se
-      // reescreve nem se apaga: o histórico precisa valer alguma
-      // coisa. O que muda depois do envio são só as marcas.
-      //
-      // `lidaEm`      qualquer um dos dois lados marca.
-      // `resolvidaEm` e `resolvidaPor` são CONTROLE INTERNO da
-      //               equipe: dizem que alguém já tomou a
-      //               providência que a mensagem pedia. Ler não é
-      //               resolver, e por isso são marcas separadas.
-      //               O cliente não escreve nelas — se pudesse,
-      //               poderia dar por resolvido o próprio pedido.
-      match /mensagens/{msgId} {
-        allow read: if equipeOuDono(empresaId);
-
-        allow create: if textoAte(request.resource.data.texto, 4000)
-                      && ((ehEquipe() && request.resource.data.autor == 'equipe')
-                          || (ehDonoDaEmpresa(empresaId) && request.resource.data.autor == 'cliente'));
-
-        // ---------- Apagar a mensagem ----------
-        //
-        // NÃO É DELETE, é uma lápide: o texto e os anexos saem, e
-        // fica registrado quem apagou e quando. A conversa é o
-        // registro do que o cliente pediu e do que a Totali
-        // respondeu — sumir sem deixar rastro abriria espaço para
-        // reescrever o histórico de uma cobrança.
-        //
-        // Por isso as travas abaixo são todas sobre o VALOR final,
-        // e não sobre a intenção de quem escreve: o texto TEM que
-        // virar vazio. Sem isso, "permitir editar `texto` ao
-        // apagar" seria só permitir editar `texto`.
-        //
-        // Lápide não se reescreve, senão o segundo apagão apaga o
-        // primeiro. O que decide isso é o VALOR de `apagadaEm`, e
-        // não a presença do campo.
-        //
-        // ERRO QUE ESTAVA AQUI: a checagem era `!('apagadaEm' in
-        // resource.data)`. Só que a mensagem do CLIENTE nasce com
-        // `apagadaEm: 0` — o payload do portal grava todos os
-        // campos, inclusive os zerados. Resultado: o campo existia,
-        // a regra lia "esta mensagem já foi apagada" e recusava
-        // TODA mensagem de cliente, para o cliente e para o admin.
-        // As antigas, sem o campo, continuavam apagáveis, o que
-        // deixou o sintoma confuso.
-        //
-        // A JANELA USA `request.time`, E NÃO O RELÓGIO DE QUEM
-        // PEDE. Confiar no horário mandado pelo navegador seria
-        // deixar a trava de 15 minutos ser desligada mudando a
-        // hora do computador.
-        function virandoLapide() {
-          return request.resource.data.diff(resource.data).affectedKeys()
-                   .hasOnly(['texto', 'anexos', 'apagadaEm', 'apagadaPor'])
-                 && request.resource.data.texto == ''
-                 && request.resource.data.anexos.size() == 0
-                 && request.resource.data.apagadaEm is number
-                 && request.resource.data.apagadaEm > 0
-                 && resource.data.get('apagadaEm', 0) == 0;
-        }
-
-        // Mensagem antiga não tem `autorUid` — e não precisa ter:
-        // ela já está fora da janela de 15 minutos de qualquer
-        // jeito, então só admin a alcança.
-        function ehAutorDaMensagem() {
-          return resource.data.get('autorUid', '') == request.auth.uid;
-        }
-
-        function dentroDaJanela(minutos) {
-          return request.time.toMillis() - resource.data.em < minutos * 60 * 1000;
-        }
-
-        // ---------- Corrigir a mensagem ----------
-        //
-        // Prazo mais curto que o de apagar, e SEM exceção para
-        // admin — de propósito. Apagar tira algo do registro;
-        // editar põe palavras na boca de quem escreveu. Ninguém
-        // edita mensagem alheia, nem administrador.
-        //
-        // `editadaEm` fica no documento e a tela mostra "editada":
-        // corrigir um erro de digitação é legítimo, fingir que a
-        // frase sempre foi aquela não é.
-        //
-        // Lápide não volta a ser mensagem: com `apagadaEm` no
-        // documento, editar deixa de ser permitido.
-        function corrigindo() {
-          return request.resource.data.diff(resource.data).affectedKeys()
-                   .hasOnly(['texto', 'editadaEm'])
-                 && textoAte(request.resource.data.texto, 4000)
-                 && request.resource.data.texto != ''
-                 && request.resource.data.editadaEm is number
-                 && resource.data.get('apagadaEm', 0) == 0;
-        }
-
-        allow update: if (ehEquipe() && soEstesCampos(['lidaEm', 'resolvidaEm', 'resolvidaPor']))
-                      || (ehDonoDaEmpresa(empresaId) && soEstesCampos(['lidaEm']))
-                      || (virandoLapide()
-                          && (ehAdmin()
-                              || (equipeOuDono(empresaId)
-                                  && ehAutorDaMensagem()
-                                  && dentroDaJanela(15))))
-                      || (corrigindo()
-                          && equipeOuDono(empresaId)
-                          && ehAutorDaMensagem()
-                          && dentroDaJanela(5));
-        allow delete: if ehAdmin();
-      }
-
-      // ---------- Anotações internas ----------
-      //
-      // O que a equipe precisa lembrar e o cliente não pode ler:
-      // "o contador anterior não entrega o balanço", "só atende
-      // depois das 18h". Antes isso vivia no WhatsApp de quem
-      // atendeu e sumia quando essa pessoa saía de férias.
-      //
-      // Coleção separada, e não campo dentro da empresa: o cliente
-      // lê a empresa inteira, então campo escondido lá seria
-      // segredo só na aparência. Aqui `read` exige equipe, e não
-      // há caminho pelo qual o cliente veja ou liste isto.
-      match /notas/{notaId} {
-        allow read: if ehEquipe();
-        allow create, update: if ehEquipe()
-                              && textoAte(request.resource.data.texto, 2000)
-                              && request.resource.data.keys().hasOnly(['texto', 'por', 'em']);
-        allow delete: if ehEquipe();
-      }
-
-      // ---------- A jornada de 30 dias ----------
-      //
-      // O andamento do procedimento interno de onboarding desta
-      // empresa: qual etapa foi concluída, por quem, quais tarefas
-      // estão feitas, anotações. Um documento só, `andamento`.
-      //
-      // SÓ A EQUIPE, e o dono da empresa NÃO. Isto é procedimento
-      // interno da Totali — quem ligou, quem conduz a reunião, o
-      // que se anotou sobre a dor do cliente. Aqui não vale o
-      // `equipeOuDono` das outras subcoleções: o cliente nunca vê,
-      // e a regra é o que garante isso, não a tela.
-      //
-      // A definição das etapas (títulos, tarefas, quem conduz) não
-      // mora aqui: vem do código, com o padrão do treinamento, e
-      // pode ser sobreposta em /configuracoes/jornada.
-      match /jornada/{doc} {
-        allow read: if ehEquipe();
-        allow create, update: if ehEquipe() && assinaturaConfere();
-        allow delete: if ehAdmin();
-      }
-
-      // O FEEDBACK DOS 30 DIAS é a única peça da jornada em que o
-      // cliente escreve: uma resposta livre, pedida pela equipe no
-      // D30. Só estes quatro campos, assinados com o próprio uid, e
-      // nada do resto da jornada fica visível para ele.
-      match /jornada/feedback {
-        allow read: if equipeOuDono(empresaId);
-        allow create, update: if ehDonoDaEmpresa(empresaId)
-                              && soEstesCamposAoCriar(['texto', 'em', 'porUid', 'porNome'])
-                              && request.resource.data.texto is string
-                              && request.resource.data.texto.size() <= 4000
-                              && request.resource.data.porUid == request.auth.uid;
-      }
-
-      // ---------- Acompanhamento da empresa ----------
-      //
-      // ATENÇÃO, e isto precisa estar claro: quem grava AQUI é o
-      // próprio navegador. A regra impede apagar e reescrever, mas
-      // NÃO impede o cliente de inventar um evento. Serve para
-      // acompanhar e depurar; NÃO tem valor probatório.
-      //
-      // A trilha que TEM valor é a coleção /auditoria na raiz,
-      // escrita por Cloud Function com a hora do servidor e
-      // fechada para escrita de todo mundo, inclusive admin.
-      // Duas coisas diferentes, com nomes parecidos: esta é o que
-      // aconteceu na tela do cliente; aquela é o que o servidor
-      // presenciou. Ao investigar qualquer coisa, olhar a segunda.
-      match /eventos/{eventoId} {
-        allow read: if ehEquipe();
-        allow create: if equipeOuDono(empresaId);
-        allow update: if false;
-
-        // Apagar evento a evento continua proibido — é o que dá
-        // sentido à trilha. A exceção é admin, e existe por um
-        // motivo prático: sem ela, excluir uma empresa deixaria
-        // os eventos órfãos no banco para sempre, invisíveis no
-        // console e ainda assim cobrados.
-        allow delete: if ehAdmin();
-      }
-    }
-
-    // ---------- Pedidos de exclusão de conta de login ----------
-    //
-    // O painel não consegue apagar uma conta do Authentication: isso
-    // exige poder de administrador do projeto, que não pode morar
-    // dentro de uma página web. Então o painel GRAVA UM PEDIDO aqui
-    // e uma função do servidor reage à gravação.
-    //
-    // Foi assim que ficou depois de a versão por HTTPS não passar:
-    // função de 2ª geração roda sobre Cloud Run, e liberar a chamada
-    // exigiria conceder acesso a `allUsers` — proibido pela política
-    // da organização da Totali. Invertendo o sentido, some o
-    // endereço público e quem autoriza volta a ser esta regra.
-    //
-    // Criar é só de admin. Alterar e apagar, de ninguém: o resultado
-    // é escrito pelo servidor e o pedido vira registro do que foi
-    // feito, com autor e data.
-    match /exclusoesDeConta/{pedidoId} {
-      allow read: if ehEquipe();
-      allow create: if ehAdmin()
-                    && request.resource.data.pedidoPor == request.auth.uid
-                    && request.resource.data.uids is list
-                    && request.resource.data.uids.size() > 0
-                    && request.resource.data.uids.size() <= 20;
-      allow update, delete: if false;
-    }
-
-    // ---------- Pedidos de abertura de senha ----------
-    //
-    // O painel grava um pedido aqui e a Cloud Function
-    // `abrirCredencial` responde no mesmo documento. Mesmo padrão
-    // da exclusão de conta, e pelo mesmo motivo: função chamável
-    // exigiria liberar `allUsers` no Cloud Run, o que a política
-    // da organização proíbe.
-    //
-    // O PEDIDO CARREGA UMA CHAVE PÚBLICA DESCARTÁVEL, gerada na
-    // aba de quem pediu. A função recifra a resposta com ela — e
-    // é por isso que nada aqui dentro é legível, nem para quem
-    // conseguir ler a coleção inteira. Sem essa recifragem, a
-    // senha ficaria em texto puro no documento do pedido, e
-    // teríamos trocado um problema por outro.
-    //
-    // Ler só o próprio pedido: um membro da equipe não precisa
-    // ver o que outro pediu — e, mesmo lendo, não abriria, porque
-    // a chave de resposta é da aba do outro.
-    match /pedidosDeSenha/{pedidoId} {
-      allow read: if ehEquipe() && resource.data.pedidoPor == request.auth.uid;
-      allow create: if ehEquipe()
-                    && request.resource.data.pedidoPor == request.auth.uid
-                    && request.resource.data.empresaId is string
-                    && request.resource.data.chave is string
-                    && request.resource.data.chavePublica is map;
-      // A resposta é escrita pela função, que passa por cima das
-      // regras. Ninguém edita nem apaga um pedido.
-      allow update, delete: if false;
-    }
-
-    // ---------- Trocar a senha de outra pessoa da equipe ----------
-    //
-    // O navegador não consegue fazer isto: o SDK do cliente só
-    // troca a senha de quem está logado. Trocar a de outra pessoa
-    // exige o Admin SDK, que só existe dentro de uma Cloud
-    // Function. Por isso o pedido vira documento aqui, e a função
-    // `trocarSenhaDeMembro` faz o trabalho.
-    //
-    // A SENHA NÃO ENTRA AQUI EM TEXTO PURO. Ela vem selada com a
-    // mesma chave pública que o portal usa para as senhas de
-    // maquininha do cliente, e quem abre é a função, com a chave
-    // privada que mora no Secret Manager. Guardar a senha legível
-    // no Firestore — mesmo por dois segundos, mesmo num documento
-    // que ninguém lê — seria abrir do lado de cá o buraco que o
-    // resto do sistema fecha do lado de lá.
-    //
-    // Ler é só de quem pediu, para acompanhar o resultado. E nem
-    // quem pediu edita ou apaga: a função responde e encerra.
-    match /pedidosDeTrocaDeSenha/{pedidoId} {
-      allow read: if ehAdmin() && resource.data.pedidoPor == request.auth.uid;
-      allow create: if ehAdmin()
-                    && request.resource.data.pedidoPor == request.auth.uid
-                    && request.resource.data.alvo is string
-                    // Ninguém troca a própria senha por aqui: para isso
-                    // existe o caminho normal, que exige a senha atual.
-                    // Este caminho é para DESTRAVAR outra pessoa.
-                    && request.resource.data.alvo != request.auth.uid
-                    && request.resource.data.pacote is map;
-      allow update, delete: if false;
-    }
-
-    // ---------- Trilha de auditoria do SERVIDOR ----------
-    //
-    // A diferença entre esta e a /eventos de cada empresa é toda
-    // a diferença que importa: /eventos é escrita pelo navegador
-    // e serve para acompanhar; esta é escrita por Cloud Function,
-    // com a hora do servidor, e nenhuma das duas pontas consegue
-    // tocá-la.
-    //
-    // `write: false` para todo mundo — cliente, equipe e admin.
-    // A função passa por cima destas regras porque roda com poder
-    // de administrador do projeto, e é exatamente isso que dá
-    // valor ao registro: quem é parte interessada não escreve.
-    //
-    // Ler é da equipe. É uma trilha de trabalho, não um mural.
-    // A TRILHA É DO ADMINISTRADOR, e passou a ser em 04/09/2026.
-    //
-    // Ela era de leitura da equipe inteira, e não por escolha: o
-    // dossiê buscava aqui as datas de recebimento e aprovação de
-    // cada documento, então fechar a trilha quebrava o dossiê. O
-    // efeito colateral era grande — a trilha guarda a carteira
-    // INTEIRA de clientes, e por ela se vê qual senha de qual
-    // cliente foi aberta e por quem.
-    //
-    // Com as datas carimbadas no próprio documento (ver
-    // `semCarimbo` acima), o dossiê deixou de precisar da trilha,
-    // e a tela de Segurança passou a ser fronteira de verdade, e
-    // não só arrumação de menu.
-    match /auditoria/{registroId} {
-      allow read: if ehAdmin();
-      allow write: if false;
-    }
-
-    // ---------- Saúde das rotinas do servidor ----------
-    //
-    // Um documento por rotina automática, atualizado por ela a cada
-    // execução. O painel lê e avisa a equipe quando alguma falhou ou
-    // faz dias demais que não roda — antes, uma rotina quebrada era
-    // falha silenciosa: os clientes deixavam de ser cobrados e
-    // ninguém ficava sabendo.
-    //
-    // `write: false` pela mesma razão de /auditoria: quem escreve é
-    // a função, que passa por cima das regras. Equipe que pudesse
-    // escrever aqui poderia "consertar" um alarme sem consertar a
-    // rotina.
-    match /saude/{rotina} {
-      allow read: if ehEquipe();
-      allow write: if false;
-    }
-
-    // ---------- Conteúdo do portal ----------
-    //
-    // Textos, documentos do checklist, trilhas da Academy. Todo
-    // cliente lê; só a equipe altera. É o que tira o passo de
-    // baixar arquivo e publicar.
-    // ---------- Conteúdo do portal ----------
-    //
-    // Leitura aberta de propósito: é o que o portal do cliente
-    // carrega antes de qualquer login para saber o que mostrar.
-    // Nada aqui é dado de cliente — são textos, vídeos e a lista
-    // de documentos.
-    //
-    // ESCRITA TEM DOIS NÍVEIS (pedido dele, 2026-08-27). A equipe
-    // mantém o que muda no dia: vídeo de abertura, Academy,
-    // checklist de documentos, bancos e maquininhas. Estes cinco
-    // blocos são do administrador porque falam pela empresa
-    // inteira ou mexem na estrutura:
-    //
-    //   etapas + formasRelatorio  a trilha da migração; cada linha
-    //                             está amarrada a uma tela
-    //   faq                       a Ajuda que todo cliente lê
-    //   compromisso + termo       o texto que o cliente ASSINA
-    //   org                       nome, endereço e telefone
-    //
-    // O aviso automático (`lembretes`) fica com a equipe inteira,
-    // por decisão dele: é ferramenta de cobrança, e quem atende é
-    // quem sabe se o horário e o texto estão bons.
-    //
-    // O painel esconde essas seções de quem não é admin, mas
-    // esconder é conforto: é esta regra que recusa a gravação,
-    // inclusive a que viria de um rascunho antigo no navegador de
-    // alguém que já foi administrador.
-    match /conteudo/{doc} {
-      allow read: if true;
-
-      // Criar o documento do zero mexe em tudo ao mesmo tempo.
-      allow create, delete: if ehAdmin();
-
-      allow update: if ehAdmin()
-                    || (ehEquipe()
-                        && blocoIntacto('etapas') && blocoIntacto('formasRelatorio')
-                        && blocoIntacto('faq') && blocoIntacto('compromisso')
-                        && blocoIntacto('termo') && blocoIntacto('org'));
-    }
-
-    // ---------- Configuração da equipe ----------
-    //
-    // Hoje guarda um documento só: `departamentos`, a lista de
-    // áreas da empresa (Financeiro, Comercial, Diretoria…) que o
-    // cadastro de membro oferece.
-    //
-    // POR QUE NÃO FICA EM /conteudo, que seria o lugar óbvio: lá a
-    // leitura é pública e a escrita é da equipe inteira. Isto não
-    // precisa ser público — é organização interna — e o Raoni pediu
-    // que só o administrador pudesse mexer. Uma regra mais estrita
-    // DENTRO de /conteudo não resolveria: no Firestore as regras se
-    // somam, então a permissiva de lá continuaria valendo.
-    //
-    // Não confundir com os SETORES que cada pessoa confere, que são
-    // os grupos do checklist e vivem em /usuarios/{uid}.setores.
-    match /configuracoes/{doc} {
-      allow read: if ehEquipe();
-      allow write: if ehAdmin();
-    }
-
-    // ---------- Equipe ----------
-    //
-    // O PRIMEIRO documento aqui é criado à mão pelo console.
-    // Depois disso, só admin cria outros. Ninguém se promove.
-    match /usuarios/{uid} {
-      // QUEM É DA EQUIPE VÊ QUEM MAIS É DA EQUIPE.
-      //
-      // Antes só o próprio documento e o administrador. O efeito
-      // era uma aba "Usuários" que, para quem não é admin, só
-      // sabia dizer "peça a um administrador" — um item de menu
-      // que não faz nada. Ver a lista de colegas, com papel e
-      // setor, é o que torna a tela útil para quem precisa saber
-      // a quem recorrer.
-      //
-      // Ler não é mexer: alterar papel, setor ou remover alguém
-      // continua sendo só de administrador, logo abaixo. E aqui
-      // não há segredo — nome, e-mail de trabalho e função são o
-      // que se lê na porta de uma sala.
-      allow read: if ehEquipe();
-      allow create: if ehAdmin()
-                    && request.resource.data.papel in ['admin', 'equipe']
-                    && assinaturaConfere();
-
-      // Quem manda neste documento continua sendo o administrador,
-      // com UMA exceção estreita: cada pessoa marca o próprio
-      // tutorial como visto. Sem isso, quem não é admin veria a
-      // explicação de novo a cada login, para sempre.
-      //
-      // `hasOnly(['tutoriais'])` é o que segura: papel, nome, e-mail
-      // e departamentos não podem mudar por este caminho. Ninguém se
-      // promove marcando que assistiu ao tutorial.
-      allow update: if (ehAdmin()
-                        && request.resource.data.papel in ['admin', 'equipe']
-                        && assinaturaConfere())
-                    || (logado()
-                        && request.auth.uid == uid
-                        && request.resource.data.diff(resource.data)
-                             .affectedKeys().hasOnly(['tutoriais']));
-
-      allow delete: if ehAdmin() && request.auth.uid != uid;
-    }
-
-    // ---------- Tudo o mais ----------
-    match /{document=**} {
+    // Nada mais existe. O que não está escrito acima está negado,
+    // e é assim que se percebe que sobrou coisa velha apontando
+    // para cá: a gravação falha em vez de passar calada.
+    match /{documento=**} {
       allow read, write: if false;
     }
   }

@@ -9,43 +9,49 @@
    problema.
 
    O que NUNCA pode entrar aqui: chave de conta de serviço
-   (aquela que começa com "-----BEGIN PRIVATE KEY"), token do
-   Admin SDK, ou a chave privada da criptografia das senhas.
+   (aquela que começa com "-----BEGIN PRIVATE KEY") ou token do
+   Admin SDK.
+
+   PROJETO NOVO EM 23/09/2026. Era `portaldocliente-8cc7d`, e o
+   ID de um projeto do Google é IMUTÁVEL — não havia como renomear.
+   Como o sistema virou Academy e o ID antigo aparecia até no
+   remetente do e-mail de redefinição de senha que o cliente lê, a
+   saída foi um projeto novo. Nada se perdeu: os dados do antigo
+   eram todos de teste.
    ============================================================ */
 window.FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAe3WcxKguZNLmA5J84SVY0XB1L6DQDXTM",
-  authDomain: "portaldocliente-8cc7d.firebaseapp.com",
-  projectId: "portaldocliente-8cc7d",
-  storageBucket: "portaldocliente-8cc7d.firebasestorage.app",
-  messagingSenderId: "114944286344",
-  appId: "1:114944286344:web:90f35c18663b6e5eb0c93d"
+  apiKey: "AIzaSyC_DCtlBp34RcehtYW_VzXH8CVHsP8-a7I",
+  authDomain: "totali-academy.firebaseapp.com",
+  projectId: "totali-academy",
+  storageBucket: "totali-academy.firebasestorage.app",
+  messagingSenderId: "279694787480",
+  appId: "1:279694787480:web:dee375150a7b71fec921ed"
 };
 
 /* ============================================================
-   App Check — chave do site do reCAPTCHA v3
+   APP CHECK — DESLIGADO, E A CONTA FOI FEITA
 
-   Também é pública, e tem que ser: o navegador precisa dela para
-   pedir o token ao Google. Quem valida é a chave SECRETA, que
-   fica só no console do Firebase e nunca sai de lá.
+   O App Check existia para impedir que alguém copiasse as chaves
+   acima e falasse com o Firebase por fora da Academy, gastando
+   cota. No sistema antigo isso pesava: havia documento de
+   cliente, senha cifrada e arquivo no Storage.
 
-   O que o App Check resolve: as chaves acima estão no código-
-   fonte da página, como em qualquer aplicativo web. Sem App
-   Check, alguém pode copiá-las e falar com o Firebase por fora
-   do portal. As regras continuam impedindo que essa pessoa LEIA
-   documento de cliente — mas não impedem que ela gaste a nossa
-   cota criando contas ou lendo /conteudo em laço.
+   Aqui não há nada disso. O que existe é o catálogo de aulas —
+   que é conteúdo nosso, de leitura pública de propósito — e o
+   nome de quem assiste, protegido pelas regras. O abuso possível
+   é consumo de cota, não vazamento.
 
-   O CUSTO, e ele é real: o reCAPTCHA carrega script do Google, e
-   por isso a CSP das duas páginas deixou de ser "só a própria
-   origem". Está limitada aos dois domínios exatos que o
-   reCAPTCHA usa.
+   Decisão dele em 23/09/2026. O ganho de tirar: a CSP das páginas
+   volta a ser só a própria origem, sem script de terceiro, e o
+   reCAPTCHA deixa de carregar em toda abertura.
 
-   Deixe vazio para desligar o App Check.
+   Para religar, basta pôr a chave do site do reCAPTCHA v3 aqui e
+   devolver os domínios do Google ao `script-src` da CSP.
    ============================================================ */
-window.APP_CHECK_SITE_KEY = "6Lfr7Y0tAAAAAGZOc7qAwmJ_1UuzJod12Oias56W";
+window.APP_CHECK_SITE_KEY = "";
 
 /* Analytics foi deixado de fora de propósito: ele instala
-   rastreamento de terceiros no portal do cliente, o que pede
-   aviso de cookies e conversa com a LGPD sem trazer nada que a
-   gente precise. Se um dia quiser medir uso, dá para contar o
-   que interessa no próprio Firestore, sem rastrear ninguém. */
+   rastreamento de terceiros na tela do cliente, o que pede aviso
+   de cookies e conversa com a LGPD sem trazer nada que a gente
+   precise. Quem assistiu o quê já fica registrado em /alunos, que
+   é dado nosso, no nosso banco, e que o próprio aluno pode apagar. */
