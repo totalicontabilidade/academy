@@ -16,6 +16,11 @@
        i.ytimg.com        a miniatura de cada aula, de graça
        youtube-nocookie   o player, no modo que não deixa cookie
        firebasestorage    a capa, o áudio e o PDF que a equipe sobe
+
+     `frame-ancestors` NÃO entra aqui: o navegador ignora essa
+     diretiva quando ela vem por <meta>, e só a aceita em cabeçalho
+     HTTP — que o GitHub Pages não deixa configurar. Quem impede a
+     página de ser embutida em outro site é js/pwa.js, em código.
      ============================================================ -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
@@ -34,7 +39,6 @@
   object-src 'none';
   base-uri 'self';
   form-action 'none';
-  frame-ancestors 'self';
 ">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 
