@@ -108,7 +108,38 @@ próprio perfil, que a pessoa poderia escrever. As regras estão em
 
 ### Storage
 
-Só `publico/`, e só capa de trilha. Não há documento de cliente na Academy.
+Só `publico/`: capa de trilha e de aula, aula em áudio e apostila em PDF. Não há
+documento de cliente na Academy. Os limites e os tipos aceitos estão em
+`storage.rules` e repetidos em `js/admin.js` — se divergirem, um arquivo passa no
+navegador e é recusado no servidor.
+
+#### Envio de arquivos: uma permissão que se concede uma vez
+
+A regra do Storage descobre quem é da equipe **consultando o Firestore**:
+
+```
+firestore.exists(/databases/(default)/documents/usuarios/$(request.auth.uid))
+```
+
+Essa consulta entre serviços exige uma permissão que o projeto **não recebe
+sozinha** quando as regras são publicadas pela linha de comando. Sem ela a regra
+reprova todo envio, em silêncio, e o painel mostra `storage/unauthorized` — as
+regras estão certas e mesmo assim nada sobe.
+
+Para liberar, o caminho curto:
+
+1. Console do Firebase → **Storage → Rules**.
+2. Salvar/publicar as regras por ali (pode ser o mesmo texto de `storage.rules`).
+3. O console detecta a consulta entre serviços e oferece conceder a permissão.
+   Aceite.
+
+Se não aparecer a oferta, o caminho longo, no Google Cloud → **IAM**, do projeto
+`totali-academy`: marque *Incluir concessões de papéis fornecidas pelo Google*,
+procure `service-279694787480@gcp-sa-firebaserules.iam.gserviceaccount.com` e
+conceda o papel **Firebase Rules Firestore Service Agent**.
+
+Enquanto isso não for feito, o resto da Academy funciona: o vídeo mora no
+YouTube, e a capa da aula cai na miniatura dele.
 
 ### O que não existe
 

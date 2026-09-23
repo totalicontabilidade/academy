@@ -434,6 +434,15 @@
     "auth/weak-password": "A senha precisa de pelo menos 6 caracteres.",
     "auth/network-request-failed": "A internet oscilou. Tente de novo.",
     "permission-denied": "Você não tem permissão para isso. Se deveria ter, fale com um administrador.",
+    /* O envio de arquivo depende de a regra do Storage conseguir
+       consultar o Firestore para saber quem é da equipe, e essa
+       consulta precisa de uma permissão que o projeto não recebe
+       sozinha. Sem ela a regra reprova tudo, calada. A mensagem
+       diz onde se resolve, porque "não deu certo" faria alguém
+       procurar o defeito no arquivo. */
+    "storage/unauthorized": "O servidor recusou o envio. Falta liberar, uma vez só, a permissão que deixa a regra do Storage consultar o Firestore — está no README, em “Envio de arquivos”.",
+    "storage/retry-limit-exceeded": "O envio demorou demais. Tente de novo com uma conexão melhor.",
+    "storage/canceled": "Envio cancelado.",
     "unavailable": "O servidor não respondeu. Tente de novo em instantes."
   };
 
