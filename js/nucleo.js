@@ -90,19 +90,98 @@
     });
   }
 
-  function entrar(email, senha) {
-    if (!auth) return Promise.reject(new Error("sem-conexao"));
-    return auth.signInWithEmailAndPassword(String(email).trim(), String(senha))
-      .then(aguardarCredencial);
+  /* ------------------------------------------------------------
+     UMA SÓ PORTA DE ENTRADA PARA A SESSÃO
+
+     O DEFEITO QUE ISTO CONSERTA (relatado por ele em 23/09/2026):
+     ao criar o acesso, a tela de cadastro não saía; e no login o
+     botão ficava em "Entrando…" para sempre. Só recarregar o
+     endereço resolvia.
+
+     A causa era uma corrida, e ela é dos dois casos:
+
+       1. `createUserWithEmailAndPassword` faz o Firebase avisar na
+          hora que HÁ sessão. Nesse instante o documento em /alunos
+          ainda não existe — ele é escrito no passo seguinte. O
+          ouvinte lia, não achava, concluía "não é aluno" e
+          desenhava a porta de novo. Quando o documento enfim era
+          gravado, NADA reavaliava: o estado de autenticação não
+          mudou outra vez, então o aviso não se repetiu.
+
+       2. No login, a tela reagia só ao aviso de sessão. Entrando
+          com a mesma conta que já estava autenticada, o Firebase
+          não emite aviso novo — e a tela ficava parada no
+          "Entrando…", esperando algo que não vinha.
+
+     A cura não é esperar mais tempo: é parar de depender do aviso.
+     Agora `entrar` e `cadastrar` CARREGAM o aluno e avisam por
+     conta própria quando o dado está pronto. O ouvinte de sessão
+     continua existindo para o que ele faz bem — reabrir o app com
+     sessão salva e perceber a saída —, e fica calado enquanto um
+     cadastro está em andamento, para não desenhar a porta no meio
+     do caminho.
+     ------------------------------------------------------------ */
+  var ouvintes = [];
+  var emCadastro = false;
+
+  function avisar(motivo) {
+    ouvintes.forEach(function (fn) {
+      try { fn(alunoAtual, motivo); } catch (e) { /* um ouvinte ruim não derruba os outros */ }
+    });
   }
 
-  /* O cadastro só acontece com convite válido: é o que mantém o
-     conteúdo com quem é cliente. A conta no Authentication vem
-     primeiro; o documento em /alunos depois, porque a regra do
-     servidor exige que o uid já exista para conferir a assinatura. */
+  /* Lê o documento do aluno e devolve-o, ou `null` quando ele
+     REALMENTE não existe. Falha de leitura não é ausência: nesse
+     caso a promessa é recusada, e quem chamou decide. */
+  function carregarAluno(uid) {
+    return aguardarCredencial()
+      .then(function () { return db.collection("alunos").doc(uid).get(); })
+      .then(function (d) {
+        if (!d.exists) {
+          var doServidor = d.metadata && d.metadata.fromCache === false;
+          if (!doServidor) throw new Error("leitura-falhou");
+          return null;
+        }
+        var v = d.data() || {};
+        alunoAtual = {
+          uid: uid,
+          nome: v.nome || "",
+          email: v.email || "",
+          empresa: v.empresa || "",
+          progresso: v.progresso || {}
+        };
+        return alunoAtual;
+      });
+  }
+
+  function marcarPresenca() {
+    if (!alunoAtual) return;
+    db.collection("alunos").doc(alunoAtual.uid)
+      .update({ ultimoAcessoEm: Date.now() }).catch(function () {});
+  }
+
+  function entrar(email, senha) {
+    if (!auth || !db) return Promise.reject(new Error("sem-conexao"));
+    return auth.signInWithEmailAndPassword(String(email).trim(), String(senha))
+      .then(function (cred) { return carregarAluno(cred.user.uid); })
+      .then(function (a) {
+        if (a) { avisar(); marcarPresenca(); return a; }
+        /* Conta existe no Authentication, mas não em /alunos: é
+           quem parou o cadastro no meio. Com convite em mãos dá
+           para terminar ali mesmo. */
+        alunoAtual = null;
+        avisar("sem-cadastro");
+        return null;
+      });
+  }
+
+  /* Cria a conta, grava o documento e SÓ ENTÃO avisa. A ordem
+     importa: a regra do servidor exige que o uid já exista para
+     conferir quem está gravando. */
   function cadastrar(codigo, nome, email, senha, empresa) {
     if (!auth || !db) return Promise.reject(new Error("sem-conexao"));
     var cod = "";
+    emCadastro = true;
     return lerConvite(codigo)
       .then(function (c) {
         cod = c.codigo;
@@ -117,22 +196,58 @@
           });
       })
       .then(function (cred) {
-        var u = cred.user || auth.currentUser;
-        var nomeLimpo = String(nome || "").trim().slice(0, 120);
-        return u.updateProfile({ displayName: nomeLimpo }).catch(function () {})
-          .then(aguardarCredencial)
-          .then(function () {
-            return db.collection("alunos").doc(u.uid).set({
-              nome: nomeLimpo,
-              email: String(u.email || "").slice(0, 160),
-              empresa: String(empresa || "").trim().slice(0, 160),
-              convite: cod,
-              criadoEm: Date.now(),
-              ultimoAcessoEm: Date.now(),
-              progresso: {}
-            });
-          });
+        var u = (cred && cred.user) || auth.currentUser;
+        return matricular(u, nome, empresa, cod);
+      })
+      .then(function (a) {
+        emCadastro = false;
+        avisar();
+        return a;
+      }, function (e) {
+        emCadastro = false;
+        throw e;
       });
+  }
+
+  /* Escreve /alunos/{uid}. Se o documento já existir — segunda
+     tentativa depois de um erro de rede —, `merge` deixa o
+     progresso em paz e não devolve "sem permissão". */
+  function matricular(u, nome, empresa, cod) {
+    var nomeLimpo = String(nome || u.displayName || "").trim().slice(0, 120);
+    return u.updateProfile({ displayName: nomeLimpo }).catch(function () {})
+      .then(aguardarCredencial)
+      .then(function () { return db.collection("alunos").doc(u.uid).get(); })
+      .then(function (d) {
+        if (d.exists) {
+          return db.collection("alunos").doc(u.uid).update({
+            nome: nomeLimpo,
+            empresa: String(empresa || "").trim().slice(0, 160),
+            ultimoAcessoEm: Date.now()
+          });
+        }
+        return db.collection("alunos").doc(u.uid).set({
+          nome: nomeLimpo,
+          email: String(u.email || "").slice(0, 160),
+          empresa: String(empresa || "").trim().slice(0, 160),
+          convite: cod,
+          criadoEm: Date.now(),
+          ultimoAcessoEm: Date.now(),
+          progresso: {}
+        });
+      })
+      .then(function () { return carregarAluno(u.uid); });
+  }
+
+  /* Para quem já está autenticado e não tem matrícula: termina o
+     cadastro com o convite que veio no endereço. */
+  function garantirMatricula(codigo, nome, empresa) {
+    if (!auth || !auth.currentUser) return Promise.reject(new Error("sem-sessao"));
+    var u = auth.currentUser;
+    emCadastro = true;
+    return lerConvite(codigo)
+      .then(function (c) { return matricular(u, nome || u.displayName, empresa, c.codigo); })
+      .then(function (a) { emCadastro = false; avisar(); return a; },
+            function (e) { emCadastro = false; throw e; });
   }
 
   function recuperarSenha(email) {
@@ -146,44 +261,31 @@
   }
 
   /* ------------------------------------------------------------
-     Quem está assistindo
+     O ouvinte de sessão
 
-     Um documento ausente NÃO quer dizer "não é aluno" quando a
-     resposta veio do cache: numa oscilação de rede isso jogaria a
-     pessoa de volta para o login no meio da aula. Só a resposta do
-     SERVIDOR afirma ausência.
+     Serve a dois momentos: abrir o app com sessão já salva, e
+     perceber que alguém saiu. Fora isso ele se cala — quem entra
+     ou se cadastra avisa por conta própria, com o dado na mão.
+
+     Documento ausente só quer dizer "não é aluno" quando a
+     resposta veio do SERVIDOR. Vinda do cache, numa oscilação de
+     rede, ela não afirma nada — e tratá-la como ausência jogaria a
+     pessoa para o login no meio da aula.
      ------------------------------------------------------------ */
   function observarSessao(aoMudar) {
+    if (typeof aoMudar === "function") ouvintes.push(aoMudar);
     if (!auth) { aoMudar(null); return function () {}; }
     return auth.onAuthStateChanged(function (u) {
-      if (!u) { alunoAtual = null; aoMudar(null); return; }
-      aguardarCredencial()
-        .then(function () { return db.collection("alunos").doc(u.uid).get(); })
-        .then(function (d) {
-          if (!d.exists) {
-            var doServidor = d.metadata && d.metadata.fromCache === false;
-            if (doServidor) { alunoAtual = null; aoMudar(null, "sem-cadastro"); return; }
-            if (alunoAtual) { aoMudar(alunoAtual); return; }
-            aoMudar(null, "leitura-falhou");
-            return;
-          }
-          var v = d.data() || {};
-          alunoAtual = {
-            uid: u.uid,
-            nome: v.nome || u.displayName || "",
-            email: v.email || u.email || "",
-            empresa: v.empresa || "",
-            progresso: v.progresso || {}
-          };
-          aoMudar(alunoAtual);
-          /* Marca de presença, sem travar a tela: serve para a
-             equipe saber quem anda por aqui. */
-          db.collection("alunos").doc(u.uid)
-            .update({ ultimoAcessoEm: Date.now() }).catch(function () {});
-        }, function () {
-          if (alunoAtual) { aoMudar(alunoAtual); return; }
-          aoMudar(null, "leitura-falhou");
-        });
+      if (!u) { alunoAtual = null; avisar(); return; }
+      if (emCadastro) return;
+      carregarAluno(u.uid).then(function (a) {
+        if (a) { avisar(); marcarPresenca(); return; }
+        alunoAtual = null;
+        avisar("sem-cadastro");
+      }, function () {
+        if (alunoAtual) avisar();
+        else avisar("leitura-falhou");
+      });
     });
   }
 
@@ -290,6 +392,7 @@
     lerConvite: lerConvite,
     entrar: entrar,
     cadastrar: cadastrar,
+    garantirMatricula: garantirMatricula,
     recuperarSenha: recuperarSenha,
     sair: sair,
     catalogo: catalogo,

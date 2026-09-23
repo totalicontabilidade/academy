@@ -623,4 +623,4 @@ quebra instalação.
 | `totali-portal-auditoria-v1` | ferramentas/anonimizar-auditoria.js | sal de hash: mudar muda os hashes |
 | `portaldocliente-8cc7d` | Firebase | id de projeto é imutável |
 | `conteudo/portal` | Firestore | é o documento publicado, em uso |
-| `cliente.totalicontabilidade.com.br` | CNAME | domínio publicado; mudar exige DNS |
+| `totali-academy` | Firebase | id de projeto é imutável |

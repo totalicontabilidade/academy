@@ -684,7 +684,13 @@
     if (qual === "entrar") {
       if (!email || !senha) { recado("Preencha o e-mail e a senha.", "erro"); return; }
       trava("Entrando…");
-      N.entrar(email, senha).catch(function (e) {
+      /* Quem redesenha a tela é o aviso que `entrar` dispara com o
+         aluno já carregado. Aqui só se cuida do que dá errado — e
+         de devolver o botão, para o "Entrando…" nunca ficar preso
+         numa tela que não mudou. */
+      N.entrar(email, senha).then(function (a) {
+        if (!a) solta("Entrar");
+      }, function (e) {
         solta("Entrar"); recado(N.explicar(e), "erro", 8000);
       });
       return;
@@ -698,7 +704,14 @@
       var cod = codigoDaURL();
       if (!cod) { recado("Abra o link de convite que a Totali mandou.", "erro", 9000); return; }
       trava("Criando…");
-      N.cadastrar(cod, nome, email, senha, empresa).catch(function (e) {
+      /* Conta já autenticada e sem matrícula: o que falta é o
+         documento do aluno, não uma conta nova. Criar outra aqui
+         deixaria duas contas para a mesma pessoa. */
+      var jaLogado = N.auth && N.auth.currentUser;
+      var passo = jaLogado
+        ? N.garantirMatricula(cod, nome, empresa)
+        : N.cadastrar(cod, nome, email, senha, empresa);
+      passo.catch(function (e) {
         solta("Criar acesso e entrar"); recado(N.explicar(e), "erro", 9000);
       });
     }
@@ -772,14 +785,25 @@
       N.observarSessao(function (aluno, motivo) {
         estado.aluno = aluno;
         estado.carregando = false;
+
         if (!aluno && motivo === "sem-cadastro") {
-          /* Conta existe no Authentication mas não em /alunos: é
-             quem começou o cadastro e não terminou. Com convite na
-             mão, a tela de criar acesso resolve; sem, precisa de um
-             link novo. */
-          estado.porta = codigoDaURL() ? "cadastro" : "entrar";
-          if (!codigoDaURL()) recado("Sua conta não está vinculada à Academy. Peça um link novo à Totali.", "erro", 10000);
+          /* A conta existe no Authentication mas não em /alunos: é
+             quem parou o cadastro no meio. Com o convite em mãos, a
+             tela de criar acesso termina o serviço — e o botão dela
+             vai chamar `garantirMatricula`, não criar outra conta. */
+          if (codigoDaURL()) {
+            estado.porta = "cadastro";
+            recado("Falta só terminar o seu cadastro: confirme o nome e crie o acesso.", "", 9000);
+          } else {
+            estado.porta = "entrar";
+            recado("Sua conta ainda não está vinculada à Academy. Abra o link de convite que a Totali mandou.", "erro", 11000);
+          }
         }
+
+        if (!aluno && motivo === "leitura-falhou") {
+          recado("Não deu para falar com o servidor agora. Tente de novo em instantes.", "erro", 9000);
+        }
+
         if (aluno && !estado.cat) {
           N.catalogo().then(function (c) { estado.cat = c; render(); });
           return;

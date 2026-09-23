@@ -1,6 +1,6 @@
 /* ============================================================
    Totali · Academy
-   painel.js — esqueleto do painel da equipe
+   painel.js — esqueleto do painel de administração
 
    POR QUE EXISTE
    --------------
@@ -90,7 +90,7 @@
       else mais.removeAttribute("aria-current");
     }
 
-    document.title = TITULOS[alvo] + " · Painel da equipe · Totali";
+    document.title = TITULOS[alvo] + " · Painel de administração · Totali";
 
     if (mudou && !semRolar) global.scrollTo({ top: 0, behavior: "auto" });
     if (mudou) ouvintes.forEach(function (fn) {
