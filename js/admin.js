@@ -49,12 +49,21 @@
       db = global.firebase.firestore(app);
       if (global.firebase.storage) storage = global.firebase.storage(app);
 
-      /* A sessão do painel fica na ABA, não no aparelho. É tela de
-         uso interno, aberta em computador compartilhado: fechar a
-         aba tem de encerrar o acesso. Com o aluno é o contrário —
-         lá a persistência é LOCAL, porque ninguém quer digitar
-         senha para ver a aula seguinte amanhã. */
-      return auth.setPersistence(global.firebase.auth.Auth.Persistence.SESSION)
+      /* A SESSÃO FICA NO APARELHO, como a do aluno.
+
+         Primeiro ficou na aba (SESSION), pensando em computador
+         compartilhado: fechar a aba encerrava o acesso. Custava
+         caro no uso real — cada aba nova pedia a senha de novo, e
+         quem publica aula abre o painel várias vezes por dia. Ele
+         escolheu o outro lado em 23/09/2026, e a escolha é dele:
+         o painel roda no computador dele, não num balcão.
+
+         O que isso exige em troca: num computador que outra
+         pessoa use, o botão Sair passa a ser obrigatório — sem
+         ele, quem sentar depois abre o painel já logado. É o
+         preço da comodidade, e está dito aqui para não ser
+         redescoberto do jeito difícil. */
+      return auth.setPersistence(global.firebase.auth.Auth.Persistence.LOCAL)
         .catch(function () {})
         .then(function () { return true; });
     } catch (e) {

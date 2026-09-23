@@ -167,9 +167,9 @@ Ou `serve.ps1`. Não abra por `file://`: o service worker e o Firebase exigem
 
 ## Decisões que parecem estranhas e não são
 
-- **A sessão do painel morre ao fechar a aba** (`SESSION`), a do aluno não
-  (`LOCAL`). O painel é usado em computador compartilhado; o cliente não quer
-  digitar senha para ver a aula seguinte amanhã.
+- **A sessão do painel fica no aparelho** (`LOCAL`), como a do aluno. Ficou na
+  aba primeiro, e custava uma senha por aba nova. Em troca, num computador
+  compartilhado o botão Sair passa a ser obrigatório.
 - **`entrar()` carrega o perfil e avisa por conta própria**, em vez de esperar o
   evento de autenticação do Firebase. Depender do evento produziu dois defeitos
   reais em 23/09/2026: o botão preso em "Entrando…" e a tela de cadastro que não
