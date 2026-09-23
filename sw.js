@@ -16,7 +16,7 @@
    Ao alterar qualquer arquivo do app, suba o número da versão —
    é o que faz o navegador do cliente buscar o conteúdo novo.
    ============================================================ */
-var VERSAO = "v204";
+var VERSAO = "v205";
 var CACHE = "totali-academy-" + VERSAO;
 
 var SHELL = [
@@ -111,7 +111,8 @@ function guardavel(resp) {
    duas páginas no projeto; qualquer outra rota cai no portal. */
 function paginaDe(url) {
   try {
-    return /equipe\.html$/i.test(new URL(url).pathname) ? "./equipe.html" : "./index.html";
+    return /(^|\/)admin\/?$|\/admin\/index\.html$/i.test(new URL(url).pathname)
+      ? "./admin/" : "./index.html";
   } catch (e) { return "./index.html"; }
 }
 
@@ -130,7 +131,7 @@ self.addEventListener("fetch", function (ev) {
 
      CADA PÁGINA NO SEU PRÓPRIO LUGAR. Antes, toda navegação era
      guardada sob a chave "./index.html" — inclusive a do painel.
-     Bastava alguém da equipe abrir o equipe.html para o portal do
+     Bastava alguém da equipe abrir o painel para o portal do
      cliente, naquele aparelho, passar a abrir o PAINEL quando
      estivesse sem internet. Não vazava nada (o painel exige login
      e servidor), mas era a tela errada na hora errada. */

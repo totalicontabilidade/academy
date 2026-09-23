@@ -85,7 +85,7 @@
           (nome ? U.esc(nome) : "Bem-vindo") + '</h2>' +
         '<p class="section__desc">' +
           (publicou
-            ? "A Academy está no ar com o conteúdo que a equipe publicou."
+            ? "A Academy está no ar com o conteúdo que vocês publicaram."
             : "A Academy ainda está mostrando o conteúdo de exemplo.") +
         '</p>' +
       '</div>' +
@@ -106,7 +106,7 @@
             'Editar trilhas e aulas</button>' +
           '<button type="button" class="btn btn--quiet btn--sm" data-aba="convites">' +
             'Criar um convite</button>' +
-          '<a class="btn btn--quiet btn--sm" href="index.html" target="_blank" rel="noopener">' +
+          '<a class="btn btn--quiet btn--sm" href="../" target="_blank" rel="noopener">' +
             'Ver como o cliente vê</a>' +
         '</div>' +
       '</div>';

@@ -35,14 +35,19 @@
   /* O link leva à ACADEMY, não a esta página.
 
      Montá-lo a partir de `location.href` estava errado de duas
-     maneiras ao mesmo tempo: o endereço do painel termina em
-     `equipe.html` e ainda carrega o `#/convites` da aba aberta,
-     então o convite saía como `.../equipe.html#/?k=…` — um link
-     que abriria a tela de login da equipe para o cliente. O que
-     interessa é a PASTA, e é ela que responde pelo index.html. */
+     maneiras ao mesmo tempo: carregava o `#/convites` da aba
+     aberta e apontava para o próprio painel — um link que abriria
+     a tela de login da administração para o cliente.
+
+     E o painel mora em `/academy/admin/` desde 23/09/2026, então
+     a pasta dele TAMBÉM não serve: é preciso subir um nível. Fazer
+     isso a partir do caminho, e não de um endereço fixo, é o que
+     mantém o link certo quando o sistema é servido de outra pasta
+     — o que acontece toda vez que se testa em localhost. */
   function enderecoDoConvite(codigo) {
-    var pasta = location.pathname.replace(/[^/]*$/, "");
-    return location.origin + pasta + "?k=" + codigo;
+    var pasta = location.pathname.replace(/[^/]*$/, "");   /* .../academy/admin/ */
+    var raiz = pasta.replace(/[^/]+\/$/, "");              /* .../academy/      */
+    return location.origin + raiz + "?k=" + codigo;
   }
 
   function carregar() {

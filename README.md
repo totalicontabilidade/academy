@@ -7,7 +7,7 @@ Aplicação estática (HTML, CSS e JavaScript sem framework), pensada primeiro p
 o celular, instalável como aplicativo (PWA) e publicada no GitHub Pages.
 
 - **Academy (cliente):** <https://totalicontabilidade.github.io/academy/>
-- **Painel de administração:** <https://totalicontabilidade.github.io/academy/equipe.html>
+- **Administração:** <https://totalicontabilidade.github.io/academy/admin/>
 
 ---
 
@@ -43,7 +43,7 @@ não deve voltar para cá.
 
 ### Quem administra
 
-O painel (`equipe.html`) tem cinco abas:
+A administração (`admin/index.html`) tem cinco abas:
 
 | Aba | Serve para |
 |---|---|
@@ -66,7 +66,7 @@ Firebase.** Essa é uma regra do projeto, não uma coincidência.
 
 ```
 index.html          a Academy do cliente
-equipe.html         o painel de administração
+admin/index.html    a administração (equipe.html sobrou só como encaminhamento)
 
 js/moldura.js       impede a página de ser posta dentro de outro site
 js/util.js          nove funções auxiliares puras
@@ -76,7 +76,7 @@ js/catalogo.js      a forma de uma trilha e de uma aula, e as contas de progress
 js/nucleo.js        o Firebase do ALUNO      → index.html
 js/aluno.js         as telas do aluno
 
-js/admin.js         o Firebase do PAINEL     → equipe.html
+js/admin.js         o Firebase do PAINEL     → admin/index.html
 js/painel.js        casca: porta de entrada, abas, identidade
 js/painel-inicio.js · painel-trilhas.js · painel-alunos.js
 js/painel-convites.js · painel-usuarios.js
