@@ -132,6 +132,10 @@ Para liberar, o caminho curto:
 2. Salvar/publicar as regras por ali (pode ser o mesmo texto de `storage.rules`).
 3. O console detecta a consulta entre serviços e oferece conceder a permissão.
    Aceite.
+4. **Publique as regras de novo depois disso.** Só a permissão não basta — foi
+   preciso subir uma versão nova para o envio passar a funcionar. Se o
+   `firebase deploy` disser *already up to date, skipping upload*, mude
+   qualquer comentário em `storage.rules` para forçar.
 
 Se não aparecer a oferta, o caminho longo, no Google Cloud → **IAM**, do projeto
 `totali-academy`: marque *Incluir concessões de papéis fornecidas pelo Google*,
@@ -140,6 +144,10 @@ conceda o papel **Firebase Rules Firestore Service Agent**.
 
 Enquanto isso não for feito, o resto da Academy funciona: o vídeo mora no
 YouTube, e a capa da aula cai na miniatura dele.
+
+Liberado em 23/09/2026 e verificado: a equipe envia, a leitura é pública, e o
+servidor recusa HTML e SVG — arquivo que o navegador executa servido do nosso
+endereço seria XSS com a nossa assinatura.
 
 ### O que não existe
 

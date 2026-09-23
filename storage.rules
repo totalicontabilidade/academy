@@ -1,6 +1,30 @@
 rules_version = '2';
 
 // ============================================================
+// A CONSULTA ENTRE SERVICOS PRECISA SER LIBERADA UMA VEZ
+//
+// O `firestore.exists(...)` logo abaixo e o que faz esta regra
+// saber quem e da equipe. Ele so funciona depois de o projeto
+// receber a permissao para consultar o Firestore a partir do
+// Storage, e essa permissao NAO vem junto quando as regras sao
+// publicadas pela linha de comando.
+//
+// Enquanto faltar, a regra reprova TODO envio em silencio: o
+// navegador recebe storage/unauthorized e as regras parecem
+// certas, porque estao. Aconteceu em 23/09/2026.
+//
+// Como resolver: console do Firebase -> Storage -> Rules. A
+// faixa vermelha no alto traz o botao Corrigir problema.
+//
+// E DEPOIS DE CONCEDER, PUBLIQUE AS REGRAS DE NOVO. So a
+// permissao nao basta: foi preciso subir uma versao nova para
+// o envio passar a funcionar. Se o `firebase deploy` disser
+// "already up to date, skipping upload", mude qualquer
+// comentario aqui para forcar o envio.
+// ============================================================
+
+
+// ============================================================
 // Totali · Academy — regras do Storage
 //
 // Aqui vive UMA coisa só: o material das aulas que a equipe
