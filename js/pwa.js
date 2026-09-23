@@ -5,26 +5,9 @@
 (function (global) {
   "use strict";
 
-  /* ---------- 1. Proteção contra enquadramento (clickjacking) ----------
-     O GitHub Pages não permite enviar cabeçalhos HTTP, então não dá
-     para usar frame-ancestors nem X-Frame-Options. Esta verificação
-     em JavaScript é a defesa possível: se a página for carregada
-     dentro de um iframe de outro site, o conteúdo é bloqueado.
-  --------------------------------------------------------------------- */
-  try {
-    if (global.top !== global.self) {
-      document.documentElement.innerHTML =
-        '<body style="margin:0;font-family:system-ui,sans-serif;background:#0e1f30;color:#fff;' +
-        'display:grid;place-items:center;height:100vh;text-align:center;padding:24px">' +
-        '<div><p style="font-size:16px;font-weight:600;margin:0 0 8px">Página bloqueada</p>' +
-        '<p style="font-size:14px;opacity:.8;margin:0">Por segurança, a Academy da Totali ' +
-        'não pode ser exibido dentro de outro site.</p></div></body>';
-      try { global.top.location = global.self.location.href; } catch (e) { /* origem cruzada */ }
-      return;
-    }
-  } catch (e) {
-    /* Acessar global.top já lança erro em origem cruzada: também é iframe. */
-  }
+  /* A proteção contra enquadramento saiu daqui para o
+     `js/moldura.js`, que o painel também carrega: era o mesmo
+     trecho em dois lugares esperando para divergir. */
 
   /* ---------- 2. Aviso de conexão insegura ---------- */
   var seguro = location.protocol === "https:" ||

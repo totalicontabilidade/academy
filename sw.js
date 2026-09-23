@@ -16,7 +16,7 @@
    Ao alterar qualquer arquivo do app, suba o número da versão —
    é o que faz o navegador do cliente buscar o conteúdo novo.
    ============================================================ */
-var VERSAO = "v202";
+var VERSAO = "v203";
 var CACHE = "totali-academy-" + VERSAO;
 
 var SHELL = [
@@ -217,63 +217,8 @@ self.addEventListener("fetch", function (ev) {
   );
 });
 
-/* ============================================================
-   Notificações
-
-   O ouvinte de "push" só entra em ação quando o Firebase Cloud
-   Messaging estiver ligado — é ele que entrega a mensagem com o
-   aplicativo fechado. Até lá, quem dispara os avisos é o
-   js/notificacoes.js, com o portal aberto ou em segundo plano.
-
-   Nunca confiamos no conteúdo do push para montar HTML: os
-   campos são usados apenas como texto da notificação.
+/* As notificações saíram com o onboarding: não há mais pendência
+   de documento a cobrar, e nada na Academy dispara push. O
+   ouvinte de `push` e o de `notificationclick` estão na tag
+   `portal-completo`, se um dia voltarem a fazer sentido.
    ============================================================ */
-self.addEventListener("push", function (ev) {
-  var dados = { titulo: "Totali", corpo: "", rota: "inicio", tag: "totali" };
-  if (ev.data) {
-    try {
-      var recebido = ev.data.json();
-      if (recebido && typeof recebido === "object") {
-        if (typeof recebido.titulo === "string") dados.titulo = recebido.titulo.slice(0, 120);
-        if (typeof recebido.corpo === "string") dados.corpo = recebido.corpo.slice(0, 300);
-        if (typeof recebido.rota === "string") dados.rota = recebido.rota.slice(0, 40);
-        if (typeof recebido.tag === "string") dados.tag = recebido.tag.slice(0, 40);
-      }
-    } catch (e) {
-      dados.corpo = String(ev.data.text() || "").slice(0, 300);
-    }
-  }
-  ev.waitUntil(
-    self.registration.showNotification(dados.titulo, {
-      body: dados.corpo,
-      icon: "assets/icon-192.png",
-      badge: "assets/icon-192.png",
-      tag: dados.tag,
-      renotify: true,
-      lang: "pt-BR",
-      data: { rota: dados.rota }
-    })
-  );
-});
-
-/* Tocar no aviso abre o portal já na tela certa — reaproveitando
-   a aba aberta, se houver. */
-self.addEventListener("notificationclick", function (ev) {
-  ev.notification.close();
-  var rota = (ev.notification.data && ev.notification.data.rota) || "inicio";
-  var destino = new URL("./#/" + rota, self.location.href).href;
-
-  ev.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (janelas) {
-      for (var i = 0; i < janelas.length; i++) {
-        var j = janelas[i];
-        if (j.url.indexOf(self.registration.scope) === 0 && "focus" in j) {
-          if ("navigate" in j) { return j.navigate(destino).then(function (c) { return c && c.focus(); }); }
-          return j.focus();
-        }
-      }
-      if (self.clients.openWindow) return self.clients.openWindow(destino);
-      return null;
-    })
-  );
-});

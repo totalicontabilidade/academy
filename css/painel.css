@@ -1,0 +1,1693 @@
+
+
+/* ---------- 1. Tokens ---------- */
+:root{
+  /* ============================================================
+     A NOITE LÁ FORA, A LUZ AQUI DENTRO
+
+     O pedido foi um sistema que acolha — que passe paz, que dê
+     vontade de ficar. Três coisas ficaram no caminho, e cada
+     token abaixo responde a uma delas.
+
+     1. O cinza vinha de lavar azul com branco.
+        O cartão era um véu branco translúcido sobre o fundo azul.
+        Branco sobre azul não clareia o azul: ele DESSATURA. O
+        resultado media 21% de saturação contra 56% do fundo — quer
+        dizer, o cartão era literalmente mais cinza que a página.
+        Por isso agora cada camada tem cor PRÓPRIA e opaca, mais
+        clara E mais saturada que o piso. O cinza some pela raiz.
+
+     2. Acolhimento é temperatura, e temperatura é luz.
+        Azul puro lê como "clínico, corporativo, à distância" — é
+        o efeito que qualquer paleta fria carrega. Mas trocar o
+        azul por marrom mataria a identidade da Totali. A saída é
+        a mesma da vida real: à noite, o que aquece um ambiente
+        não é a cor da parede, é a lâmpada. Então o fundo continua
+        azul-noite (a rua lá fora) e cada superfície recebe uma
+        luz DOURADA vindo de cima (a lâmpada da sala). É o mesmo
+        dourado da marca, agora fazendo trabalho de iluminação em
+        vez de só enfeitar borda.
+
+     3. Texto branco-azulado esfria tudo.
+        Depois do fundo, o texto é a maior área de cor da tela.
+        Ele era #eaf1f8 — branco puxado para o azul. Passou a ser
+        um marfim quente. É a mudança que mais aquece a página e a
+        que menos mexe na identidade.
+
+     O que NÃO mudou, de propósito: continua escuro, continua
+     azul-noite, continua com grão e linha fina. Acolhedor não é
+     sinônimo de claro nem de infantil.
+     ============================================================ */
+
+  /* ------------------------------------------------------------
+     REGRA Nº 1, E A MAIS IMPORTANTE: UMA COR SÓ NAS SUPERFÍCIES.
+
+     Duas rodadas de cinza vieram da mesma causa, e vale escrever
+     em voz alta para não haver uma terceira: MISTURAR QUENTE COM
+     FRIO PRODUZ CINZA. Não é opinião, é o que a conta dá.
+
+       1ª rodada — cartão era véu branco sobre azul.
+                   Saturação caía de 55% para 21%.
+       2ª rodada — cartão era véu DOURADO sobre azul, a 8,5%.
+                   Saturação caía de 39% para 21% no alto do
+                   cartão. Resultado: uma faixa cinza atravessando
+                   o topo de tudo — o "degradê cinzento".
+
+     A tentativa de aquecer a superfície com luz dourada foi bem
+     intencionada e estava errada: dourado sobre azul-noite não
+     aquece o azul, ele o lava. Qualquer opacidade que fosse
+     visível já seria suficiente para acinzentar.
+
+     Então a regra passa a ser: **fundo, superfície, borda e
+     estado de foco vivem todos no MESMO matiz azul (211–213°) e
+     mudam só de claridade.** Matiz constante é o que garante que
+     cinza nunca apareça em lugar nenhum.
+
+     E o dourado da Totali? Continua inteiro — só que como
+     ACENTO: botão principal, selo, aba ativa, link, anel de
+     progresso, fio do cabeçalho. Acento é área pequena e nunca é
+     misturado dentro de um preenchimento grande, então ele
+     aparece vibrante em vez de sujar o azul. É assim que marca
+     forte convive com fundo calmo.
+     ------------------------------------------------------------ */
+
+  /* Piso — a noite. */
+  --bg-0:#0a1522;
+  --bg-1:#0e1b2b;
+  --bg-2:#132538;
+  --navy:#1a3149;
+  --navy-2:#20405f;
+  --navy-3:#2a4d70;
+
+  /* ------------------------------------------------------------
+     REGRA Nº 2: O CARTÃO É A BORDA, NÃO O PREENCHIMENTO.
+     ("Contorno" — escolhido pelo Raoni em 2026-08-18.)
+
+     Foram quatro rodadas até aqui, e o caminho foi sempre o mesmo
+     erro: tentar resolver o cartão pelo PREENCHIMENTO. Branco
+     sobre azul virou cinza; dourado sobre azul virou cinza de
+     novo; azul a 29% ficou na terra de ninguém — nem neutro o
+     bastante para ler como grafite, nem saturado o bastante para
+     ler como azul.
+
+     A saída foi parar de pintar o cartão. Ele fica quase da cor
+     do fundo (contraste de 1,06) e quem o desenha é o FIO DA
+     BORDA, que tem contraste 2,1 contra o preenchimento. A tela
+     vira um campo azul-noite contínuo, cortado por linhas.
+
+     Duas consequências que valem lembrar antes de mexer aqui:
+       • sem preenchimento para carregar cor, o dourado passa a
+         ser praticamente a única cor forte da tela — é ele que
+         faz o desenho funcionar;
+       • a borda deixou de ser enfeite e virou ESTRUTURA. Apagar
+         ou enfraquecer `--stroke-card` apaga o cartão inteiro.
+     ------------------------------------------------------------ */
+  --surf:#0e1b2b;         /* cartão — quase o fundo, de propósito */
+  --surf-2:#16283c;       /* passagem do mouse, cartão em destaque */
+  --surf-3:#20344c;       /* realce */
+  --surf-baixo:#0b1622;   /* item já resolvido: recua */
+
+  /* Marca — vibrante porque é acento, nunca preenchimento. */
+  --gold:#c2a250;
+  --gold-2:#dcc487;
+  --gold-3:#ecdcb2;
+  --gold-glow:rgba(194,162,80,.32);
+
+  /* Véus e bordas puxados para o AZUL, não para o branco nem
+     para o âmbar: é o que mantém o matiz constante mesmo nos
+     elementos translúcidos. */
+  --glass-fraco:rgba(180,205,235,.035);
+  --glass:rgba(180,205,235,.07);
+  --glass-2:rgba(180,205,235,.11);
+  --glass-3:rgba(180,205,235,.16);
+
+  /* Bordas OPACAS, e não véus translúcidos.
+
+     Num desenho em que a borda é a única coisa que define o
+     cartão, ela não pode variar conforme o que estiver por trás —
+     e véu translúcido varia. Opaca, o fio tem sempre a mesma
+     força, esteja sobre o fundo, sobre outro cartão ou sobre o
+     cabeçalho.
+
+     `--stroke` é o fio interno (divisórias dentro do cartão) e
+     `--stroke-card` é o contorno externo, mais forte. Se os dois
+     fossem iguais, cada divisória cortaria o cartão com o mesmo
+     peso da moldura e a leitura viraria uma grade. */
+  --stroke-fraco:#1a2c40;
+  --stroke:#274058;
+  --stroke-card:#31506f;
+  --stroke-2:#41618a;
+  --stroke-gold:rgba(194,162,80,.42);
+
+  /* ------------------------------------------------------------
+     REGRA Nº 4: SUAVE É CONTRASTE LOCAL BAIXO E BORDA DIFUSA.
+
+     A dureza não vinha da cor do texto — vinha do fio branco no
+     alto do cartão, do brilho interno e de uma sombra preta seca.
+     Sombra preta sobre fundo colorido lê como corte; sombra
+     tingida com a própria cor do fundo lê como profundidade.
+
+     O texto acompanha o mesmo matiz das superfícies. Medido sobre
+     --surf: principal 14,6:1 · secundário 9,6:1 · terciário
+     6,9:1 · rótulo 5,3:1. Com o cartão quase da cor do fundo,
+     todos subiram — é o lado bom de não ter preenchimento claro
+     roubando contraste. O brilho do sistema vem de bordas, anéis
+     e selos, nunca de halo atrás da letra.
+     ------------------------------------------------------------ */
+  --txt:#eaf0f7;
+  --txt-2:#b3c3d3;
+  --txt-3:#93a6ba;
+  --txt-4:#7d90a5;
+
+  /* Semânticos — tons dessaturados, sem neon */
+  --ok:#5cc394;         --ok-bg:rgba(92,195,148,.1);    --ok-br:rgba(92,195,148,.26);
+  --info:#6ba4dd;       --info-bg:rgba(107,164,221,.1); --info-br:rgba(107,164,221,.26);
+  --warn:#dcae5c;       --warn-bg:rgba(220,174,92,.1);  --warn-br:rgba(220,174,92,.26);
+  --danger:#e88a83;     --danger-bg:rgba(232,138,131,.1); --danger-br:rgba(232,138,131,.28);
+
+  /* Formas — canto um pouco mais redondo de propósito.
+     Preferência por curvatura é das respostas mais constantes em
+     estudo de forma: canto redondo lê como acolhedor, canto vivo
+     lê como alerta. É barato e funciona. */
+  --r-sm:11px;
+  --r:15px;
+  --r-lg:20px;
+  --r-xl:28px;
+
+  /* Sombras tingidas com a cor do fundo, não pretas.
+     Preto sobre azul lê como corte; azul escuro lê como
+     profundidade. E mais abertas, para a borda do cartão dissolver
+     em vez de terminar seca. */
+  --sh-1:0 1px 2px rgba(4,11,22,.28);
+  --sh-2:0 10px 30px rgba(4,11,22,.30);
+  --sh-3:0 20px 56px rgba(4,11,22,.44);
+  --glow-gold:0 0 0 1px var(--stroke-gold), 0 10px 34px rgba(194,162,80,.16);
+
+  /* Layout */
+  --header-h:62px;
+  --tabbar-h:66px;
+  --sidebar-w:270px;
+  --maxw:1160px;
+
+  /* Tipografia */
+  --font:"Segoe UI Variable Display","Segoe UI",-apple-system,BlinkMacSystemFont,
+         "Inter","Helvetica Neue",Arial,system-ui,sans-serif;
+
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+
+/* ---------- 2. Reset ---------- */
+*,*::before,*::after{box-sizing:border-box}
+/* `display:flex` e `display:grid` são mais específicos que o
+   `display:none` que o navegador dá a `[hidden]`. Sem esta linha,
+   esconder um cartão pelo atributo simplesmente não funciona — e
+   o cabeçalho aparecia na tela de login. */
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%;background:var(--bg-0)}
+body{
+  margin:0;
+  font-family:var(--font);
+  font-size:15px;
+  line-height:1.55;
+  color:var(--txt);
+  background:var(--bg-0);
+  text-rendering:optimizeLegibility;
+  overflow-wrap:break-word;
+  min-height:100vh;
+}
+
+
+img,svg{display:block;max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+a{color:var(--gold-2);text-decoration-color:rgba(224,198,132,.4);text-underline-offset:3px}
+a:hover{color:var(--gold-3)}
+
+
+
+
+
+::selection{background:rgba(194,162,80,.3);color:#f2f6fa}
+
+
+
+
+
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.skip-link{
+  position:absolute;left:12px;top:-60px;z-index:200;
+  background:var(--gold);color:#0d1926;padding:10px 16px;border-radius:var(--r-sm);
+  font-weight:700;font-size:14px;transition:top .18s var(--ease);
+}
+.skip-link:focus{top:12px}
+
+/* ---------- 3. Fundo animado ---------- */
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;background:var(--bg-0)}
+.bg__aurora{position:absolute;inset:-25%;opacity:.9}
+.bg__aurora::before,.bg__aurora::after{
+  content:"";position:absolute;border-radius:50%;filter:blur(90px);
+}
+.bg__aurora::before{
+  width:70vmax;height:70vmax;left:-18vmax;top:-24vmax;
+  background:radial-gradient(circle at 40% 40%,rgba(36,72,112,.68),rgba(20,41,63,0) 68%);
+  animation:drift1 30s var(--ease) infinite alternate;
+}
+/* A luz quente do ambiente.
+   Antes ela vagava pela tela junto com a mancha azul, e movimento
+   contínuo no canto do olho é justamente o oposto de repouso.
+   Agora fica parada no alto, como uma janela ou um abajur: a
+   página inteira ganha temperatura sem nada se mexendo. */
+.bg__aurora::after{
+  width:64vmax;height:64vmax;right:-14vmax;top:-20vmax;
+  background:radial-gradient(circle at 50% 50%,rgba(216,170,96,.3),rgba(194,162,80,0) 64%);
+}
+.bg__glow{
+  position:absolute;left:50%;bottom:-30vmax;transform:translateX(-50%);
+  width:90vmax;height:60vmax;border-radius:50%;filter:blur(100px);
+  background:radial-gradient(circle at 50% 50%,rgba(30,62,95,.55),transparent 65%);
+  animation:pulse 22s ease-in-out infinite;
+}
+.bg__grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+  background-size:60px 60px;
+  -webkit-mask-image:radial-gradient(75% 55% at 50% 0%,#000 0%,transparent 78%);
+  mask-image:radial-gradient(75% 55% at 50% 0%,#000 0%,transparent 78%);
+}
+/* Grão bem mais discreto. Textura ajuda um fundo a não parecer
+   chapado morto, mas acima de certo ponto ela vira sujeira — e
+   "clean" e "granulado" puxam para lados opostos. */
+.bg__noise{
+  position:absolute;inset:0;opacity:.07;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+}
+@keyframes drift1{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  100%{transform:translate3d(14vmax,9vmax,0) scale(1.16)}
+}
+@keyframes drift2{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  100%{transform:translate3d(-12vmax,14vmax,0) scale(1.22)}
+}
+@keyframes pulse{
+  0%,100%{opacity:.55;transform:translateX(-50%) scale(1)}
+  50%{opacity:.85;transform:translateX(-50%) scale(1.1)}
+}
+
+/* ---------- 4. Movimento ----------
+   O conteúdo só é escondido quando o motion.js confirma que
+   consegue animá-lo (classe .motion no <html>). Sem JavaScript,
+   com movimento reduzido ou em navegador antigo, tudo aparece
+   normalmente — nunca há risco de tela em branco.
+------------------------------------- */
+.reveal{will-change:opacity,transform}
+
+
+@keyframes viewIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shimmer{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  
+}
+
+/* ---------- 5. Cabeçalho ---------- */
+.app-header{
+  position:sticky;top:0;z-index:60;
+  height:var(--header-h);
+  display:flex;align-items:center;gap:12px;
+  padding:0 14px;
+  padding-left:max(14px,env(safe-area-inset-left));
+  padding-right:max(14px,env(safe-area-inset-right));
+  background:linear-gradient(180deg,rgba(13,25,38,.93),rgba(13,25,38,.76));
+  backdrop-filter:blur(18px) saturate(1.5);
+  -webkit-backdrop-filter:blur(18px) saturate(1.5);
+  border-bottom:1px solid var(--stroke);
+}
+.app-header::after{
+  content:"";position:absolute;left:0;right:0;bottom:-1px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold-2) 55%,transparent);
+  opacity:.55;
+}
+/* O cabeçalho inteiro é o atalho para o início. */
+.brand{
+  display:flex;align-items:center;gap:11px;min-width:0;
+  padding:5px 9px 5px 5px;margin-left:-5px;border-radius:12px;text-align:left;
+  border:1px solid transparent;
+  transition:background .2s var(--ease),border-color .2s var(--ease),transform .14s var(--ease);
+}
+.brand:hover{background:var(--glass);border-color:var(--stroke)}
+.brand:active{transform:scale(.98)}
+.brand[aria-current="page"]{cursor:default}
+.brand__logo{height:30px;width:auto;flex:none;filter:drop-shadow(0 2px 8px rgba(0,0,0,.5))}
+
+
+
+
+
+
+/* No celular, com a logo completa, o fio divisor sai. Ele existe
+   para separar um símbolo mudo do texto ao lado; a logo completa
+   já termina em palavra e se separa sozinha. São ~12px que vão
+   para o nome da empresa, que é o que corta primeiro. */
+
+.brand__divider{width:1px;height:22px;background:var(--stroke-2);flex:none}
+.brand__text{min-width:0;display:block}
+.brand__title{display:block;
+  color:var(--txt);font-size:13.5px;font-weight:620;letter-spacing:.004em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+
+/* O RÓTULO DO PAINEL SAI SÓ ONDE NÃO CABE.
+
+   Quando o cabeçalho tinha um botão a mais — o "Acesso do cliente",
+   removido em 04/09/2026 —, sobravam 64px para o texto em 375px:
+   o bastante para "Painel d…" e mais nada, com o "USO INTERNO"
+   quebrando em duas linhas. O rótulo saiu inteiro abaixo de 430px.
+
+   Com um botão a menos, medi de novo no painel publicado, com
+   administrador logado. O rótulo pede 100px, e o que ele recebe:
+
+     412px … 100  cabe
+     390px … 100  cabe
+     375px … 100  cabe, no limite exato
+     360px …  93  CORTA
+     344px …  82  corta
+     320px …  58  corta
+
+   Ou seja, o aperto começa abaixo de 375. Acima disso o rótulo
+   aparece no tamanho natural e não empurra a altura da barra.
+   O corte fica em 374px, que é onde ele de fato deixa de caber —
+   e não num número escolhido de véspera.
+
+   Vale SÓ no painel. No portal do cliente este mesmo espaço
+   carrega o nome da empresa: ali é informação, não rótulo, e é
+   melhor mostrar um pedaço dele do que nada. */
+@media (max-width:374px){
+  .pagina-painel .brand__text{display:none}
+}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+.hbtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  height:37px;min-width:37px;padding:0 11px;
+  border-radius:11px;
+  color:var(--txt-2);
+  border:1px solid var(--stroke);
+  background:var(--glass);
+  font-size:13px;font-weight:560;
+  transition:background .18s var(--ease),border-color .18s var(--ease),
+             color .18s var(--ease),transform .14s var(--ease);
+}
+.hbtn:hover{background:var(--glass-2);border-color:var(--stroke-2);color:var(--txt)}
+.hbtn:active{transform:scale(.97)}
+.hbtn .ic{width:18px;height:18px}
+
+
+
+/* Aqui morava `.hbtn--discreto`, o estilo das portas cruzadas
+   entre portal e painel. As duas portas saíram do cabeçalho em
+   04/09/2026 e a regra ficou sem dono — some junto, senão vira
+   estilo órfão que o próximo a mexer aqui tenta entender. */
+.hbtn__label{display:none}
+@media (min-width:520px){ .hbtn__label{display:inline} }
+
+/* ---------- 6. Layout ---------- */
+.shell{
+  display:block;
+  max-width:var(--maxw);
+  margin:0 auto;
+  padding:0 0 calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 14px);
+}
+.main{
+  padding:18px 16px 30px;
+  padding-left:max(16px,env(safe-area-inset-left));
+  padding-right:max(16px,env(safe-area-inset-right));
+}
+.view{animation:viewIn .4s var(--ease-out)}
+.sidenav{display:none}
+
+/* ---------- Tela de entrada ----------
+   Sem sessão não há para onde o menu levar: todo item cairia de
+   volta no formulário de login. Mostrar sete atalhos mortos ao
+   lado da caixa de senha só dá o que ignorar. Na entrada fica a
+   marca, o formulário e o rodapé — nada mais.
+
+   O `!important` é o jeito de vencer o `display:block` que a
+   consulta de largura devolve à barra lateral no desktop, sem
+   duplicar esta regra dentro de cada media query. */
+body.porta-aberta .sidenav,
+body.porta-aberta .tabbar{display:none !important}
+body.porta-aberta .shell{
+  display:block;
+  grid-template-columns:none;
+  padding-bottom:34px;
+}
+
+/* Barra inferior (celular) */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:60;
+  height:calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  padding-bottom:env(safe-area-inset-bottom);
+  display:grid;grid-auto-flow:column;grid-auto-columns:1fr;
+  background:linear-gradient(0deg,rgba(13,25,38,.97),rgba(18,32,49,.84));
+  backdrop-filter:blur(20px) saturate(1.5);
+  -webkit-backdrop-filter:blur(20px) saturate(1.5);
+  border-top:1px solid var(--stroke);
+}
+.tabbar__item{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--txt-3);font-size:10.5px;font-weight:620;letter-spacing:.01em;
+  position:relative;padding-top:5px;
+  transition:color .2s var(--ease);
+}
+.tabbar__item .ic{width:22px;height:22px;stroke-width:1.6;transition:transform .28s var(--ease-out)}
+.tabbar__item:active .ic{transform:scale(.88)}
+.tabbar__item[aria-current="page"]{color:var(--gold-2)}
+.tabbar__item[aria-current="page"] .ic{filter:drop-shadow(0 0 7px var(--gold-glow))}
+
+.tabbar__item[aria-current="page"]::before{
+  content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+  width:30px;height:3px;border-radius:0 0 4px 4px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2));
+  box-shadow:0 0 14px var(--gold-glow);
+}
+
+
+
+
+
+
+
+/* Cor chapada, uma borda, uma sombra difusa. Nada mais.
+
+   O que saiu daqui e por quê:
+     • o degradê dourado — acinzentava o topo (39% → 21%);
+     • o fio branco no alto (`::before`) — era a aresta mais dura
+       da tela, e brilho de fio é justamente o que impede um
+       cartão de parecer calmo;
+     • o brilho interno `--luz-fio` — mesma coisa, por dentro;
+     • o desfoque de fundo — invisível sob cor opaca e caro em
+       celular modesto: cada cartão da lista obrigava o navegador
+       a recompor tudo o que estava atrás. */
+.card{
+  position:relative;
+  background:var(--surf);
+  border:1px solid var(--stroke-card);
+  border-radius:var(--r-lg);
+  /* Sem sombra: no modelo Contorno quem separa o cartão do fundo
+     é o fio, e sombra por baixo de um cartão quase transparente
+     só suja a borda. */
+  box-shadow:none;
+  overflow:hidden;
+}
+.card--pad{padding:20px}
+
+.section{margin-top:28px}
+.section:first-child{margin-top:0}
+.section__head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px}
+.section__title{font-size:18px;font-weight:660;color:var(--txt)}
+.section__desc{font-size:13px;color:var(--txt-3);margin-top:4px;font-weight:450;line-height:1.5}
+
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:10.5px;font-weight:750;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--gold-2);
+}
+.eyebrow::before{
+  content:"";width:16px;height:1px;background:linear-gradient(90deg,transparent,var(--gold));
+}
+
+/* ---------- 8. Botões ---------- */
+.btn{
+  position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:44px;padding:0 20px;border-radius:12px;
+  font-size:14px;font-weight:620;letter-spacing:.004em;
+  border:1px solid transparent;
+  transition:transform .14s var(--ease),box-shadow .22s var(--ease),
+             background .22s var(--ease),border-color .22s var(--ease),color .22s var(--ease);
+  white-space:nowrap;
+}
+.btn:active{transform:translateY(1px) scale(.995)}
+.btn .ic{width:18px;height:18px;flex:none}
+
+.btn--primary{
+  background:linear-gradient(135deg,var(--gold),var(--gold-2));
+  color:#0d1926;box-shadow:0 6px 22px rgba(194,162,80,.26);
+}
+.btn--primary:hover{
+  background:linear-gradient(135deg,var(--gold-2),var(--gold-3));
+  box-shadow:0 10px 30px rgba(194,162,80,.4);
+}
+.btn--primary::after{
+  content:"";position:absolute;top:0;bottom:0;width:34%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);
+  transform:translateX(-140%);
+}
+.btn--primary:hover::after{animation:shimmer 1.05s var(--ease-out)}
+
+
+
+
+.btn--ghost{background:var(--glass);border-color:var(--stroke);color:var(--txt-2);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.btn--ghost:hover{background:var(--glass-2);border-color:var(--stroke-2);color:var(--txt)}
+
+.btn--quiet{background:transparent;color:var(--txt-3);height:38px;padding:0 12px}
+.btn--quiet:hover{background:var(--glass);color:var(--txt-2)}
+
+.btn--danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-br)}
+.btn--danger:hover{background:rgba(255,122,114,.18);border-color:rgba(255,122,114,.45)}
+
+.btn--sm{height:36px;padding:0 14px;font-size:13px;border-radius:10px}
+.btn--block{width:100%}
+.btn[disabled]{opacity:.4;pointer-events:none}
+
+/* ---------- 9. Selos de situação ---------- */
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  height:24px;padding:0 10px;border-radius:20px;
+  font-size:11.5px;font-weight:660;letter-spacing:.01em;
+  border:1px solid transparent;white-space:nowrap;
+}
+.badge .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none;box-shadow:0 0 6px currentColor}
+
+
+
+.badge--analise{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-br)}
+.badge--aprovado{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-br)}
+
+.badge--na{background:rgba(255,255,255,.03);color:var(--txt-4);border-color:var(--stroke)}
+.badge--na .dot{box-shadow:none}
+
+/* ---------- 10. Formulários ---------- */
+.field{margin-bottom:16px}
+.field__label{
+  display:block;font-size:12.5px;font-weight:620;color:var(--txt-2);
+  margin-bottom:7px;letter-spacing:.005em;
+}
+
+.field__hint{font-size:12px;color:var(--txt-3);margin-top:6px;line-height:1.45}
+
+.input,.select,.textarea{
+  width:100%;height:46px;padding:0 14px;
+  background:rgba(255,255,255,.035);
+  border:1px solid var(--stroke);border-radius:12px;
+  font-size:15px;color:var(--txt);
+  transition:border-color .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease);
+}
+.textarea{height:auto;min-height:96px;padding:12px 14px;line-height:1.5;resize:vertical}
+.select{
+  appearance:none;padding-right:40px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a9bacd' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;
+}
+.select option{background:var(--bg-2);color:var(--txt)}
+.input:hover,.select:hover,.textarea:hover{border-color:var(--stroke-2)}
+.input:focus,.select:focus,.textarea:focus{
+  outline:none;border-color:var(--gold);background:rgba(255,255,255,.055);
+  box-shadow:0 0 0 3.5px rgba(194,162,80,.15);
+}
+.input[aria-invalid="true"],.textarea[aria-invalid="true"]{border-color:var(--danger)}
+.input[aria-invalid="true"]:focus{box-shadow:0 0 0 3.5px rgba(255,122,114,.15)}
+.input::placeholder,.textarea::placeholder{color:var(--txt-4)}
+/* Campo preenchido pela Totali: legível, mas claramente não editável. */
+.input[readonly],.select:disabled{
+  background:rgba(255,255,255,.02);
+  border-style:dashed;
+  color:var(--txt-2);
+  cursor:default;
+}
+.input[readonly]:hover,.select:disabled:hover{border-color:var(--stroke)}
+.input[readonly]:focus{border-color:var(--stroke-2);box-shadow:none}
+.grid-2{display:grid;gap:0 16px}
+
+input[type=checkbox]{accent-color:var(--gold)}
+
+.hr{height:1px;background:var(--stroke);border:0;margin:20px 0}
+.stack>*+*{margin-top:14px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.text-muted{color:var(--txt-3)}
+.text-sm{font-size:13px}
+.text-xs{font-size:12px}
+
+/* ---------- 13b. Menu de contexto ---------- */
+.menuctx{
+  position:fixed;z-index:130;min-width:186px;padding:6px;
+  border-radius:13px;border:1px solid var(--stroke-2);
+  background:var(--bg-1);
+  box-shadow:0 18px 48px rgba(0,0,0,.55);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+
+
+
+/* ---------- 14. Avisos ---------- */
+.notice{
+  display:flex;gap:12px;padding:14px 15px;border-radius:13px;
+  border:1px solid var(--stroke);background:var(--glass);
+  font-size:13px;line-height:1.55;color:var(--txt-2);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+}
+.notice__icon{flex:none;margin-top:1px;color:var(--txt-3)}
+.notice__icon .ic{width:18px;height:18px}
+.notice--warn{background:var(--warn-bg);border-color:var(--warn-br);color:#e8d3a4}
+.notice--warn .notice__icon{color:var(--warn)}
+
+
+
+
+.notice strong{font-weight:680;color:var(--txt)}
+
+
+/* Só `.ac-trilha__t` e `.ac-trilha__d` continuam sendo emitidos
+   (js/painel-conteudo.js). O contêiner `.ac-trilha` e o cabeçalho
+   com número saíram quando as trilhas do editor passaram a usar o
+   bloco recolhível comum, o `.rec`. */
+.ac-trilha__t{display:block;font-size:14.5px;font-weight:650;color:var(--txt);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-trilha__d{display:block;font-size:12px;color:var(--txt-3);margin-top:2px}
+.ac-ordem{display:flex;flex-direction:column;gap:3px;flex:none}
+.ac-mini{
+  width:24px;height:20px;border-radius:6px;display:grid;place-items:center;
+  background:var(--glass-2);border:1px solid var(--stroke);
+  color:var(--txt-3);font-size:11px;line-height:1;
+  transition:background .16s var(--ease),color .16s var(--ease);
+}
+.ac-mini:hover{background:var(--glass-3);color:var(--txt)}
+.ac-mini--x{width:30px;height:30px;font-size:17px}
+.ac-mini--x:hover{background:var(--danger-bg);color:var(--danger)}
+
+.ac-aulas{margin-top:6px;padding-top:14px;border-top:1px solid var(--stroke)}
+.ac-aula{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:11px;margin-bottom:9px;border-radius:11px;
+  background:rgba(255,255,255,.03);border:1px solid var(--stroke);
+}
+.ac-aula__n{
+  width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;
+  background:var(--glass-2);border:1px solid var(--stroke);
+  font-size:11.5px;font-weight:700;color:var(--txt-3);margin-top:9px;
+}
+.ac-aula__campos{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.ac-aula__linha{display:flex;gap:7px;flex-wrap:wrap}
+.ac-aula__linha .input{flex:1;min-width:150px}
+
+
+.ac-aula .input{height:40px;font-size:14px}
+
+/* ---------- 15a. Capas ---------- */
+.capa{
+  display:block;position:relative;aspect-ratio:16/9;overflow:hidden;
+  background:linear-gradient(140deg,#16283a,#25476a);
+}
+.capa img{width:100%;height:100%;object-fit:cover;display:block}
+
+
+
+
+
+
+
+
+/* ---------- 16. Estado vazio ---------- */
+.empty{text-align:center;padding:40px 20px}
+.empty__icon{
+  width:58px;height:58px;border-radius:18px;margin:0 auto 16px;
+  display:grid;place-items:center;
+  background:var(--glass-2);border:1px solid var(--stroke);color:var(--txt-4);
+}
+.empty__icon .ic{width:24px;height:24px}
+.empty__title{font-size:15px;font-weight:660;color:var(--txt-2)}
+.empty__desc{font-size:13px;color:var(--txt-3);margin-top:6px;max-width:38ch;margin-inline:auto;line-height:1.55}
+
+/* ---------- 17. Modal ---------- */
+.modal-backdrop{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(7,14,23,.7);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .24s var(--ease);
+}
+.modal{
+  width:100%;max-width:580px;max-height:88vh;
+  display:flex;flex-direction:column;
+  background:linear-gradient(160deg,rgba(26,49,73,.97),rgba(13,25,38,.98));
+  border:1px solid var(--stroke-2);border-bottom:0;
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  box-shadow:var(--sh-3);
+  animation:sheetUp .38s var(--ease-out);
+  padding-bottom:env(safe-area-inset-bottom);
+  overflow:hidden;
+}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.modal__grip{width:40px;height:4px;border-radius:4px;background:var(--stroke-2);margin:10px auto 0;flex:none}
+.modal__head{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:15px 20px 13px;border-bottom:1px solid var(--stroke);flex:none;
+}
+.modal__title{font-size:16.5px;font-weight:660;flex:1;min-width:0;padding-top:2px;color:var(--txt)}
+.modal__close{
+  width:36px;height:36px;border-radius:10px;display:grid;place-items:center;
+  color:var(--txt-3);flex:none;transition:background .2s var(--ease),color .2s var(--ease);
+}
+.modal__close:hover{background:var(--glass-2);color:var(--txt)}
+.modal__close .ic{width:19px;height:19px}
+.modal__body{padding:18px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.modal__foot{
+  padding:14px 20px;border-top:1px solid var(--stroke);flex:none;
+  display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;
+}
+
+
+
+
+.help-list{margin-top:6px}
+.help-list li{
+  position:relative;padding-left:19px;font-size:13.5px;
+  color:var(--txt-2);line-height:1.6;margin-top:6px;
+}
+.help-list li::before{
+  content:"";position:absolute;left:3px;top:9px;
+  width:6px;height:6px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold-glow);
+}
+
+
+
+
+
+
+
+
+
+/* ---------- 18. Toasts ---------- */
+.toasts{
+  position:fixed;left:50%;transform:translateX(-50%);
+  top:calc(var(--header-h) + 12px);z-index:120;
+  display:flex;flex-direction:column;gap:9px;
+  width:min(92vw,450px);pointer-events:none;
+}
+.toast{
+  pointer-events:auto;display:flex;align-items:flex-start;gap:11px;
+  padding:12px 15px;border-radius:13px;
+  background:linear-gradient(140deg,rgba(26,49,73,.97),rgba(13,25,38,.98));
+  color:var(--txt);
+  border:1px solid var(--stroke-2);border-left:3px solid var(--gold);
+  box-shadow:var(--sh-3);font-size:13.5px;line-height:1.45;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  animation:toastIn .3s var(--ease-out);
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(-14px) scale(.96)}to{opacity:1;transform:none}}
+.toast--out{opacity:0;transform:translateY(-12px);transition:opacity .24s,transform .24s}
+.toast .ic{width:17px;height:17px;flex:none;margin-top:1px}
+.toast--ok{border-left-color:var(--ok)}
+.toast--ok .ic{color:var(--ok)}
+.toast--err{border-left-color:var(--danger)}
+.toast--err .ic{color:var(--danger)}
+
+/* ---------- 21. Desktop ---------- */
+@media (min-width:900px){
+  :root{--header-h:68px}
+  .shell{
+    display:grid;
+    grid-template-columns:var(--sidebar-w) minmax(0,1fr);
+    gap:28px;
+    padding:28px 24px 44px;
+    align-items:start;
+  }
+  .main{padding:0}
+  .tabbar{display:none}
+
+  .sidenav{display:block;position:sticky;top:calc(var(--header-h) + 28px)}
+  .sidenav__label{
+    font-size:10px;font-weight:750;letter-spacing:.15em;text-transform:uppercase;
+    color:var(--txt-4);padding:0 12px 10px;
+  }
+  .sidenav__item{
+    position:relative;overflow:hidden;
+    display:flex;align-items:center;gap:12px;width:100%;
+    padding:11px 13px;border-radius:12px;margin-bottom:4px;
+    font-size:14px;font-weight:560;color:var(--txt-2);text-align:left;
+    border:1px solid transparent;
+    transition:background .22s var(--ease),color .22s var(--ease),border-color .22s var(--ease);
+  }
+  .sidenav__item .ic{width:19px;height:19px;color:var(--txt-4);flex:none;transition:color .22s var(--ease)}
+  .sidenav__item:hover{background:var(--glass);color:var(--txt);border-color:var(--stroke)}
+  .sidenav__item:hover .ic{color:var(--txt-2)}
+  .sidenav__item[aria-current="page"]{
+    background:linear-gradient(120deg,rgba(194,162,80,.16),rgba(34,69,108,.24));
+    border-color:var(--stroke-gold);
+    color:var(--txt);font-weight:640;
+    box-shadow:0 6px 24px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);
+  }
+  .sidenav__item[aria-current="page"] .ic{color:var(--gold-2);filter:drop-shadow(0 0 5px var(--gold-glow))}
+  .sidenav__item[aria-current="page"]::before{
+    content:"";position:absolute;left:0;top:22%;bottom:22%;width:3px;border-radius:0 3px 3px 0;
+    background:linear-gradient(180deg,var(--gold),var(--gold-2));box-shadow:0 0 10px var(--gold-glow);
+  }
+  .sidenav__badge{
+    margin-left:auto;min-width:22px;height:22px;padding:0 7px;border-radius:11px;
+    background:var(--glass-2);color:var(--txt-2);font-size:11px;font-weight:720;
+    display:grid;place-items:center;border:1px solid var(--stroke);
+  }
+  .sidenav__item[aria-current="page"] .sidenav__badge{
+    background:rgba(194,162,80,.2);color:var(--gold-3);border-color:var(--stroke-gold);
+  }
+  .sidenav__card{
+    position:relative;overflow:hidden;
+    margin-top:20px;padding:17px;border-radius:var(--r-lg);
+    background:linear-gradient(150deg,rgba(34,69,108,.4),rgba(10,21,36,.6));
+    border:1px solid var(--stroke);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    box-shadow:var(--sh-2);
+  }
+  .sidenav__card::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(80% 100% at 100% 0%,rgba(194,162,80,.22),transparent 60%);
+  }
+  .sidenav__card>*{position:relative}
+  .sidenav__card .t{font-size:13.5px;font-weight:680;color:var(--txt)}
+  .sidenav__card .d{font-size:12px;color:var(--txt-3);margin-top:5px;line-height:1.55}
+
+  
+  
+  
+  .grid-2{grid-template-columns:1fr 1fr}
+  
+  .modal-backdrop{align-items:center;padding:24px}
+  .modal{border-radius:var(--r-xl);max-height:84vh;border-bottom:1px solid var(--stroke-2)}
+  .modal__grip{display:none}
+  .modal__head{padding-top:18px}
+  .item__top{align-items:center}
+}
+
+
+
+/* ---------- 22. Impressão ---------- */
+@media print{
+  .app-header,.tabbar,.sidenav,.item__actions,.btn,.toasts,.bg{display:none !important}
+  body{background:#fff;color:#000}
+  .shell{display:block;padding:0}
+  .card,.hero{box-shadow:none;border:1px solid #ccc;background:#fff;backdrop-filter:none}
+  
+  .item__name,.group__title,.section__title,.rail__title{color:#000}
+}
+
+
+.gira180{transform:rotate(180deg)}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Os descontos saíram de medição, não de chute: no celular sobram
+   o cabeçalho, o título da seção, o campo de escrever e a barra de
+   abas; no computador não há barra de abas e o título é menor.
+   Medido em 375×812 e em 1280×800 no endereço publicado. */
+@supports (height: 100dvh) {
+  .chat{ max-height:calc(100dvh - 470px); min-height:180px; }
+}
+@media (min-width:900px){
+  
+  @supports (height: 100dvh) {
+    .chat{ max-height:calc(100dvh - 360px); min-height:260px; }
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Passo de abertura e de encerramento não acendem nada: aí o
+   véu vem do próprio fundo do tutorial. */
+
+
+
+@keyframes tourEntra{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Rótulo de campo com um botão à direita, na mesma linha. Em tela
+   estreita o botão desce, em vez de espremer o rótulo. */
+
+
+.rec{
+  border:1px solid var(--stroke);border-radius:12px;
+  background:rgba(255,255,255,.02);margin-bottom:10px;overflow:hidden;
+}
+
+
+.rec__cab{
+  flex:1;min-width:0;display:flex;align-items:center;gap:10px;
+  background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;
+}
+
+
+
+
+.rec__t{
+  display:block;font-size:14px;font-weight:650;color:var(--txt);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+
+.rec__corpo{padding:0 12px 14px;border-top:1px solid var(--stroke);padding-top:14px}
+
+/* Variante em `<details>`, para conteúdo que abre e fecha sozinho
+   sem precisar de JavaScript — usada onde o bloco é raro e não vale
+   a mecânica do `caixaRecolhivel`. O triângulo padrão do navegador
+   sai porque destoa do resto; a seta é a mesma dos outros blocos. */
+
+
+
+
+
+
+
+details.rec[open]{border-color:var(--stroke-2,var(--stroke))}
+
+
+
+
+/* Capa + os botões que a trocam, empilhados. A coluna precisa de
+   largura própria: sem ela o flex do .ac-aula espreme os botões
+   contra a capa e o texto quebra letra a letra. */
+.capa-caixa,.previa__capa{
+  display:flex;flex-direction:column;gap:6px;flex:none;align-items:stretch;
+}
+.capa-acoes{display:flex;flex-wrap:wrap;gap:4px}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Virou botão: toca-se nele para trocar o próprio nome. O visual
+   é o mesmo de antes — o que muda é o cursor e a resposta ao
+   toque, que é o que faz uma pessoa descobrir que ali se clica. */
+.usuario{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:4px 12px 4px 4px;border-radius:20px;
+  border:1px solid var(--stroke);background:var(--glass);
+  max-width:220px;
+  font:inherit;color:inherit;text-align:left;cursor:pointer;
+  transition:border-color .18s ease, background .18s ease;
+}
+.usuario:hover{border-color:var(--gold-2);background:var(--glass-2,var(--glass))}
+.usuario:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.usuario__avatar{
+  width:29px;height:29px;flex:none;border-radius:50%;
+  display:grid;place-items:center;
+  background:linear-gradient(140deg,var(--gold),var(--gold-2));
+  color:#0d1926;font-size:11.5px;font-weight:750;letter-spacing:.02em;
+}
+
+.usuario__nome{
+  display:block;font-size:12.5px;font-weight:640;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.usuario__papel{
+  display:block;font-size:10px;font-weight:650;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--gold-2);
+}
+
+
+
+
+
+
+
+/* A marca completa na tela de entrada. É o único lugar com espaço
+   para ela inteira; no cabeçalho entra só o símbolo, que continua
+   legível a 30px de altura. */
+.marca-porta{
+  display:block;width:min(210px,62%);height:auto;
+  margin:0 auto 20px;
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,.45));
+}
+
+
+/* ============================================================
+   Caixa de entrada e lista de pendências
+
+   Conversa com mensagem não lida ganha marca dourada na lateral.
+   Mensagem de cliente parada é cliente esperando resposta — não
+   pode passar despercebida no meio da lista.
+   ============================================================ */
+
+
+
+
+@supports (height: 100dvh) {
+  .conversa--alta{max-height:min(calc(100dvh - 380px),560px)}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Cabeçalho de seção com botão de ação à direita.
+
+   Em tela estreita o botão espremia o texto e as duas coisas se
+   sobrepunham. Agora ele desce para a linha de baixo quando o
+   texto precisa da largura toda. */
+.section__head{flex-wrap:wrap}
+.section__head > div:first-child{flex:1 1 230px;min-width:0}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   Tela de início do painel
+
+   Os números são BOTÕES: cada um leva onde aquilo se resolve.
+   Número que não leva a lugar nenhum é enfeite, e enfeite em
+   painel de trabalho vira ruído em duas semanas.
+   ============================================================ */
+.numeros{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:18px;
+}
+.numero{
+  display:flex;flex-direction:column;align-items:flex-start;gap:2px;
+  padding:14px 15px;border-radius:14px;text-align:left;
+  border:1px solid var(--stroke-card);background:var(--surf);
+  cursor:pointer;transition:border-color .16s ease, background .16s ease;
+}
+.numero:hover{border-color:var(--stroke-2);background:var(--surf-2)}
+.numero:focus-visible{outline:2px solid var(--gold-2);outline-offset:2px}
+.numero__n{
+  display:block;font-size:26px;font-weight:700;line-height:1.1;color:var(--txt);
+  font-variant-numeric:tabular-nums;
+}
+.numero__rot{display:block;font-size:12.5px;color:var(--txt-3);line-height:1.4}
+
+/* Só o que exige ação hoje ganha o dourado. Se tudo brilhasse,
+   nada brilharia. */
+
+
+
+@media (min-width:760px){ .numeros{grid-template-columns:repeat(4,minmax(0,1fr))} }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ---------- Ícone redondo de item de lista ---------- */
+.group__icon{
+  width:38px;height:38px;flex:none;border-radius:11px;
+  display:grid;place-items:center;
+  background:var(--glass-2);border:1px solid var(--stroke);
+  color:var(--gold-2);
+}
+.group__icon .ic{width:18px;height:18px}
+
+/* ---------- Barra de progresso de um aluno ---------- */
+.pbar{height:6px;border-radius:99px;background:var(--glass-2);overflow:hidden}
+.pbar__fill{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2));
+  box-shadow:0 0 12px var(--gold-glow);
+  transition:width .5s var(--ease-out);
+}
+
+/* ---------- Número solto ao lado de um nome ---------- */
+.stat__num{font-size:20px;font-weight:700;color:var(--txt);line-height:1.1}
+.stat__lbl{font-size:11px;color:var(--txt-4);margin-top:2px}
+
+/* ---------- A porta de entrada ---------- */
+.porta{max-width:420px;margin:40px auto}
+.porta__titulo{font-size:20px;margin:6px 0}
+.porta__desc{margin-bottom:18px}
+.porta__pe{margin-top:14px;text-align:center}
+
+/* ---------- A barra de publicar ----------
+
+   FICA PRESA NO ALTO, e não no rodapé. No rodapé ela brigaria com
+   a barra de abas do celular, e sumiria justamente quando a pessoa
+   rola para conferir o que mudou — que é o momento em que ela
+   precisa estar à vista.
+
+   Só aparece quando há alteração pendente. Barra sempre visível
+   vira moldura: deixa de ser aviso e passa a ser decoração. */
+.barra-publicar{
+  position:sticky;top:8px;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:0 0 16px;padding:12px 14px;border-radius:var(--r-md);
+  background:linear-gradient(135deg,rgba(194,162,80,.14),rgba(194,162,80,.06));
+  border:1px solid var(--stroke-gold);
+  box-shadow:var(--sh-2);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.barra-publicar__txt{font-size:13px;color:var(--txt-2);line-height:1.5}
+.barra-publicar__txt strong{color:var(--txt)}
+.barra-publicar__acoes{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- Texto de atenção ----------
+   Âmbar, não vermelho: aula sem vídeo é um estado legítimo
+   enquanto a gravação não vem. Vermelho diria que está errado. */
+.text-warn{color:var(--warn)}

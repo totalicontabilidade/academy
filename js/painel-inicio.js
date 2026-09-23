@@ -1,787 +1,174 @@
 /* ============================================================
    Totali · Academy
-   painel-inicio.js — a primeira tela do painel da equipe
+   painel-inicio.js — a primeira tela, e o que ela responde
 
-   POR QUE EXISTE
-   --------------
-   O painel abria na lista de clientes, em ordem alfabética-ish,
-   com o mesmo peso para quem entregou tudo e para quem está
-   parado há três semanas. Para saber o que fazer primeiro, a
-   pessoa tinha que abrir Pendências, depois Mensagens, depois
-   voltar em Clientes — e cruzar as três de cabeça.
+   UMA PERGUNTA SÓ: o que precisa de você agora. Não traz
+   informação nova — traz a mesma das outras abas, em ordem do que
+   custa mais deixar para amanhã.
 
-   Esta tela faz esse cruzamento. Ela não traz informação nova:
-   traz a MESMA informação em ordem de urgência, numa lista só.
+   Três coisas pedem ação nesta Academy, e nesta ordem:
 
-   COMO A ORDEM É DECIDIDA
-   -----------------------
-   Cada pendência recebe um peso, e o peso responde a uma
-   pergunta: quanto custa deixar isto para amanhã?
+     1. Nada publicado ainda. Enquanto o catálogo estiver vazio no
+        servidor, o cliente vê o conteúdo de exemplo. É o pior
+        estado possível e o mais fácil de não perceber, porque a
+        tela do cliente parece cheia.
+     2. Aula sem vídeo. Aparece como "em breve", o que é legítimo
+        — mas só enquanto for de propósito.
+     3. Aluno parado. Quem não abre há semanas é o que pede uma
+        ligação, e é o número que diz se o conteúdo está servindo.
 
-     1. cliente escreveu e ninguém leu   — tem gente esperando
-     2. documento parado na conferência  — o cliente já fez a
-                                           parte dele
-     3. mensagem lida e não resolvida    — alguém viu e não agiu
-     4. cliente parado há muito tempo    — está esfriando
-     5. convite gerado e nunca aberto    — a migração nem começou
-
-   O empate dentro de cada faixa é resolvido pelo tempo: mais
-   antigo primeiro. Sempre. É a única regra que não deixa nada
-   afundar para sempre.
-
-   O QUE ELA NÃO FAZ
-   -----------------
-   Não busca nada no servidor. Lê a lista que a aba Clientes já
-   carregou (global.PainelClientes) e se redesenha quando aquela
-   avisa. Duas buscas dariam dois retratos diferentes da mesma
-   coisa, e o Início mostraria um mundo que já mudou.
+   Se nada disso existir, a tela diz isso com todas as letras em
+   vez de inventar um painel de indicadores. Tela de início que
+   não tem o que dizer deve dizer que está tudo em ordem.
    ============================================================ */
 (function (global) {
   "use strict";
 
-  var UI = global.UI, U = global.U;
+  var UI = global.UI, U = global.U, A = global.Admin, C = global.Catalogo;
   var $ = UI.$;
-  var DIA = 86400000;
+  var ic = UI.icone;
 
-  function ic(nome, cls) {
-    return '<svg class="ic ' + (cls || "") + '" aria-hidden="true" focusable="false">' +
-           '<use href="#' + nome + '"></use></svg>';
-  }
+  var carregado = false;
 
-  /* Quantos dias faz — sempre em texto de gente, nunca "há 0 dias". */
-  function faz(ms) {
-    if (!ms) return "";
-    var dias = Math.floor((Date.now() - ms) / DIA);
-    if (dias <= 0) return "hoje";
-    if (dias === 1) return "ontem";
-    if (dias < 7) return "há " + dias + " dias";
-    if (dias < 14) return "há uma semana";
-    if (dias < 60) return "há " + Math.floor(dias / 7) + " semanas";
-    return "há " + Math.floor(dias / 30) + " meses";
-  }
+  function carregar() {
+    if (carregado) return Promise.resolve();
+    var caixa = $("#inCorpo");
+    if (caixa) caixa.innerHTML = '<div class="card card--pad text-muted">Carregando…</div>';
 
-  function diasDe(ms) {
-    return ms ? Math.floor((Date.now() - ms) / DIA) : 0;
-  }
-
-  /* ------------------------------------------------------------
-     Reunir o trabalho
-     ------------------------------------------------------------ */
-  /* A jornada entra logo abaixo de "documento esperando
-     conferência": uma ligação de D0 atrasada é mais urgente do que
-     uma mensagem lida e não resolvida — o cliente acabou de
-     assinar e o silêncio é onde nasce o arrependimento. */
-  var PESO = {
-    naoLida: 1, conferir: 2, jornada: 3, aResolver: 4, parado: 5, convite: 6
-  };
-
-  /* ---------- Filtro por departamento ----------
-
-     Ligado por padrão. Quem não tem setor definido cuida de tudo,
-     e para essa pessoa o filtro não muda nada — nem o botão de
-     desligar aparece. */
-  var soMeuSetor = true;
-
-  /* "MEUS CLIENTES": só as empresas em que eu sou o gerente de
-     contas. Cliente sem gerente definido continua aparecendo —
-     ele não é de ninguém, então é de todo mundo. Nasce desligado:
-     quem não é gerente de nada veria a tela vazia. */
-  var soMeusClientes = false;
-  function meuCliente(c) {
-    var g = (c.empresa || {}).gerenteUid;
-    var eu = souDe();
-    return !g || !eu || g === eu.uid;
-  }
-  function haGerentes() {
-    return (global.PainelClientes ? global.PainelClientes.empresas : []).some(function (c) {
-      return !!(c.empresa || {}).gerenteUid;
-    });
-  }
-
-  function souDe() { return (global.FB && global.FB.equipe) || null; }
-
-  function temSetor() {
-    return !global.Departamentos.veTudo(souDe());
-  }
-
-  function daMinhaArea(grupoId) {
-    if (!soMeuSetor) return true;
-    return global.Departamentos.cuida(souDe(), grupoId);
-  }
-
-  /* Documentos em que o cliente respondeu a uma correção sem
-     reenviar arquivo — a bola está com a equipe.
-
-     Mora aqui fora porque duas telas precisam da MESMA conta: a
-     lista de tarefas e o contador do topo. Quando a conta estava
-     escrita só dentro da lista, o topo dizia "0 documentos a
-     conferir" com uma tarefa logo abaixo. */
-  function respondidosDe(c) {
-    var fora = [];
-    global.DATA.GRUPOS.forEach(function (g) {
-      if (!daMinhaArea(g.id)) return;
-      var alvos = g.escopo === "socio"
-        ? (c.dados.socios || []).map(function (s) { return s.id; })
-        : [null];
-      alvos.forEach(function (socioId) {
-        g.itens.forEach(function (item) {
-          if (global.Situacao.de(c.dados, g, item, socioId) !== "pendencia") return;
-          var chave = global.Situacao.chaveItem(g.id, item.id, socioId);
-          var reg = (c.dados.itens || {})[chave] || {};
-          if (reg.obs) fora.push({ item: item, reg: reg });
-        });
-      });
-    });
-    return fora;
-  }
-
-  function reunir() {
-    var PC = global.PainelClientes;
-    if (!PC) return [];
-
-    var linhas = [];
-
-    PC.empresas.forEach(function (c) {
-      if (PC.arquivada(c)) return;
-      if (soMeusClientes && !meuCliente(c)) return;
-      var nome = PC.nomeDe(c);
-
-      /* 1. Mensagem que o cliente mandou e ninguém abriu. */
-      /* Lápide de mensagem apagada não vira tarefa: não há o que
-         ler nem o que responder. Ver a nota em `naoLidasDe`. */
-      var naoLidas = c.mensagens.filter(function (m) {
-        return m.autor === "cliente" && !m.lidaEm && !m.apagadaEm;
-      });
-      if (naoLidas.length) {
-        var maisAntiga = naoLidas.reduce(function (a, m) {
-          return (!a || (m.em || 0) < (a.em || 0)) ? m : a;
-        }, null);
-        linhas.push({
-          peso: PESO.naoLida, em: (maisAntiga && maisAntiga.em) || 0,
-          cliente: c, icone: "ic-chat", acao: "conversa",
-          empresa: nome,
-          titulo: naoLidas.length === 1
-            ? "Mensagem nova"
-            : naoLidas.length + " mensagens novas",
-          detalhe: String((maisAntiga && maisAntiga.texto) || "").slice(0, 110),
-          selo: "Responder", seloCls: "badge--pendencia"
-        });
-      }
-
-      /* 2. Documento entregue, esperando alguém olhar.
-
-         Aqui entra o departamento: quem cuida do Pessoal não
-         precisa ver todo dia os balanços que a contabilidade
-         está conferindo. As mensagens NÃO são filtradas — elas
-         não pertencem a setor nenhum, e uma pergunta sem resposta
-         é problema de quem estiver por perto. */
-      var fila = PC.naoConferidos(c).filter(function (x) {
-        return daMinhaArea(x.grupo.id);
-      });
-      if (fila.length) {
-        var maisVelho = 0;
-        fila.forEach(function (x) {
-          var t = PC.emMs((c.dados.itens[x.chave] || {}).atualizadoEm) || 0;
-          if (t && (!maisVelho || t < maisVelho)) maisVelho = t;
-        });
-        linhas.push({
-          peso: PESO.conferir, em: maisVelho,
-          cliente: c, icone: "ic-check-circle", acao: "ficha",
-          empresa: nome,
-          titulo: fila.length === 1
-            ? "1 documento esperando conferência"
-            : fila.length + " documentos esperando conferência",
-          detalhe: fila.slice(0, 3).map(function (x) { return x.item.nome; }).join(" · ") +
-                   (fila.length > 3 ? " · e mais " + (fila.length - 3) : ""),
-          selo: "Conferir", seloCls: diasDe(maisVelho) >= 3 ? "badge--pendencia" : "badge--analise"
-        });
-      }
-
-      /* 2b. O cliente respondeu a uma correção, e a bola voltou.
-
-         ISTO ERA UMA MENSAGEM, e estava errado. A resposta virava
-         recado na conversa, aparecia como "mensagem sem
-         providência" e sumia quando alguém marcava a CONVERSA como
-         resolvida — sem que ninguém tivesse decidido nada sobre o
-         documento. Assunto de documento se resolve na tela de
-         documento.
-
-         Agora é tarefa de documento e leva para a ficha. Só sai
-         daqui quando a equipe aprovar, trocar o motivo ou devolver
-         para conferência — ou seja, quando a decisão existir. */
-      var respondidos = respondidosDe(c);
-      if (respondidos.length) {
-        var maisAntiga = respondidos.reduce(function (a, x) {
-          var t = PC.emMs(x.reg.obsEm) || PC.emMs(x.reg.atualizadoEm) || 0;
-          return (!a || (t && t < a)) ? t : a;
-        }, 0);
-        linhas.push({
-          peso: PESO.conferir, em: maisAntiga,
-          cliente: c, icone: "ic-chat", acao: "ficha",
-          empresa: nome,
-          titulo: respondidos.length === 1
-            ? "Respondeu sobre um documento"
-            : "Respondeu sobre " + respondidos.length + " documentos",
-          detalhe: respondidos.slice(0, 2).map(function (x) {
-            return x.item.nome + ": " + String(x.reg.obs || "").slice(0, 60);
-          }).join(" · "),
-          selo: "Decidir", seloCls: "badge--analise"
-        });
-      }
-
-      /* 3. Lida, mas ninguém tomou providência. Só conta o que
-            NÃO está na faixa 1 — senão o mesmo cliente apareceria
-            duas vezes pela mesma conversa. */
-      var aResolver = c.mensagens.filter(function (m) {
-        return m.autor === "cliente" && m.lidaEm && !m.resolvidaEm && !m.apagadaEm;
-      });
-      if (aResolver.length && !naoLidas.length) {
-        var velha = aResolver.reduce(function (a, m) {
-          return (!a || (m.em || 0) < (a.em || 0)) ? m : a;
-        }, null);
-        linhas.push({
-          peso: PESO.aResolver, em: (velha && velha.em) || 0,
-          cliente: c, icone: "ic-chat", acao: "conversa",
-          empresa: nome,
-          titulo: aResolver.length === 1
-            ? "Pedido sem providência"
-            : aResolver.length + " pedidos sem providência",
-          detalhe: String((velha && velha.texto) || "").slice(0, 110),
-          selo: "Resolver", seloCls: "badge--analise"
-        });
-      }
-
-      /* 4. Ninguém mexeu há muito tempo. Só vale quando ainda
-            falta alguma coisa — cliente completo e quieto está
-            certo de estar quieto. */
-      var est = PC.estadoDoCliente(c);
-      var parado = PC.diasParado(c);
-
-      /* O QUE ESTE CLIENTE DEVE, DENTRO DO MEU SETOR.
-
-         Este aviso não passava pelo filtro, e isso o tornava
-         confuso: o Raoni marcou Societário e Documentos dos sócios,
-         trocou o filtro e a tela não mudou nada — porque todos os
-         avisos dele eram deste tipo. Um filtro que não filtra é
-         pior que filtro nenhum.
-
-         Cobrar um cliente é sobre o que ele DEVE. Se o que falta
-         não é de nenhum setor meu, não é minha cobrança — e o
-         número na linha de baixo tem de contar a mesma coisa,
-         senão a tarefa diz "9 documentos faltam" e eu abro a ficha
-         para achar dois. */
-      /* E SÓ O QUE É DELE: o que a contabilidade anterior ainda não
-         mandou não se cobra do cliente — isso é a etapa D8 da
-         jornada, e tem outra pessoa do outro lado. */
-      var obrigatoriosMeus = global.Situacao.pendencias(c.dados, global.DATA.GRUPOS, { soDoCliente: true })
-        .filter(function (p) { return p.item.obrigatorio && daMinhaArea(p.grupo.id); }).length;
-
-      if (parado !== null && parado >= 7 && est.chave !== "emdia" &&
-          !fila.length && obrigatoriosMeus > 0) {
-        linhas.push({
-          peso: PESO.parado, em: Date.now() - parado * DIA,
-          cliente: c, icone: "ic-clock", acao: "ficha",
-          empresa: nome,
-          /* Só "Parado": o quando vem logo abaixo, na linha de tempo
-             que toda tarefa tem. Escrito aqui também, a linha dizia
-             "Parado há uma semana" e repetia "há uma semana" três
-             pixels abaixo. */
-          titulo: "Parado",
-          detalhe: obrigatoriosMeus + " " +
-            U.plural(obrigatoriosMeus,
-                     "documento obrigatório ainda falta", "documentos obrigatórios ainda faltam"),
-          selo: "Cobrar", seloCls: "badge--pendente"
-        });
-      }
-
-      /* 6. Etapa da jornada de 30 dias vencendo hoje ou já
-            vencida. É o que faz o procedimento ser cumprido sem
-            depender de alguém lembrar de abrir a aba.
-
-            Não filtra por setor de propósito: a jornada é do
-            gerente de contas, não de um setor de documento. E só
-            cobra nos primeiros 60 dias depois do aceite — ver
-            `jornadaPendente` no painel de clientes. */
-      /* Uma linha por empresa, na etapa mais antiga em aberto: com oito
-         etapas vencidas de tres clientes, o Inicio virava so jornada e
-         empurrava documento e mensagem para tras do "Mais". */
-      var pend = PC.jornadaPendente ? PC.jornadaPendente(c) : [];
-      if (pend.length) {
-        var p = pend[0], atrasada = p.atraso > 0, resto = pend.length - 1;
-        linhas.push({
-          peso: PESO.jornada, em: p.prazo,
-          cliente: c, icone: "ic-clock", acao: "ficha", vista: "jornada",
-          empresa: nome,
-          titulo: "D" + p.etapa.dia + " · " + p.etapa.titulo,
-          detalhe: (atrasada
-                      ? "Atrasada há " + p.atraso + (p.atraso === 1 ? " dia" : " dias")
-                      : "Vence hoje") +
-                   (resto ? " · mais " + resto + (resto === 1 ? " etapa" : " etapas") + " em aberto" : "") +
-                   (p.etapa.quem ? " · " + p.etapa.quem : ""),
-          selo: atrasada ? "Atrasada" : "Hoje",
-          seloCls: atrasada ? "badge--pendencia" : "badge--analise"
-        });
-      }
-
-      /* 5. Convite entregue e nunca aberto: a migração não
-            começou, e ninguém do lado de cá percebeu. */
-      if (!(c.acessos || []).length && (c.convites || []).length) {
-        var maisAntigoConvite = (c.convites || []).reduce(function (a, v) {
-          var t = PC.emMs(v.criadoEm) || 0;
-          return (!a || (t && t < a)) ? t : a;
-        }, 0);
-        if (diasDe(maisAntigoConvite) >= 3) {
-          linhas.push({
-            peso: PESO.convite, em: maisAntigoConvite,
-            cliente: c, icone: "ic-mail", acao: "ficha",
-            empresa: nome,
-            titulo: "Ainda não entrou no portal",
-            detalhe: "O convite foi gerado " + faz(maisAntigoConvite) +
-                     " e ninguém abriu. Vale reenviar o link.",
-            selo: "Reenviar", seloCls: "badge--pendente"
-          });
-        }
+    return Promise.all([A.lerCatalogo(), A.alunos()]).then(function (r) {
+      carregado = true;
+      desenhar(r[0] || {}, r[1] || []);
+    }, function (e) {
+      if (caixa) {
+        caixa.innerHTML = '<div class="notice notice--warn"><span class="notice__icon">' +
+          ic("ic-alert") + '</span><span>' + U.esc(A.explicar(e)) + '</span></div>';
       }
     });
-
-    return linhas.sort(function (a, b) {
-      if (a.peso !== b.peso) return a.peso - b.peso;
-      /* Sem data conhecida vai para o fim da própria faixa. */
-      if (!a.em && !b.em) return 0;
-      if (!a.em) return 1;
-      if (!b.em) return -1;
-      return a.em - b.em;
-    });
   }
 
-  /* ------------------------------------------------------------
-     Números do topo
-
-     Cada um é um botão que leva ao lugar onde se resolve aquilo.
-     Número que não leva a lugar nenhum vira enfeite.
-     ------------------------------------------------------------ */
-  /* Os quatro números são só sobre O MEU trabalho.
-
-     A primeira versão trazia "correções pedidas" e "clientes
-     ativos". Os dois estavam errados de propósito diferente:
-     correção pedida é fila do CLIENTE, não minha — eu já fiz a
-     parte de pedir; e "clientes ativos" não muda de semana em
-     semana, então vira número que ninguém mais lê. */
-  /* Quantos documentos estão esperando o CLIENTE — o outro lado do
-     número desta tela. */
-  function comOsClientes() {
-    var PC = global.PainelClientes;
-    var n = 0;
-    (PC.empresas || []).forEach(function (c) {
-      if (PC.arquivada(c)) return;
-      n += global.Situacao.pendencias(c.dados, global.DATA.GRUPOS).length;
-    });
-    return n;
+  function vistoDe(aluno) {
+    return function (trilhaId, n) {
+      var chave = String(trilhaId).replace(/[.~/[\]*]/g, "") + "|" + Number(n);
+      return !!aluno.progresso[chave];
+    };
   }
 
-  function avisoDoOutroLado() {
-    var n = comOsClientes();
-    /* A explicação saiu (pedido dele). "Estão com os clientes" já
-       diz de quem é a vez — quem lê isso logo abaixo de "nada
-       esperando por você" não precisa da mesma ideia duas vezes. */
-    return '<p class="empty__nota">' +
-      '<strong>' + n + ' ' + U.plural(n, "documento está", "documentos estão") +
-      ' com ' + U.plural(n, "o cliente", "os clientes") + '.</strong> ' +
-      '<button type="button" class="empty__link" data-ir="pendencias">Ver quem cobrar</button>' +
-    '</p>';
-  }
-
-  function numeros() {
-    var PC = global.PainelClientes;
-    var ativos = PC.empresas.filter(function (c) { return !PC.arquivada(c); });
-
-    var conferir = 0, naoLidas = 0, aResolver = 0, parados = 0;
-    ativos.forEach(function (c) {
-      /* "A conferir" é tudo que espera decisão da equipe: o que o
-         cliente acabou de enviar E o que ele respondeu sem
-         reenviar. Os dois viram tarefa na lista abaixo; se só o
-         primeiro contasse, o número brigaria com a lista. */
-      conferir += PC.naoConferidos(c).filter(function (x) {
-        return daMinhaArea(x.grupo.id);
-      }).length + respondidosDe(c).length;
-      naoLidas += PC.naoLidasDe(c);
-      aResolver += c.mensagens.filter(function (m) {
-        return m.autor === "cliente" && m.lidaEm && !m.resolvidaEm && !m.apagadaEm;
-      }).length;
-      var d = PC.diasParado(c);
-      if (d !== null && d >= 7 && PC.estadoDoCliente(c).chave !== "emdia") parados++;
-    });
-
-    return [
-      { n: conferir, rot: U.plural(conferir, "documento a conferir", "documentos a conferir"),
-        aba: "pendencias", forte: conferir > 0 },
-      { n: naoLidas, rot: U.plural(naoLidas, "mensagem nova", "mensagens novas"),
-        aba: "mensagens", forte: naoLidas > 0 },
-      { n: aResolver, rot: "sem providência", aba: "mensagens", forte: aResolver > 0 },
-      { n: parados, rot: U.plural(parados, "cliente parado", "clientes parados"),
-        aba: "clientes", forte: parados > 0,
-        extra: "de " + ativos.length + " " + U.plural(ativos.length, "ativo", "ativos") }
-    ];
-  }
-
-  /* ------------------------------------------------------------
-     Desenho
-     ------------------------------------------------------------ */
-  var MOSTRAR = 10;
-  var mostrandoTudo = false;
-
-  /* ============================================================
-     AVISO DE ROTINA PARADA (pedido dele, 2026-08-24)
-
-     A cobrança automática roda às 10h em dias úteis, sozinha. Se
-     ela parar, os clientes deixam de ser cobrados e ninguém fica
-     sabendo: nada quebra na tela, nada aparece. Falha silenciosa.
-
-     As funções passaram a anotar cada execução em /saude. Aqui a
-     equipe é avisada quando uma delas falhou, ou quando faz tempo
-     demais que não roda.
-
-     QUATRO DIAS, e não dois, porque a rotina só roda em dia útil:
-     de sexta a segunda passam três dias sem execução nenhuma, e um
-     alarme que dispara todo fim de semana é um alarme que a equipe
-     aprende a ignorar. */
-  var LIMITE_SEM_RODAR_MS = 4 * 24 * 60 * 60 * 1000;
-  var ROTINAS = { avisarPendencias: "Cobrança automática por prazo" };
-  var saude = null;
-
-  function lerSaude() {
-    var FB = global.FB;
-    if (!FB || !FB.ligado || !FB.db) return;
-    FB.db.collection("saude").get().then(function (snap) {
-      saude = [];
-      snap.forEach(function (d) {
-        var x = d.data() || {};
-        saude.push({
-          id: d.id,
-          ok: x.ok !== false,
-          erro: x.erro || "",
-          em: x.em && x.em.toDate ? x.em.toDate().getTime() : 0
-        });
-      });
-      desenharSaude();
-    }, function () { /* sem permissão ou sem rede: silêncio é melhor que alarme falso */ });
-  }
-
-  function desenharSaude() {
-    var caixa = $("#inSaude");
+  function desenhar(doc, alunos) {
+    var caixa = $("#inCorpo");
     if (!caixa) return;
-    if (!saude) { caixa.innerHTML = ""; return; }
+
+    var publicou = Array.isArray(doc.academy) && doc.academy.length > 0;
+    var trilhas = C.aplicar(doc).trilhas;
+
+    var aulas = 0, semVideo = 0;
+    trilhas.forEach(function (t) {
+      aulas += t.aulas.length;
+      t.aulas.forEach(function (a) { if (!C.aulaDisponivel(a)) semVideo++; });
+    });
 
     var agora = Date.now();
-    var problemas = [];
-
-    Object.keys(ROTINAS).forEach(function (id) {
-      var r = null, i;
-      for (i = 0; i < saude.length; i++) if (saude[i].id === id) r = saude[i];
-
-      if (!r) {
-        problemas.push({
-          nome: ROTINAS[id],
-          texto: "nunca registrou execução. Pode ser que ainda não tenha chegado a hora dela, " +
-                 "ou que não esteja publicada."
-        });
-        return;
-      }
-      if (!r.ok) {
-        problemas.push({ nome: ROTINAS[id], texto: "falhou na última execução" +
-          (r.em ? " (" + U.dataCurta(r.em) + ")" : "") + (r.erro ? ": " + r.erro : ".") });
-        return;
-      }
-      if (r.em && agora - r.em > LIMITE_SEM_RODAR_MS) {
-        problemas.push({ nome: ROTINAS[id],
-          texto: "não roda desde " + U.dataCurta(r.em) + "." });
-      }
+    var parados = alunos.filter(function (a) {
+      return !a.ultimoAcessoEm || (agora - a.ultimoAcessoEm) > 14 * 86400000;
     });
 
-    if (!problemas.length) { caixa.innerHTML = ""; return; }
+    var soma = 0;
+    alunos.forEach(function (a) { soma += C.resumoGeral(trilhas, vistoDe(a)).pct; });
+    var medio = alunos.length ? Math.round(soma / alunos.length) : 0;
 
-    /* AVISO QUE ENSINA, e não só reclama.
-       Quem lê isto não é quem publica funções — é quem atende
-       cliente. "A rotina falhou" sem o que fazer a seguir vira um
-       alarme que se aprende a ignorar. Então: o que parou, o que
-       isso significa na prática, e o passo a passo. */
+    var eu = A.eu();
+    var nome = U.primeiroNome ? U.primeiroNome(eu && eu.nome) : ((eu && eu.nome) || "");
+
     caixa.innerHTML =
-      '<div class="card card--pad" style="margin-top:26px;border-color:var(--stroke-gold)">' +
-        '<div class="notice notice--warn" style="margin:0 0 16px">' +
-          '<span class="notice__icon">' + ic("ic-alert") + '</span>' +
-          '<span><strong>Uma rotina do servidor precisa de atenção.</strong><br>' +
-          problemas.map(function (p) {
-            return U.esc(p.nome) + " — " + U.esc(p.texto);
-          }).join("<br>") + '</span>' +
+      '<div class="card card--pad" style="margin-bottom:14px">' +
+        '<div class="eyebrow">' + U.esc(U.saudacao ? U.saudacao() : "Olá") + '</div>' +
+        '<h2 class="section__title" style="font-size:19px;margin-top:4px">' +
+          (nome ? U.esc(nome) : "Bem-vindo") + '</h2>' +
+        '<p class="section__desc">' +
+          (publicou
+            ? "A Academy está no ar com o conteúdo que a equipe publicou."
+            : "A Academy ainda está mostrando o conteúdo de exemplo.") +
+        '</p>' +
+      '</div>' +
+
+      '<div class="numeros">' +
+        numero(trilhas.length, U.plural(trilhas.length, "trilha", "trilhas")) +
+        numero(aulas, U.plural(aulas, "aula", "aulas")) +
+        numero(alunos.length, U.plural(alunos.length, "aluno", "alunos")) +
+        numero(medio + "%", "progresso médio") +
+      '</div>' +
+
+      avisos(publicou, semVideo, parados, alunos.length) +
+
+      '<div class="card card--pad" style="margin-top:14px">' +
+        '<div class="eyebrow">Atalhos</div>' +
+        '<div class="item__actions" style="margin-top:10px">' +
+          '<button type="button" class="btn btn--primary btn--sm" data-aba="conteudo">' +
+            'Editar trilhas e aulas</button>' +
+          '<button type="button" class="btn btn--quiet btn--sm" data-aba="convites">' +
+            'Criar um convite</button>' +
+          '<a class="btn btn--quiet btn--sm" href="index.html" target="_blank" rel="noopener">' +
+            'Ver como o cliente vê</a>' +
         '</div>' +
-
-        /* O QUE FAZER FICA RECOLHIDO (pedido dele, 2026-08-25).
-
-           O aviso em si precisa ser lido de relance; a explicação,
-           não. Quem já sabe o que fazer não deve reler quatro passos
-           todo dia, e quem não sabe abre uma vez. Aberto por padrão,
-           o bloco tomaria meia tela por um problema que talvez seja
-           só o fim de semana. */
-        '<details class="rec">' +
-          '<summary class="rec__head">' +
-            '<span class="rec__txt">' +
-              '<span class="rec__t">O que isso quer dizer e o que fazer</span>' +
-              '<span class="rec__d">Quatro passos. O portal continua funcionando.</span>' +
-            '</span>' +
-          '</summary>' +
-          '<div class="rec__body">' +
-            '<div class="help-block">' +
-              '<div class="help-block__t">O que isso quer dizer</div>' +
-              '<p class="text-sm text-muted" style="margin:0">' +
-                'A cobrança automática é o aviso por e-mail que sai às 10h, em dias úteis, para ' +
-                'quem está com documento atrasado. Com ela parada, <strong>o cliente simplesmente ' +
-                'deixa de ser cobrado</strong> — nada quebra na tela, e por isso este aviso ' +
-                'existe. Todo o resto do portal continua funcionando normalmente.' +
-              '</p>' +
-            '</div>' +
-
-            '<div class="help-block">' +
-              '<div class="help-block__t">O que fazer agora</div>' +
-              '<ol class="passos">' +
-                '<li><strong>Cobre à mão, hoje.</strong> Abra a ficha do cliente e use ' +
-                  '<em>Cobrar tudo o que falta</em>. Leva um minuto por cliente e não depende ' +
-                  'da rotina.</li>' +
-                '<li><strong>Veja se foi coisa de um dia.</strong> A rotina só roda em dia útil: ' +
-                  'se hoje é segunda, o último registro pode ser de sexta e estar tudo certo. ' +
-                  'Este aviso só aparece passados quatro dias.</li>' +
-                '<li><strong>Se persistir, chame quem cuida do sistema</strong> e passe esta ' +
-                  'informação: <em>a função <code>avisarPendencias</code> não está registrando ' +
-                  'execução em <code>/saude</code></em>. É o suficiente para achar a causa.</li>' +
-                '<li><strong>Enquanto não voltar</strong>, olhe a aba <em>Pendências</em> uma vez ' +
-                  'por dia. É a mesma lista que a rotina usaria.</li>' +
-              '</ol>' +
-            '</div>' +
-
-            '<p class="text-xs text-muted" style="margin:0">' +
-              'Este aviso some sozinho assim que a rotina voltar a rodar.' +
-            '</p>' +
-          '</div>' +
-        '</details>' +
       '</div>';
-  }
 
-  function desenhar() {
-    var alvo = $("#inLista");
-    if (!alvo) return;
-
-    var PC = global.PainelClientes;
-    if (!PC) return;
-
-    var saudacao = $("#inSaudacao");
-    if (saudacao) {
-      var quem = (global.Painel && $("#pnNome") && $("#pnNome").textContent) || "";
-      saudacao.textContent = U.saudacao() + (quem ? ", " + quem.split(" ")[0] : "");
-    }
-
-    /* A chave do departamento só existe para quem TEM
-       departamento. Para quem cuida de tudo ela seria um botão
-       que não faz nada. */
-    var chave = $("#inSetor");
-    if (chave) {
-      var meusHTML = haGerentes()
-        ? '<button type="button" class="filtro' + (soMeusClientes ? " filtro--on" : "") + '" id="inMeus" ' +
-            'title="Só as empresas em que você é o gerente de contas. As sem gerente também aparecem.">' +
-            'Meus clientes</button>'
-        : '';
-      if (!temSetor()) chave.innerHTML = meusHTML;
-      else {
-        chave.innerHTML = meusHTML + '<button type="button" class="filtro' +
-            (soMeuSetor ? " filtro--on" : "") + '" id="inSoMeu">' +
-            U.esc(global.Departamentos.rotuloDoRecorte(souDe())) + '</button>' +
-          '<button type="button" class="filtro' + (soMeuSetor ? "" : " filtro--on") +
-            '" id="inTudo">Todos os departamentos</button>' +
-          /* O QUE O FILTRO NÃO ALCANÇA, DITO EM VOZ ALTA.
-
-             Mensagem e convite não pertencem a setor nenhum:
-             pergunta sem resposta é de quem estiver por perto, e
-             cliente que nunca abriu o portal não deve documento a
-             ninguém ainda. Eles aparecem para toda a equipe, de
-             propósito.
-
-             Sem esta linha, alguém marca os próprios setores, troca
-             o filtro, vê a tela inalterada e conclui que está
-             quebrado — foi o que aconteceu com o Raoni em
-             11/09/2026. Uma frase evita a dúvida inteira. */
-          '<span class="text-xs text-muted" style="flex-basis:100%;margin-top:6px">' +
-            'Mensagens e convites não pertencem a setor: aparecem para toda a equipe.</span>';
-        var b1 = $("#inSoMeu"), b2 = $("#inTudo");
-        if (b1) b1.addEventListener("click", function () { soMeuSetor = true; desenhar(); });
-        if (b2) b2.addEventListener("click", function () { soMeuSetor = false; desenhar(); });
-      }
-      var b3 = $("#inMeus");
-      if (b3) b3.addEventListener("click", function () { soMeusClientes = !soMeusClientes; desenhar(); });
-    }
-
-    if (PC.carregando) {
-      alvo.innerHTML = '<div class="card card--pad"><p class="text-sm text-muted">' +
-        'Carregando o que precisa de você…</p></div>';
-      var placarVazio = $("#inNumeros");
-      if (placarVazio) placarVazio.innerHTML = "";
-      return;
-    }
-
-    desenharSaude();
-
-    /* ---- números ---- */
-    var placar = $("#inNumeros");
-    if (placar) {
-      placar.innerHTML = numeros().map(function (x) {
-        return '<button type="button" class="numero' + (x.forte ? " numero--forte" : "") +
-            '" data-aba="' + U.escAttr(x.aba) + '">' +
-          '<span class="numero__n">' + x.n + '</span>' +
-          '<span class="numero__rot">' + U.esc(x.rot) + '</span>' +
-          (x.extra ? '<span class="numero__extra">' + U.esc(x.extra) + '</span>' : '') +
-        '</button>';
-      }).join("");
-    }
-
-    /* ---- lista de trabalho ---- */
-    var tudo = reunir();
-
-    if (!tudo.length) {
-      alvo.innerHTML = '<div class="card"><div class="empty">' +
-        '<div class="empty__icon">' + ic("ic-check-circle") + '</div>' +
-        '<div class="empty__title">Nada esperando por você</div>' +
-        '<div class="empty__desc">' +
-          (!PC.empresas.length
-            ? 'Ainda não há cliente cadastrado. Comece por “Novo cliente”.'
-            : (temSetor() && soMeuSetor)
-              ? 'Nada esperando em ' +
-                U.esc(global.Departamentos.rotuloDoRecorte(souDe())) +
-                '. Toque em “Todos os departamentos” para ver o resto do escritório.'
-              : 'Toda mensagem foi respondida, todo documento que chegou já foi conferido e ' +
-                'ninguém está parado. Bom dia de trabalho.') + '</div>' +
-        /* "NADA ESPERANDO POR VOCÊ" AO LADO DE "PENDÊNCIAS 2" parece
-           contradição para quem não conhece a regra da casa: esta
-           tela conta o que espera a EQUIPE, e documento que falta
-           chegar já é fila do cliente.
-
-           Quem não sabe disso lê os dois números e conclui que um
-           deles está errado — ou pior, que o sistema perdeu alguma
-           coisa. Dizer onde está o resto custa uma linha e fecha a
-           pergunta antes de ela ser feita. */
-        (comOsClientes() ? avisoDoOutroLado() : '') +
-      '</div></div>';
-      return;
-    }
-
-    var lista = mostrandoTudo ? tudo : tudo.slice(0, MOSTRAR);
-
-    alvo.innerHTML = '<div class="card">' +
-      lista.map(function (l) {
-        return '<button type="button" class="tarefa" data-ir="' + U.escAttr(l.acao) +
-            '" data-alvo="' + U.escAttr(l.cliente.id) + '"' +
-            /* Qual aba da ficha abrir. Só a jornada usa, por
-               enquanto: as outras tarefas caem em Documentos, que é
-               o padrão da ficha. */
-            (l.vista ? ' data-vista="' + U.escAttr(l.vista) + '"' : '') + '>' +
-          '<span class="tarefa__icone">' + ic(l.icone) + '</span>' +
-          '<span class="tarefa__txt">' +
-            /* EMPRESA E AVISO SÃO DUAS COISAS, E PRECISAM PARECER DUAS.
-
-               Antes o nome da empresa era concatenado dentro da frase
-               — "META ACESSORIOS E FERRAGENS LTDA parado há uma
-               semana" — e, com tudo no mesmo peso e na mesma cor, o
-               aviso era lido como continuação do nome. Em nome longo e
-               em maiúsculas, que é a regra aqui, ficava impossível ver
-               onde um termina e o outro começa.
-
-               Agora o nome vem no peso forte, o aviso em seguida mais
-               claro, com um ponto no meio. Quem bate o olho lê primeiro
-               DE QUEM é, depois O QUE é. */
-            '<span class="tarefa__t">' +
-              (l.empresa ? '<span class="tarefa__emp">' + U.esc(l.empresa) + '</span>' : '') +
-              '<span class="tarefa__aviso">' + U.esc(l.titulo) + '</span>' +
-            '</span>' +
-            '<span class="tarefa__d">' + U.esc(l.detalhe) + '</span>' +
-            (l.em ? '<span class="tarefa__q">' + U.esc(faz(l.em)) + '</span>' : '') +
-          '</span>' +
-          '<span class="badge ' + l.seloCls + '"><span class="dot"></span>' +
-            U.esc(l.selo) + '</span>' +
-          '<span class="cliente__chev">' + ic("ic-chevron-right") + '</span>' +
-        '</button>';
-      }).join("") +
-    '</div>' +
-    (tudo.length > MOSTRAR
-      ? '<button type="button" class="btn btn--ghost btn--sm" id="inMais" ' +
-          'style="margin-top:12px">' +
-          (mostrandoTudo ? "Mostrar só as " + MOSTRAR + " primeiras"
-                         : "Ver as outras " + (tudo.length - MOSTRAR)) + '</button>'
-      : '');
-
-    var mais = $("#inMais");
-    if (mais) mais.addEventListener("click", function () {
-      mostrandoTudo = !mostrandoTudo;
-      desenhar();
+    /* Os atalhos são botões de aba como os do menu, então o
+       ouvinte do `painel.js` já os atende — menos estes, que
+       nascem depois dele. Ligar aqui é mais barato que observar a
+       árvore inteira à espera deles. */
+    UI.$$("[data-aba]", caixa).forEach(function (b) {
+      b.addEventListener("click", function () { global.Painel.abrir(b.getAttribute("data-aba")); });
     });
   }
 
-  /* ------------------------------------------------------------
-     Ligação
-     ------------------------------------------------------------ */
-  function ligar() {
-    document.addEventListener("click", function (ev) {
-      var b = ev.target.closest("[data-ir]");
-      if (!b) return;
-      var PC = global.PainelClientes;
-      if (!PC) return;
-      var id = b.getAttribute("data-alvo");
-
-      /* Nem todo `data-ir` aponta para um cliente: o aviso do
-         "nada esperando por você" leva para uma ABA. Sem isto ele
-         cairia no caminho de baixo e tentaria abrir a ficha de um
-         cliente sem id — de novo o clique que não faz nada. */
-      if (!id) {
-        if (global.Painel) global.Painel.abrir(b.getAttribute("data-ir"));
-        return;
-      }
-
-      if (b.getAttribute("data-ir") === "conversa") {
-        if (global.Painel) global.Painel.abrir("mensagens");
-        PC.abrirConversa(id);
-      } else {
-        if (global.Painel) global.Painel.abrir("clientes");
-        PC.abrirFicha(id, b.getAttribute("data-vista") || "");
-      }
-    });
-
-    var atualizar = $("#inAtualizar");
-    if (atualizar) atualizar.addEventListener("click", function () {
-      if (global.Painel) global.Painel.abrir("clientes");
-      var b = $("#clAtualizar");
-      if (b) b.click();
-    });
+  function numero(valor, rotulo) {
+    return '<div class="numero">' +
+      '<div class="numero__n">' + U.esc(String(valor)) + '</div>' +
+      '<div class="numero__rot">' + U.esc(rotulo) + '</div>' +
+    '</div>';
   }
 
-  function iniciar() {
-    if (!$("#inLista")) return;
-    ligar();
+  function avisos(publicou, semVideo, parados, totalAlunos) {
+    var itens = [];
 
-    if (global.PainelClientes) global.PainelClientes.aoAtualizar(desenhar);
-    if (global.Painel) global.Painel.aoTrocar(function (aba) {
-      if (aba === "inicio") desenhar();
-    });
-
-    /* A saúde das rotinas é lida uma vez por sessão: são poucos
-       documentos e o estado muda uma vez por dia. Ler a cada troca
-       de aba seria leitura à toa. */
-    if (global.FB && global.FB.observarSessao) {
-      global.FB.observarSessao(function (quem) { if (quem) lerSaude(); });
+    if (!publicou) {
+      itens.push(aviso("warn", "ic-alert", "Nenhuma trilha publicada ainda",
+        "O cliente está vendo o catálogo de exemplo que vem com o sistema — títulos reais, " +
+        "mas sem vídeo. Abra Trilhas e aulas, ajuste o que for preciso e publique."));
     }
 
-    desenhar();
+    if (semVideo) {
+      itens.push(aviso("warn", "ic-play",
+        semVideo + " " + U.plural(semVideo, "aula sem vídeo", "aulas sem vídeo"),
+        U.plural(semVideo, "Ela aparece", "Elas aparecem") + " como “em breve” para o " +
+        "cliente. Se a gravação ainda vem, está certo assim."));
+    }
+
+    if (totalAlunos && parados.length) {
+      var nomes = parados.slice(0, 3).map(function (a) { return a.nome || a.email; }).join(", ");
+      itens.push(aviso("info", "ic-users",
+        parados.length + " " + U.plural(parados.length, "aluno parado", "alunos parados"),
+        "Sem abrir a Academy há mais de duas semanas: " + nomes +
+        (parados.length > 3 ? " e mais " + (parados.length - 3) : "") + "."));
+    }
+
+    if (!itens.length) {
+      itens.push(aviso("ok", "ic-check-circle", "Nada pendente",
+        "O conteúdo está publicado, todas as aulas têm vídeo e os alunos estão entrando."));
+    }
+
+    return itens.join("");
   }
 
-  /* A aba Segurança chama isto quando alguém troca o próprio
-     departamento: sem redesenhar, a tela continuaria mostrando a
-     fila do setor antigo. */
-  global.PainelInicio = { redesenhar: desenhar };
+  function aviso(tipo, icone, titulo, texto) {
+    return '<div class="notice notice--' + tipo + '" style="margin-top:12px;align-items:flex-start">' +
+      '<span class="notice__icon">' + ic(icone) + '</span>' +
+      '<span><strong>' + U.esc(titulo) + '.</strong> ' + U.esc(texto) + '</span>' +
+    '</div>';
+  }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar);
-  else iniciar();
+  global.Painel.aoTrocarDeAba(function (aba) {
+    if (aba !== "inicio") return;
+    carregado = false;    /* a primeira tela sempre chega fresca */
+    carregar();
+  });
 })(window);

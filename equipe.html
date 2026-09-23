@@ -4,36 +4,41 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
+<!-- A CSP encolheu junto com o painel. Saíram o App Check (que
+     exigia o google.com), o descompactador em WebAssembly, a
+     consulta de CNPJ e o projeto antigo do Firebase — nada disso
+     existe mais aqui. Sobrou a própria origem e o Firebase novo.
+
+     `frame-ancestors` não está aqui de propósito: entregue por
+     <meta>, o navegador a ignora e ainda escreve um aviso no
+     console. Quem impede o painel de ser posto dentro de um
+     quadro de outro site é o js/moldura.js, que abre a página. -->
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'wasm-unsafe-eval' https://www.google.com https://www.gstatic.com;
+  script-src 'self';
   style-src 'self' 'unsafe-inline';
-  img-src 'self' data: blob: https://i.ytimg.com https://firebasestorage.googleapis.com;
+  img-src 'self' data: blob:
+    https://firebasestorage.googleapis.com
+    https://totali-academy.firebasestorage.app;
   font-src 'self';
   connect-src 'self'
     https://firestore.googleapis.com
     https://identitytoolkit.googleapis.com
     https://securetoken.googleapis.com
     https://firebasestorage.googleapis.com
-    https://portaldocliente-8cc7d.firebasestorage.app
-    https://firebaseappcheck.googleapis.com
-    https://content-firebaseappcheck.googleapis.com
-    https://www.google.com
-    https://i.ytimg.com
-    https://brasilapi.com.br;
+    https://totali-academy.firebasestorage.app;
   object-src 'none';
   base-uri 'none';
   form-action 'none';
-  frame-src https://www.google.com;
   upgrade-insecure-requests">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow">
 
 <title>Painel de administração · Totali</title>
-<meta name="theme-color" content="#0f1c2a">
+<meta name="theme-color" content="#0a1522">
 <meta name="color-scheme" content="dark">
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32">
-<link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/painel.css">
 </head>
 <body class="pagina-painel">
 
@@ -45,130 +50,26 @@
 </div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
-  <symbol id="ic-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.6"/>
+  <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/>
   </symbol>
-  <symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M10.6 4.2 2.9 17.4A1.6 1.6 0 0 0 4.3 20h15.4a1.6 1.6 0 0 0 1.4-2.6L13.4 4.2a1.6 1.6 0 0 0-2.8 0z"/>
-    <path d="M12 9.5v4"/><path d="M12 16.8h.01"/>
-  </symbol>
-  <symbol id="ic-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="8.5" y="8.5" width="12" height="12" rx="2"/>
-    <path d="M15.5 5.5H5.8A1.8 1.8 0 0 0 4 7.3V17"/>
-  </symbol>
-  <symbol id="ic-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M7.2 3.5H9l1.5 3.8-1.9 1.4a11.5 11.5 0 0 0 5.7 5.7l1.4-1.9 3.8 1.5v1.8a2.2 2.2 0 0 1-2.4 2.2C10.4 17.4 6.1 13.1 5 5.9a2.2 2.2 0 0 1 2.2-2.4z"/>
+  <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 5.5v13l11-6.5z"/>
   </symbol>
   <symbol id="ic-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="9.5" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3 2.7-5 6-5s6 2 6 5"/>
     <path d="M16 5.6a3.2 3.2 0 0 1 0 6"/><path d="M17.5 14.9c1.9.6 3.2 2.2 3.2 4.6"/>
   </symbol>
-  <symbol id="ic-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 20V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V20"/>
-    <path d="M14 10h4.5A1.5 1.5 0 0 1 20 11.5V20"/><path d="M2.5 20h19"/>
-    <path d="M7 8h4M7 12h4M7 16h4M17 14h1M17 17h1"/>
-  </symbol>
-  <symbol id="ic-chevron-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m9.5 6 6 6-6 6"/>
-  </symbol>
-  <symbol id="ic-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="3" y="5.2" width="18" height="13.6" rx="1.8"/><path d="m3.6 6.6 8.4 6 8.4-6"/>
-  </symbol>
-  <symbol id="ic-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20.5 3.5 10.8 13.2"/><path d="M20.5 3.5 14.3 20.8l-3.5-7.6-7.6-3.5z"/>
-  </symbol>
-  <symbol id="ic-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 4.5v11"/><path d="m7.5 11 4.5 4.5L16.5 11"/>
-    <path d="M4.5 15v3.2A1.8 1.8 0 0 0 6.3 20h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/>
-  </symbol>
-  <symbol id="ic-clipe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 11.5 12.3 19.2a4.6 4.6 0 0 1-6.5-6.5l7.9-7.9a3.1 3.1 0 0 1 4.4 4.4l-7.9 7.9a1.6 1.6 0 0 1-2.2-2.2l7.2-7.2"/>
-  </symbol>
-  <symbol id="ic-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M14 3H7.5A1.5 1.5 0 0 0 6 4.5v15A1.5 1.5 0 0 0 7.5 21h9a1.5 1.5 0 0 0 1.5-1.5V7z"/>
-    <path d="M14 3v4.5H18"/><path d="M9 13h6M9 16.5h4"/>
-  </symbol>
-  <symbol id="ic-sheet" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4" y="4" width="16" height="16" rx="1.6"/><path d="M4 9.5h16M4 14.5h16M9.5 4v16"/>
-  </symbol>
-  <symbol id="ic-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="3.5" y="4.5" width="17" height="15" rx="1.8"/><circle cx="9" cy="9.8" r="1.6"/>
-    <path d="m4 17 4.5-4.5 3.5 3 3-2.5L20 17"/>
-  </symbol>
-  <symbol id="ic-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6.5 3.5h11A1.5 1.5 0 0 1 19 5v13.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a1.5 1.5 0 0 1 1.5-1.5z"/>
-    <path d="M8.5 7.5h7M8.5 11h7M8.5 14.5h4"/>
-    <circle cx="16" cy="16.5" r="2.2"/>
-  </symbol>
-  <symbol id="ic-calculator" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4.5" y="3" width="15" height="18" rx="2"/>
-    <rect x="7.5" y="6" width="9" height="3.2" rx="1"/>
-    <path d="M8.2 12.6h.01M12 12.6h.01M15.8 12.6h.01M8.2 16.2h.01M12 16.2h.01M15.8 16.2h.01"/>
-  </symbol>
-  <symbol id="ic-receipt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M5.5 3.5h13v17l-2.2-1.5-2.2 1.5-2.1-1.5L9.9 20.5 7.7 19l-2.2 1.5z"/>
-    <path d="M8.5 8h7M8.5 11.5h7M8.5 15h4"/>
-  </symbol>
   <symbol id="ic-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
     <rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="11" r="2.3"/>
     <path d="M5.5 16.6c.5-1.6 1.9-2.4 3.5-2.4s3 .8 3.5 2.4"/><path d="M15 9.5h3.5M15 13h2.5"/>
   </symbol>
-  <symbol id="ic-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="4.8" y="10.5" width="14.4" height="9.5" rx="1.8"/>
-    <path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><path d="M12 14.3v2.4"/>
+  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3 5 5.8v5.4c0 4.3 2.9 7.6 7 9.3 4.1-1.7 7-5 7-9.3V5.8z"/>
+    <path d="m9.2 12.2 2 2 3.6-3.8"/>
   </symbol>
   <symbol id="ic-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
     <path d="M3 7.5A1.5 1.5 0 0 1 4.5 6h4.2l1.8 2.2h9A1.5 1.5 0 0 1 21 9.7v8.8a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/>
-  </symbol>
-  <symbol id="ic-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .9-1 1.6v.4"/>
-    <path d="M12 17h.01"/>
-  </symbol>
-  <symbol id="ic-bussola" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="m15.2 8.8-1.9 4.5-4.5 1.9 1.9-4.5z"/>
-  </symbol>
-  <symbol id="ic-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.8h.01"/>
-  </symbol>
-  <symbol id="ic-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 5.5v13l11-6.5z"/>
-  </symbol>
-  <symbol id="ic-chevron-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m6 9.5 6 6 6-6"/>
-  </symbol>
-  <symbol id="ic-card" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M2.5 9.8h19"/>
-    <path d="M6 14.5h3.5M13 14.5h5"/>
-  </symbol>
-  <symbol id="ic-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="12" cy="12" r="9"/><path d="M12 7v5.3l3.4 2"/>
-  </symbol>
-  <symbol id="ic-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="m5 12.5 4.5 4.5L19 7.5"/>
-  </symbol>
-  <symbol id="ic-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 15.5V4.5"/><path d="m7.5 9 4.5-4.5L16.5 9"/>
-    <path d="M4.5 15v3.2A1.8 1.8 0 0 0 6.3 20h11.4a1.8 1.8 0 0 0 1.8-1.8V15"/>
-  </symbol>
-  <symbol id="ic-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4.5h-4.5"/>
-  </symbol>
-  <!-- Três pontos: "há mais coisas aqui". Preenchido, e não em
-       traço, porque em 16px um círculo vazado vira uma mancha. -->
-  <symbol id="ic-mais" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-    <circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/>
-  </symbol>
-  <symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4.5 6.5h15"/><path d="M9.5 6.5V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7"/>
-    <path d="M6.5 6.5 7.4 19a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12.5"/>
-    <path d="M10.5 10v6.5M13.5 10v6.5"/>
-  </symbol>
-  <symbol id="ic-lapis" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0 0-3l-1-1a2.1 2.1 0 0 0-3 0L4 16z"/>
-    <path d="M13.5 5.5 18.5 10.5"/>
-  </symbol>
-  <symbol id="ic-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/>
   </symbol>
   <symbol id="ic-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
     <path d="M12 5.5v13M5.5 12h13"/>
@@ -180,62 +81,51 @@
     <path d="M14.5 4.5H18A1.5 1.5 0 0 1 19.5 6v12a1.5 1.5 0 0 1-1.5 1.5h-3.5"/>
     <path d="M11 8.5 14.5 12 11 15.5"/><path d="M14 12H4.5"/>
   </symbol>
-  <symbol id="ic-chat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M20.5 12c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.42L4 20.5l1.5-3.4A6.9 6.9 0 0 1 3.5 12c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2z"/>
-    <path d="M8.7 11.9h.01M12 11.9h.01M15.3 11.9h.01"/>
+  <symbol id="ic-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10.6 4.2 2.9 17.4A1.6 1.6 0 0 0 4.3 20h15.4a1.6 1.6 0 0 0 1.4-2.6L13.4 4.2a1.6 1.6 0 0 0-2.8 0z"/>
+    <path d="M12 9.5v4"/><path d="M12 16.8h.01"/>
   </symbol>
-  <symbol id="ic-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M12 3 5 5.8v5.4c0 4.3 2.9 7.6 7 9.3 4.1-1.7 7-5 7-9.3V5.8z"/>
-    <path d="m9.2 12.2 2 2 3.6-3.8"/>
+  <symbol id="ic-check-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/><path d="m8 12.3 2.7 2.7L16 9.6"/>
+  </symbol>
+  <symbol id="ic-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.8h.01"/>
+  </symbol>
+  <symbol id="ic-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 12a8 8 0 1 1-2.5-5.8"/><path d="M20 4v4.5h-4.5"/>
+  </symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 6.5h15"/><path d="M9.5 6.5V4.8A1.3 1.3 0 0 1 10.8 3.5h2.4a1.3 1.3 0 0 1 1.3 1.3v1.7"/>
+    <path d="M6.5 6.5 7.4 19a1.5 1.5 0 0 0 1.5 1.4h6.2a1.5 1.5 0 0 0 1.5-1.4l.9-12.5"/>
+    <path d="M10.5 10v6.5M13.5 10v6.5"/>
+  </symbol>
+  <symbol id="ic-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
   </symbol>
 </svg>
 
+<a class="skip-link" href="#conteudoPrincipal">Ir para o conteúdo</a>
+
 <!-- ============================================================
-     Cabeçalho — quem está usando o painel fica sempre visível.
-     Num sistema interno, saber em nome de quem você está agindo
-     não é enfeite: é o que evita aprovar documento na conta de
-     outra pessoa.
+     Cabeçalho
      ============================================================ -->
-<header class="app-header dark-surface">
-  <button type="button" class="brand" data-aba="inicio" aria-label="Painel de administração · ir para o início">
-    <!-- Começa no símbolo porque a tela de entrada é o primeiro que
-         se vê; `mostrarPainel()` (js/painel.js) troca para a logo
-         completa quando alguém entra. -->
-    <img class="brand__logo" id="pnLogo" data-marca="simbolo"
-         src="assets/academy-simbolo.png" alt="Academy · Totali"
-         width="544" height="618">
+<header class="app-header">
+  <button type="button" class="brand" data-aba="inicio" aria-label="Academy · ir para o início">
+    <img class="brand__logo" src="assets/academy-branca.png" alt="" width="1989" height="618">
     <span class="brand__divider" aria-hidden="true"></span>
     <span class="brand__text">
       <span class="brand__title">Administração</span>
-      <span class="brand__sub">Uso interno</span>
     </span>
   </button>
 
-  <!-- O ATALHO PARA O PORTAL NÃO MORA MAIS NO CABEÇALHO.
-
-       Havia aqui um "Acesso do cliente". Saiu em 04/09/2026: o
-       caminho já existe dentro do sistema, no cartão "Portal do
-       cliente" da barra lateral, e dois lugares para a mesma coisa
-       só ocupavam a barra — que no celular já disputa espaço com o
-       nome de quem está logado.
-
-       O QUE SE PERDEU, para quem for reavaliar: este link também
-       aparecia ANTES do login, e servia a quem digitasse o
-       endereço errado e parasse na porta da equipe. Agora essa
-       pessoa vê só a tela de entrada do painel. Foi decisão do
-       Raoni, sabendo disso. -->
   <div class="header-actions" id="pnAcoes" hidden>
-    <span class="usuario" id="pnQuem">
-      <span class="usuario__avatar" id="pnIniciais" aria-hidden="true">—</span>
-      <span class="usuario__txt">
-        <span class="usuario__nome" id="pnNome">—</span>
-        <span class="usuario__papel" id="pnPapel">—</span>
+    <div class="hbtn" id="pnQuem" tabindex="0">
+      <span class="usuario__avatar" id="pnIniciais">?</span>
+      <span class="hbtn__label">
+        <span class="usuario__nome" id="pnNome"></span>
+        <span class="usuario__papel" id="pnPapel"></span>
       </span>
-    </span>
-    <button type="button" class="hbtn" data-tutorial-painel="1" aria-label="Ver o tutorial">
-      <svg class="ic" aria-hidden="true"><use href="#ic-bussola"></use></svg>
-      <span class="hbtn__label">Tutorial</span>
-    </button>
+    </div>
     <button type="button" class="hbtn" id="pnSair" aria-label="Sair do painel">
       <svg class="ic" aria-hidden="true"><use href="#ic-sair"></use></svg>
       <span class="hbtn__label">Sair</span>
@@ -246,15 +136,15 @@
 <!-- ============================================================
      Porta de entrada
      ============================================================ -->
-<div class="shell" id="pnPorta" hidden style="grid-template-columns:minmax(0,1fr)">
+<div class="shell" id="pnPorta" hidden>
   <main class="main">
     <section class="section" id="secLogin" hidden>
-      <div class="card card--pad" style="max-width:420px;margin:40px auto">
+      <div class="card card--pad porta">
         <img src="assets/academy-branca.png" alt="Academy · Totali"
              width="1989" height="618" class="marca-porta">
         <div class="eyebrow">Uso interno</div>
-        <h1 class="section__title" style="font-size:20px;margin:6px 0 6px">Entrar no painel</h1>
-        <p class="section__desc" style="margin-bottom:18px">Acesso restrito à equipe da Totali.</p>
+        <h1 class="section__title porta__titulo">Entrar no painel</h1>
+        <p class="section__desc porta__desc">Acesso restrito à equipe da Totali.</p>
 
         <div class="field">
           <label class="field__label" for="lgEmail">E-mail</label>
@@ -274,17 +164,16 @@
         </div>
 
         <button type="button" class="btn btn--primary btn--block" id="lgEntrar">Entrar</button>
-        <p class="text-xs text-muted" style="margin-top:14px;text-align:center">
+        <p class="text-xs text-muted porta__pe">
           <a href="#" id="lgEsqueci">Esqueci minha senha</a>
         </p>
       </div>
     </section>
-
   </main>
 </div>
 
 <!-- ============================================================
-     Painel — menu à esquerda no computador, abas embaixo no
+     O painel — menu à esquerda no computador, abas embaixo no
      celular. Uma aba por assunto: nada de rolar a página inteira
      para achar o que se procura.
      ============================================================ -->
@@ -296,649 +185,167 @@
     <button type="button" class="sidenav__item" data-aba="inicio">
       <svg class="ic" aria-hidden="true"><use href="#ic-home"></use></svg>Início
     </button>
-    <button type="button" class="sidenav__item" data-aba="clientes">
-      <svg class="ic" aria-hidden="true"><use href="#ic-users"></use></svg>Clientes
-      <span class="sidenav__badge" data-badge-atencao hidden></span>
-    </button>
-    <button type="button" class="sidenav__item" data-aba="pendencias">
-      <svg class="ic" aria-hidden="true"><use href="#ic-alert"></use></svg>Pendências
-      <span class="sidenav__badge" data-badge-pendencias hidden></span>
-    </button>
-    <button type="button" class="sidenav__item" data-aba="mensagens">
-      <svg class="ic" aria-hidden="true"><use href="#ic-chat"></use></svg>Mensagens
-      <span class="sidenav__badge" data-badge-mensagens hidden></span>
-    </button>
-    <button type="button" class="sidenav__item" data-aba="novo">
-      <svg class="ic" aria-hidden="true"><use href="#ic-plus"></use></svg>Novo cliente
-    </button>
     <button type="button" class="sidenav__item" data-aba="conteudo">
-      <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>Conteúdo da Academy
+      <svg class="ic" aria-hidden="true"><use href="#ic-play"></use></svg>Trilhas e aulas
     </button>
-    <button type="button" class="sidenav__item" data-aba="usuarios">
+    <button type="button" class="sidenav__item" data-aba="alunos">
+      <svg class="ic" aria-hidden="true"><use href="#ic-users"></use></svg>Alunos
+    </button>
+    <button type="button" class="sidenav__item" data-aba="convites">
+      <svg class="ic" aria-hidden="true"><use href="#ic-link"></use></svg>Convites
+    </button>
+    <button type="button" class="sidenav__item" data-aba="usuarios" hidden>
       <svg class="ic" aria-hidden="true"><use href="#ic-badge"></use></svg>Usuários
-    </button>
-    <button type="button" class="sidenav__item" data-aba="seguranca">
-      <svg class="ic" aria-hidden="true"><use href="#ic-shield"></use></svg>Segurança
     </button>
 
     <div class="sidenav__card">
-      <div class="t">Academy do cliente</div>
-      <div class="d">Abra numa aba nova para ver exatamente o que o cliente vê.</div>
+      <div class="t">A Academy do cliente</div>
+      <div class="d">Abra numa aba nova para ver exatamente o que ele vê.</div>
       <a class="btn btn--ghost btn--sm" style="margin-top:12px;width:100%"
          href="index.html" target="_blank" rel="noopener">Abrir a Academy</a>
     </div>
   </nav>
 
-  <main class="main">
+  <main class="main" id="conteudoPrincipal">
 
-    <!-- Faixa de estado: só aparece quando o painel está rodando
-         sem servidor, e diz o que isso significa na prática. -->
-    <div class="notice notice--warn" id="secSemConexao" hidden style="margin-bottom:18px">
-      <span class="notice__icon">
-        <svg class="ic" aria-hidden="true"><use href="#ic-alert"></use></svg>
-      </span>
-      <span><strong>Sem conexão com o servidor.</strong> <span id="scMotivo"></span>
-      As ferramentas continuam funcionando no modo local, mas o que você fizer
-      não chega ao cliente.</span>
-    </div>
-
-    <!-- ---------------- Aba: Clientes ---------------- -->
-    <!-- ---------------- Aba: Início ----------------
-         O cruzamento das outras abas, em ordem de urgência. Não
-         traz informação nova: traz a mesma em ordem de o que
-         custa mais deixar para amanhã.
-         --------------------------------------------- -->
+    <!-- ---------------- Início ---------------- -->
     <section data-painel="inicio" hidden>
-      <div class="section__head"><div>
-        <div class="eyebrow" id="inSaudacao">Início</div>
-        <h1 class="section__title" style="font-size:20px;margin-top:4px">O que precisa de você</h1>
-        <p class="section__desc">Mensagens sem resposta, documentos esperando conferência e
-          clientes que pararam — na ordem em que atrasam a migração.</p>
-      </div>
-      <div class="row">
-        <button type="button" class="btn btn--quiet btn--sm" id="inAtualizar">Atualizar</button>
-      </div></div>
-
-      <div class="filtros" id="inSetor"></div>
-      <div class="numeros" id="inNumeros"></div>
-      <div id="inLista"></div>
-
-      <!-- Aviso de rotina do servidor parada ou com falha.
-           FICA NO FIM, e não no topo (decisão dele, 2026-08-25):
-           quem abre o painel vem resolver o dia, e empurrar a fila
-           de trabalho para baixo por causa de um aviso técnico
-           inverte a prioridade da tela. Aqui ele é encontrado por
-           quem termina a lista — e, no dia a dia, não existe. -->
-      <div id="inSaude"></div>
-    </section>
-
-    <section data-painel="clientes" hidden>
-      <div id="clTopo">
-        <div class="section__head"><div>
-          <div class="eyebrow">Acompanhamento</div>
-          <h1 class="section__title" style="font-size:20px;margin-top:4px">Clientes</h1>
-          <p class="section__desc">Quem está parado, o que falta e o que chegou esperando
-            conferência.</p>
-        </div>
-        <div class="row">
-          <button type="button" class="btn btn--quiet btn--sm" id="clAtualizar">Atualizar</button>
-          <button type="button" class="btn btn--ghost btn--sm" id="clCSV">Exportar CSV</button>
-        </div></div>
-
-        <div class="filtros" id="clPlacar"></div>
-
-        <div class="field" style="margin:12px 0 14px">
-          <label class="field__label" for="clBusca">Buscar</label>
-          <input type="search" class="input" id="clBusca" autocomplete="off"
-                 placeholder="Nome, CNPJ, responsável ou e-mail">
+      <div class="section__head">
+        <div>
+          <h1 class="section__title">Início</h1>
+          <p class="section__desc">O que precisa de você agora.</p>
         </div>
       </div>
-
-      <div id="clLista"></div>
-      <div id="clFicha" hidden></div>
+      <div id="inCorpo"></div>
     </section>
 
-    <!-- ---------------- Aba: Pendências ----------------
-         Só o que falta chegar, de todas as empresas de uma vez.
-         É a lista de quem cobrar hoje.
-         ------------------------------------------------- -->
-    <section data-painel="pendencias" hidden>
-      <div class="section__head"><div>
-        <div class="eyebrow">Cobrança</div>
-        <h1 class="section__title" style="font-size:20px;margin-top:4px">Pendências</h1>
-        <p class="section__desc">O que ainda falta chegar, empresa por empresa. Correções pedidas
-          aparecem primeiro — são elas que travam a migração.</p>
-      </div>
-      <button type="button" class="btn btn--quiet btn--sm" id="pdAtualizar">Atualizar</button></div>
-
-      <!-- O seletor de setor vem ANTES dos filtros de situação, e em
-           linha própria: ele decide QUAIS pendências existem, e os
-           de baixo só recortam essas. Misturados na mesma linha, os
-           cinco botões pareceriam cinco recortes irmãos. -->
-      <div class="filtros" id="pdSetor"></div>
-      <div class="filtros" id="pdFiltros"></div>
-      <div id="pdLista" style="margin-top:14px"></div>
-    </section>
-
-    <!-- ---------------- Aba: Mensagens ----------------
-         Caixa de entrada de todas as conversas. Não lida em
-         destaque, porque mensagem de cliente parada é cliente
-         esperando resposta.
+    <!-- ---------------- Trilhas e aulas ----------------
+         A aba que justifica o painel: é aqui que o conteúdo da
+         Academy nasce e é publicado.
          ------------------------------------------------ -->
-    <section data-painel="mensagens" hidden>
-      <div id="msTopo">
-        <div class="section__head"><div>
-          <div class="eyebrow">Conversas</div>
-          <h1 class="section__title" style="font-size:20px;margin-top:4px">Mensagens</h1>
-          <p class="section__desc">Tudo o que os clientes escreveram, em um lugar só.</p>
-        </div>
-        <button type="button" class="btn btn--quiet btn--sm" id="msAtualizar">Atualizar</button></div>
-
-        <div class="filtros" id="msFiltros"></div>
-      </div>
-
-      <div id="msLista" style="margin-top:14px"></div>
-      <div id="msConversa" hidden></div>
-      <!-- Os modelos ficam FORA da caixa de altura fixa, de
-           propósito: dentro dela, cada pixel que eles ocupam sai
-           do tamanho da conversa. Aqui embaixo eles aparecem ao
-           rolar, e a conversa fica com a tela inteira. -->
-      <div id="msModelos" hidden></div>
-    </section>
-
-    <!-- ---------------- Aba: Novo cliente ---------------- -->
-    <section data-painel="novo" hidden>
-      <div class="section__head"><div>
-        <div class="eyebrow">Cadastro</div>
-        <h1 class="section__title" style="font-size:20px;margin-top:4px">Novo cliente</h1>
-        <p class="section__desc">Preencha o que já sabemos. O cliente recebe a Academy com esses
-          campos prontos e só completa o contato dele.</p>
-      </div></div>
-
-      <div class="card card--pad">
-        <!-- O CNPJ VEM PRIMEIRO, e não é só ordem de tela: ao
-             completar um CNPJ válido o painel busca os dados na
-             Receita e preenche o resto. Tudo continua editável —
-             a busca adianta, não decide. -->
-        <div class="field">
-          <label class="field__label" for="cCnpj">CNPJ<span class="field__req">*</span></label>
-          <input type="text" class="input" id="cCnpj" inputmode="numeric" maxlength="18"
-                 autocomplete="off" placeholder="00.000.000/0000-00">
-          <div class="field__error" id="cErrCnpj" hidden>CNPJ inválido. Confira os números.</div>
-          <div class="field__hint" id="cBuscaEstado">Ao digitar o CNPJ, buscamos os dados na
-            Receita Federal e preenchemos o resto. Você pode corrigir tudo depois.</div>
-          <!-- Só aparece quando a consulta falha, para que voltar a
-               tentar seja um clique e não um recolar do número. -->
-          <button type="button" class="btn btn--quiet btn--sm" id="cRebuscar" hidden
-                  style="margin-top:8px">
-            <svg class="ic" aria-hidden="true"><use href="#ic-refresh"></use></svg>Buscar de novo
-          </button>
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="cRazao">Razão social<span class="field__req">*</span></label>
-          <input type="text" class="input" id="cRazao" maxlength="150" autocomplete="off"
-                 placeholder="Nome no contrato social">
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="cFantasia">Nome fantasia</label>
-          <input type="text" class="input" id="cFantasia" maxlength="120" autocomplete="off"
-                 placeholder="Aparece no cabeçalho da Academy do cliente">
-          <div class="field__hint">É este nome que o cliente vê no topo da tela. Se ficar vazio,
-            mostramos a razão social.</div>
-        </div>
-
-        <!-- Sozinho na linha desde que o CNPJ subiu para o topo.
-             Deixar num grid de duas colunas com a outra vazia
-             criava um buraco no meio do formulário. -->
-        <div class="field">
-          <label class="field__label" for="cRegime">Regime tributário</label>
-          <select class="select" id="cRegime">
-            <option value="">Selecione…</option>
-            <option>Simples Nacional</option>
-            <option>Lucro Presumido</option>
-            <option>Lucro Real</option>
-            <option>MEI</option>
-            <option>Não sei informar</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="cBase">Endereço da Academy</label>
-          <input type="text" class="input" id="cBase" autocomplete="off">
-          <div class="field__hint">Precisa começar com <code>http://</code> ou <code>https://</code>.
-            Em teste, use <code>http://localhost:8099/</code> — o link só abre na sua máquina.
-            Depois de publicar, cole aqui o endereço definitivo. Fica salvo neste navegador.</div>
-        </div>
-
-        <div class="notice" style="margin-top:4px">
-          <span class="notice__icon">
-            <svg class="ic" aria-hidden="true"><use href="#ic-check-circle"></use></svg>
-          </span>
-          <span>Não coloque dado pessoal aqui. O link vai por mensagem, fica no histórico do
-            navegador e pode ser encaminhado — por isso ele carrega só informação da empresa.</span>
-        </div>
-
-        <!-- Um link, várias empresas. É comum o mesmo dono ter
-             dois ou três CNPJs; sem isto ele terminava com três
-             senhas para a mesma contabilidade. -->
-        <div class="field" style="margin-top:18px;margin-bottom:0">
-          <span class="field__label">Este link também dá acesso a</span>
-          <div id="cOutras"></div>
-          <div class="field__hint">O cliente entra uma vez e vê todas elas na Academy, com um
-            login só, trocando pelo seletor no topo. Deixe vazio se este link for de uma
-            empresa só.</div>
-        </div>
-
-        <!-- Escolher o que se aplica ANTES de gerar o link é o
-             melhor momento: é agora que alguém da equipe está
-             olhando o CNPJ e o regime desta empresa. -->
-        <div class="field" style="margin-top:18px;margin-bottom:0">
-          <span class="field__label">Documentos deste cliente</span>
-          <div class="row" style="margin-top:2px">
-            <button type="button" class="btn btn--ghost btn--sm" id="cDocs">
-              <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>
-              Escolher quais se aplicam
-            </button>
-            <span class="text-xs text-muted" id="cDocsResumo">Todos, por enquanto</span>
-          </div>
-          <div class="field__hint">O que você marcar como “não se aplica” já sai da lista do
-            cliente antes mesmo de ele entrar. Dá para mudar depois na ficha dele.</div>
-        </div>
-
-        <button type="button" class="btn btn--primary btn--block" id="cGerar" style="margin-top:18px">
-          Gerar link do cliente
-        </button>
-      </div>
-
-      <section class="section" id="cResultado" hidden>
-        <div class="section__head"><div>
-          <h2 class="section__title" style="font-size:18px">Link pronto</h2>
-          <p class="section__desc">Envie ao cliente. Ao abrir, a Academy já mostra o nome da empresa
-            no cabeçalho, o que a contabilidade anterior manda e o que só ele pode enviar.</p>
-        </div></div>
-
-        <div class="card card--pad">
-          <div class="field">
-            <label class="field__label" for="cLink">Link</label>
-            <textarea class="textarea" id="cLink" rows="3" readonly
-                      style="font-size:13px;line-height:1.5"></textarea>
-          </div>
-          <div class="row">
-            <button type="button" class="btn btn--primary btn--sm" id="cCopiar">
-              <svg class="ic" aria-hidden="true"><use href="#ic-copy"></use></svg>Copiar link
-            </button>
-            <button type="button" class="btn btn--ghost btn--sm" id="cCopiarMsg">
-              Copiar mensagem pronta
-            </button>
-            <a class="btn btn--ghost btn--sm" id="cWhats" href="#" target="_blank" rel="noopener noreferrer">
-              <svg class="ic" aria-hidden="true"><use href="#ic-phone"></use></svg>Abrir no WhatsApp
-            </a>
-          </div>
-
-          <hr class="hr">
-          <div class="field" style="margin-bottom:0">
-            <label class="field__label" for="cMensagem">Mensagem sugerida</label>
-            <textarea class="textarea" id="cMensagem" rows="7" readonly
-                      style="font-size:13.5px"></textarea>
-          </div>
-        </div>
-      </section>
-    </section>
-
-    <!-- ---------------- Aba: Conteúdo ---------------- -->
     <section data-painel="conteudo" hidden>
-      <div class="section__head"><div>
-        <div class="eyebrow">Conteúdo</div>
-        <h1 class="section__title" style="font-size:20px;margin-top:4px">Conteúdo da Academy</h1>
-        <p class="section__desc">Tudo que o cliente vê se altera aqui: vídeos, trilhas, documentos,
-          perguntas, textos do termo e os contatos. Nada por código.</p>
-      </div></div>
+      <div class="section__head">
+        <div>
+          <h1 class="section__title">Trilhas e aulas</h1>
+          <p class="section__desc">
+            Uma trilha é um assunto; dentro dela vêm as aulas, na ordem em que devem ser
+            assistidas. Nada chega ao cliente antes de você publicar.
+          </p>
+        </div>
+        <button type="button" class="btn btn--quiet btn--sm" id="cnNova">Nova trilha</button>
+      </div>
 
-      <div class="notice" style="margin-bottom:16px">
-        <span class="notice__icon">
-          <svg class="ic" aria-hidden="true"><use href="#ic-check-circle"></use></svg>
+      <div class="barra-publicar" id="cnBarra" hidden>
+        <span class="barra-publicar__txt">
+          <strong>Há alterações não publicadas.</strong>
+          <span id="cnResumo"></span>
         </span>
-        <span>
-          <strong id="pcResumo">—</strong><br>
-          <span id="pcOrigem" style="color:var(--txt-3)"></span>
+        <span class="barra-publicar__acoes">
+          <button type="button" class="btn btn--ghost btn--sm" id="cnDescartar">Descartar</button>
+          <button type="button" class="btn btn--primary btn--sm" id="cnPublicar">Publicar para os clientes</button>
         </span>
       </div>
 
-      <div id="pcLista"></div>
+      <div id="cnLista"></div>
 
       <div class="card card--pad" style="margin-top:18px">
-        <!-- PUBLICAR VIRA O CAMINHO PRINCIPAL.
-             Antes só havia "Baixar conteudo.js": cada texto corrigido
-             custava um deploy de código. O botão de baixar fica, mas
-             como cópia de segurança, não como caminho normal. -->
-        <div class="row">
-          <button type="button" class="btn btn--primary btn--sm" id="pcPublicar">
-            <svg class="ic" aria-hidden="true"><use href="#ic-check"></use></svg>Publicar para os clientes
-          </button>
-          <button type="button" class="btn btn--quiet btn--sm" id="pcRestaurar">
-            Descartar rascunho
-          </button>
-          <button type="button" class="btn btn--quiet btn--sm" id="pcBaixar">
-            <svg class="ic" aria-hidden="true"><use href="#ic-download"></use></svg>Baixar cópia
-          </button>
-        </div>
-        <p class="field__hint" style="margin-top:12px;margin-bottom:0">
-          O rascunho fica salvo neste navegador enquanto você trabalha. Ao <strong>publicar</strong>,
-          ele vai direto para o servidor e os clientes passam a ver na próxima vez que abrirem o
-          portal — sem mexer em código nem publicar o site.
-          <br>O botão <strong>Baixar cópia</strong> gera o arquivo <code>conteudo.js</code> para
-          guardar fora do sistema. Serve de reserva; não é preciso no dia a dia.
+        <div class="eyebrow">Contato da Totali</div>
+        <p class="section__desc" style="margin:4px 0 14px">
+          É o que aparece na tela de ajuda do cliente. Mudar telefone ou horário aqui vale
+          para todo mundo assim que você publicar.
         </p>
+        <div id="cnOrg"></div>
       </div>
     </section>
 
-    <!-- ---------------- Aba: Segurança ---------------- -->
+    <!-- ---------------- Alunos ---------------- -->
+    <section data-painel="alunos" hidden>
+      <div class="section__head">
+        <div>
+          <h1 class="section__title">Alunos</h1>
+          <p class="section__desc" id="alResumo">Quem assiste, e até onde chegou.</p>
+        </div>
+        <button type="button" class="btn btn--quiet btn--sm" id="alAtualizar">Atualizar</button>
+      </div>
+
+      <div class="field">
+        <input class="input" type="search" id="alBusca" placeholder="Procurar por nome, e-mail ou empresa">
+      </div>
+
+      <div id="alLista"></div>
+    </section>
+
+    <!-- ---------------- Convites ---------------- -->
+    <section data-painel="convites" hidden>
+      <div class="section__head">
+        <div>
+          <h1 class="section__title">Convites</h1>
+          <p class="section__desc">
+            Ninguém entra na Academy sem um link destes. Um convite serve para quantas pessoas
+            você quiser, e desligá-lo fecha a entrada sem tirar o acesso de quem já entrou.
+          </p>
+        </div>
+        <button type="button" class="btn btn--quiet btn--sm" id="cvNovo">Novo convite</button>
+      </div>
+      <div id="cvLista"></div>
+    </section>
+
+    <!-- ---------------- Usuários (só administrador) ---------------- -->
     <section data-painel="usuarios" hidden>
-      <div class="section__head"><div>
-        <div class="eyebrow">Acesso ao painel</div>
-        <h1 class="section__title" style="font-size:20px;margin-top:4px">Equipe</h1>
-        <p class="section__desc">Quem entra neste painel. Só administrador altera esta lista.</p>
+      <div class="section__head">
+        <div>
+          <h1 class="section__title">Usuários</h1>
+          <p class="section__desc">
+            Quem entra neste painel. Use e-mail nominal, nunca caixa de setor: é este nome que
+            fica registrado em cada publicação.
+          </p>
+        </div>
+        <button type="button" class="btn btn--quiet btn--sm" id="usNovo">Dar acesso</button>
       </div>
-      <button type="button" class="btn btn--primary btn--sm" id="eqAdicionar" hidden>
-        <svg class="ic" aria-hidden="true"><use href="#ic-plus"></use></svg>Adicionar membro
-      </button></div>
-
-      <div id="eqLista"></div>
-
-      <!-- A lista de departamentos da empresa. Fica depois da
-           equipe, e só o administrador a enxerga: é configuração,
-           não trabalho do dia. O JavaScript preenche e esconde. -->
-      <div id="eqAreas" hidden></div>
-
-      <div class="notice notice--info" style="margin-top:14px">
-        <span class="notice__icon">
-          <svg class="ic" aria-hidden="true"><use href="#ic-check-circle"></use></svg>
-        </span>
-        <span><strong>Equipe</strong> vê clientes, confere documentos, conversa e cobra.
-        <strong>Administrador</strong> faz tudo isso, e ainda abre as senhas enviadas pelos
-        clientes e gerencia quem entra aqui. Ninguém pode alterar o próprio acesso — é o que
-        impede o painel de ficar sem administrador.</span>
-      </div>
-
-
+      <div id="usLista"></div>
     </section>
 
-    <!-- ABA SEGURANÇA, ENXUTA DESDE 2026-08-24.
-
-         Ela mostrava o ritual de instalação inteiro — gerar par,
-         copiar chave pública, baixar chave privada, subir para o
-         Secret Manager — como se fosse trabalho de todo dia. Não é:
-         foi feito uma vez, em agosto, e nunca mais. O Raoni leu
-         aquilo como uma exigência recorrente e chegou a pedir para
-         tirar a criptografia por causa disso. O problema era a
-         página, não a proteção.
-
-         Agora a aba diz o que está valendo, e o ritual fica
-         recolhido, para o dia raro de trocar a chave. Não apaguei o
-         gerador: sem ele, trocar a chave viraria trabalho de
-         programador, e a regra aqui é que tudo se resolve pelo
-         painel. -->
-    <section data-painel="seguranca" hidden>
-      <!-- ============================================================
-           A TRILHA DO SERVIDOR — PRIMEIRA COISA DA TELA
-
-           Existia desde sempre e não tinha tela: para saber quem
-           abriu qual senha, só pelo console do Firebase — o oposto
-           do que este painel promete.
-
-           Vem antes das chaves por decisão dele, e a ordem faz
-           sentido: o registro é o que se CONSULTA, e as chaves são
-           o que quase nunca se toca. Quem abre Segurança quase
-           sempre vem ver o que aconteceu, não trocar chave.
-           ============================================================ -->
-      <section class="section">
-        <div class="section__head"><div>
-          <div class="eyebrow">Trilha</div>
-          <h2 class="section__title" style="font-size:19px;margin-top:4px">Registro do servidor</h2>
-          <p class="section__desc">Cada senha aberta, documento aprovado e acesso criado, com
-            quem fez e quando. Escrito pelo servidor — nem a equipe nem o administrador
-            conseguem alterar, e é isso que dá valor ao registro.</p>
-        </div></div>
-
-        <div class="card card--pad">
-          <div id="trFiltros" class="filtros" style="margin-bottom:14px"></div>
-          <div id="trLista"></div>
-          <div id="trMais" style="margin-top:14px"></div>
-        </div>
-      </section>
-
-      <div class="section__head" style="margin-top:34px"><div>
-        <div class="eyebrow">Canal seguro</div>
-        <h2 class="section__title" style="font-size:19px;margin-top:4px">Senhas dos clientes</h2>
-        <p class="section__desc">Como as senhas que os clientes enviam ficam protegidas, e o que
-          a equipe precisa (ou não precisa) fazer a respeito.</p>
-      </div></div>
-
-      <div class="card card--pad">
-        <div id="kStatus" class="notice" style="margin-bottom:16px">
-          <span class="notice__icon">
-            <svg class="ic" aria-hidden="true"><use href="#ic-alert"></use></svg>
-          </span>
-          <span>Verificando…</span>
-        </div>
-
-        <div class="notice" style="margin:16px 0">
-          <span class="notice__icon">
-            <svg class="ic" aria-hidden="true"><use href="#ic-shield"></use></svg>
-          </span>
-          <span><strong>Não há nada para fazer aqui no dia a dia.</strong> Para ler uma senha,
-          abra a ficha do cliente, vá em <strong>Bancos e senhas</strong> e toque em
-          <strong>Ver senha</strong>. Funciona para qualquer pessoa da equipe, sem arquivo de
-          chave e sem senha extra. Quem abre o envelope é o servidor, e cada abertura fica
-          registrada com nome e hora.</span>
-        </div>
-
-        <div class="notice notice--info" style="margin:16px 0">
-          <span class="notice__icon">
-            <svg class="ic" aria-hidden="true"><use href="#ic-lock"></use></svg>
-          </span>
-          <span><strong>Só senha de consulta.</strong> O portal pede ao cliente o acesso que
-          apenas <em>vê</em> os relatórios, e o orienta a falar com a equipe quando a maquininha
-          não permitir criar esse usuário. <strong>Se chegar uma senha de movimentação, peça ao
-          cliente para trocá-la</strong> e apague o registro — a Totali não deve ter acesso a
-          senha que mexe em dinheiro.</span>
-        </div>
-
-        <details class="rec" style="margin-top:18px">
-          <summary class="rec__head">
-            <span class="rec__txt">
-              <span class="rec__t">Trocar as chaves de segurança</span>
-              <span class="rec__d">Raro. Só se a chave vazar ou for perdida.</span>
-            </span>
-          </summary>
-          <div class="rec__body">
-            <p class="text-sm text-muted" style="margin-top:0">As chaves atuais já estão em uso
-              desde agosto de 2026 e não vencem. Gerar um par novo <strong>não</strong> é
-              manutenção de rotina: o que foi enviado antes só abre com a chave anterior.</p>
-
-            <ol class="passos">
-              <li>Gere o par abaixo. A chave privada nunca sai deste navegador até você baixá-la.</li>
-              <li>Baixe a chave privada e guarde em cofre de senhas, com uma cópia offline.</li>
-              <li>Copie a chave pública e cole em <code>js/chave-publica.js</code>, no lugar da
-                anterior.</li>
-              <li>Suba a chave privada para o Secret Manager, no segredo
-                <code>chave-privada-credenciais</code> — é de lá que o servidor lê. O passo a
-                passo está em <code>ferramentas/LEIAME.md</code>.</li>
-              <li>Publique. Guarde a chave antiga enquanto houver senha enviada com ela.</li>
-            </ol>
-
-            <button type="button" class="btn btn--ghost btn--sm" id="kGerar">Gerar par de chaves</button>
-
-            <div id="kResultado" hidden>
-              <hr class="hr">
-              <div class="field">
-                <label class="field__label" for="kPub">Chave pública — cole em js/chave-publica.js</label>
-                <textarea class="textarea" id="kPub" rows="7" readonly style="font-size:12px"></textarea>
-              </div>
-              <div class="row">
-                <button type="button" class="btn btn--ghost btn--sm" id="kCopiarPub">
-                  <svg class="ic" aria-hidden="true"><use href="#ic-copy"></use></svg>Copiar chave pública
-                </button>
-                <button type="button" class="btn btn--gold btn--sm" id="kBaixarPriv">
-                  Baixar chave privada
-                </button>
-              </div>
-              <div class="field__hint" style="margin-top:10px">
-                Impressão digital: <strong id="kImpressao">—</strong>. Confira que é a mesma no
-                portal e no painel.
-              </div>
-            </div>
-          </div>
-        </details>
-      </div>
-
-      <!-- Este bloco era "Como guardar a chave privada" e falava de
-           pendrive, cofre e cópia offline como rotina da equipe.
-           Estava defasado: a chave saiu do computador de vocês e foi
-           para o Secret Manager. O risco real hoje é conta de painel
-           comprometida, não arquivo perdido — então é disso que a
-           página trata agora. -->
-      <section class="section">
-        <div class="section__head"><div>
-          <h2 class="section__title" style="font-size:17px">Cuidados que valem a pena</h2>
-          <p class="section__desc">O que protege as senhas dos clientes, na prática.</p>
-        </div></div>
-
-        <div class="card card--pad">
-          <div class="help-block">
-            <div class="help-block__t">Faça</div>
-            <ul class="help-list">
-              <li><strong>Peça o usuário de consulta.</strong> É a proteção que vale mais do que
-                todas as outras: acesso que só baixa relatório não movimenta dinheiro. O portal já
-                exige isso do cliente e manda ele falar com a equipe quando a maquininha não
-                permitir.</li>
-              <li>Ative <strong>verificação em duas etapas</strong> na conta Google do projeto e
-                nas contas de quem usa este painel.</li>
-              <li>Ao desligar alguém, <strong>remova a conta dele em Usuários</strong>. O acesso
-                morre na hora — a autorização é o crachá em Usuários, não a posse de arquivo
-                nenhum.</li>
-              <li>De vez em quando, <strong>confira quem abriu o quê</strong>. Toda abertura de
-                senha fica registrada com nome e hora, e é esse registro que torna defensável a
-                equipe inteira ter acesso.</li>
-            </ul>
-          </div>
-
-          <div class="help-block">
-            <div class="help-block__t">Não faça</div>
-            <ul class="help-list">
-              <li>Não aceite senha de movimentação. Chegando uma, peça ao cliente para trocá-la no
-                sistema dele e apague o registro aqui.</li>
-              <li>Não copie senha de cliente para bloco de notas, planilha ou conversa. Abra pelo
-                painel na hora de usar — é para isso que o botão existe.</li>
-              <li>Não compartilhe conta do painel entre duas pessoas: o registro de quem abriu o
-                quê deixa de valer.</li>
-            </ul>
-          </div>
-
-          <div class="help-block">
-            <div class="help-block__t">Se algo der errado</div>
-            <ul class="help-list">
-              <li><strong>Conta do painel comprometida</strong> — é o caminho mais provável.
-                Remova a conta em Usuários, veja no registro no topo desta tela o que ela abriu, e mande trocar
-                <strong>só as senhas daqueles clientes</strong>. Não precisa trocar chave: a chave
-                privada não passa por navegador nenhum.</li>
-              <li><strong>Suspeita de vazamento da chave do servidor</strong> — gere um par novo
-                no bloco acima, publique, e oriente os clientes a trocar as senhas nos sistemas.
-                Trocar a chave protege o que vier depois, não o que já saiu.</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-    </section>
-
-    <!-- Mesma regra do rodapé do portal: a logo aparece com a pessoa
-         dentro e some na tela de entrada, onde o cartão de login já
-         traz a marca grande. O nome escrito entra no lugar dela, para
-         o rodapé nunca ficar sem assinatura. -->
-    <footer class="foot">
-      <span class="foot__marca">
-        <img src="assets/totali-contabil-branca.png" alt="Totali Soluções Contábeis"
-             width="730" height="277" loading="lazy" decoding="async">
-      </span>
-      <strong class="foot__nome">Totali Soluções Contábeis</strong><br class="foot__nome-br">
-      Página de uso interno — não divulgue este endereço.
-    </footer>
   </main>
 </div>
 
-<nav class="tabbar tabbar--8" id="pnTabbar" aria-label="Navegação do painel" hidden>
+<!-- Barra de abas do celular. As cinco cabem sem apertar, então
+     não existe menu "Mais" aqui — ele só fazia falta quando eram
+     oito. A de Usuários some para quem não é administrador. -->
+<nav class="tabbar" id="pnAbas" aria-label="Seções do painel">
   <button type="button" class="tabbar__item" data-aba="inicio">
-    <svg class="ic" aria-hidden="true"><use href="#ic-home"></use></svg>Início
+    <svg class="ic" aria-hidden="true"><use href="#ic-home"></use></svg><span>Início</span>
   </button>
-  <button type="button" class="tabbar__item" data-aba="clientes">
-    <svg class="ic" aria-hidden="true"><use href="#ic-users"></use></svg>Clientes
-    <span class="tabbar__badge" data-badge-atencao hidden></span>
+  <button type="button" class="tabbar__item" data-aba="conteudo">
+    <svg class="ic" aria-hidden="true"><use href="#ic-play"></use></svg><span>Trilhas</span>
   </button>
-  <button type="button" class="tabbar__item" data-aba="pendencias">
-    <svg class="ic" aria-hidden="true"><use href="#ic-alert"></use></svg>Pendências
-    <span class="tabbar__badge" data-badge-pendencias hidden></span>
+  <button type="button" class="tabbar__item" data-aba="alunos">
+    <svg class="ic" aria-hidden="true"><use href="#ic-users"></use></svg><span>Alunos</span>
   </button>
-  <button type="button" class="tabbar__item" data-aba="mensagens">
-    <svg class="ic" aria-hidden="true"><use href="#ic-chat"></use></svg>Mensagens
-    <span class="tabbar__badge" data-badge-mensagens hidden></span>
+  <button type="button" class="tabbar__item" data-aba="convites">
+    <svg class="ic" aria-hidden="true"><use href="#ic-link"></use></svg><span>Convites</span>
   </button>
-  <button type="button" class="tabbar__item tabbar__item--extra" data-aba="novo">
-    <svg class="ic" aria-hidden="true"><use href="#ic-plus"></use></svg>Novo
-  </button>
-  <button type="button" class="tabbar__item tabbar__item--extra" data-aba="conteudo">
-    <svg class="ic" aria-hidden="true"><use href="#ic-folder"></use></svg>Conteúdo
-  </button>
-  <button type="button" class="tabbar__item tabbar__item--extra" data-aba="usuarios">
-    <svg class="ic" aria-hidden="true"><use href="#ic-badge"></use></svg>Usuários
-  </button>
-  <button type="button" class="tabbar__item tabbar__item--extra" data-aba="seguranca">
-    <svg class="ic" aria-hidden="true"><use href="#ic-shield"></use></svg>Segurança
-  </button>
-  <!-- As quatro abas acima não cabem na barra de um celular: com
-       as oito, cada uma ficava com 47px e a barra passava a rolar
-       de lado, escondendo Usuários e Segurança sem nenhum aviso de
-       que existiam. Elas continuam no menu lateral do computador e
-       aqui vêm por este botão. -->
-  <button type="button" class="tabbar__item" id="pnMaisAbas"
-          aria-haspopup="menu" aria-label="Mais telas do painel">
-    <svg class="ic" aria-hidden="true"><use href="#ic-mais"></use></svg>Mais
+  <button type="button" class="tabbar__item" data-aba="usuarios" hidden>
+    <svg class="ic" aria-hidden="true"><use href="#ic-badge"></use></svg><span>Usuários</span>
   </button>
 </nav>
 
-<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="toasts" id="toasts" aria-live="polite" aria-atomic="false"></div>
 
+<script defer src="js/moldura.js"></script>
 <script defer src="lib/firebase-app-compat.js"></script>
 <script defer src="lib/firebase-auth-compat.js"></script>
 <script defer src="lib/firebase-firestore-compat.js"></script>
 <script defer src="lib/firebase-storage-compat.js"></script>
-<script defer src="lib/firebase-app-check-compat.js"></script>
 <script defer src="js/firebase-config.js"></script>
-<script defer src="js/firebase.js"></script>
-<script defer src="js/chave-publica.js"></script>
-<script defer src="js/cripto.js"></script>
 <script defer src="js/util.js"></script>
 <script defer src="js/ui.js"></script>
-<script defer src="js/tour.js"></script>
-<script defer src="js/conteudo.js"></script>
-<script defer src="js/data.js"></script>
-<script defer src="js/situacao.js"></script>
-<script defer src="js/nuvem.js"></script>
-<script defer src="js/departamentos.js"></script>
-<script defer src="js/aplicacao.js"></script>
-<script defer src="js/recebimento.js"></script>
+<script defer src="js/catalogo.js"></script>
+<script defer src="js/admin.js"></script>
 <script defer src="js/painel.js"></script>
-<script defer src="js/equipe.js"></script>
-<script defer src="js/painel-conteudo.js"></script>
-<script defer src="js/ficha-pdf.js"></script>
-<script defer src="js/dossie-pdf.js"></script>
-<script defer src="js/painel-jornada.js"></script>
-<script defer src="js/painel-cadastro.js"></script>
-<script defer src="js/painel-clientes.js"></script>
 <script defer src="js/painel-inicio.js"></script>
-<script defer src="js/painel-equipe.js"></script>
-<script defer src="js/painel-trilha.js"></script>
+<script defer src="js/painel-trilhas.js"></script>
+<script defer src="js/painel-alunos.js"></script>
+<script defer src="js/painel-convites.js"></script>
+<script defer src="js/painel-usuarios.js"></script>
 </body>
 </html>
